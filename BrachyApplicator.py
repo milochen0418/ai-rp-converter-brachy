@@ -1155,7 +1155,8 @@ def show_3d_plot_result():
             img = slice_dict['rescale_pixel_array']
             gray_img = convert_to_gray_image(img)
             fig = plt.figure(figsize=(20, 5), dpi=80, facecolor='w', edgecolor='k')
-            threshed_im = cv2.adaptiveThreshold(gray_img, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 15, -22)
+            threshed_im = cv2.adaptiveThreshold(gray_img, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 15,
+                                                -22)
             plt.subplot(1, 4, 1)
             plt.imshow(threshed_im, cmap=plt.cm.bone)
             gray_img = gray_img[view_min_y: view_max_y, view_min_x:view_max_x]
@@ -1165,9 +1166,10 @@ def show_3d_plot_result():
             plt.subplot(1, 4, 3)
             plt.imshow(gray_img, cmap='gray', vmin=0, vmax=255)
 
-            #threshed_im = cv2.adaptiveThreshold(gray_img, 255, cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY, 15, -22)
+            # threshed_im = cv2.adaptiveThreshold(gray_img, 255, cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY, 15, -22)
             # threshed_im = cv2.adaptiveThreshold(gray_img, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 5, 7)
-            threshed_im = cv2.adaptiveThreshold(gray_img, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 15, -22)
+            threshed_im = cv2.adaptiveThreshold(gray_img, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 15,
+                                                -22)
 
             filter_img = threshed_im
 
@@ -1185,7 +1187,8 @@ def show_3d_plot_result():
                 ellipse = cv2.fitEllipse(contour)  # auto-figure the ellipse to fit contour
                 # print(ellipse)
                 ellipse_poly = cv2.ellipse2Poly((int(ellipse[0][0]), int(ellipse[0][1])),
-                                                (int(ellipse[1][0] / 2), int(ellipse[1][1] / 2)), int(ellipse[2]), 0, 360,
+                                                (int(ellipse[1][0] / 2), int(ellipse[1][1] / 2)), int(ellipse[2]), 0,
+                                                360,
                                                 5)
                 # Because cv2.ellipse2Poly(center, axes, angle, arcStart, arcEnd, delta)
                 # So The center point is (int(ellipse[0][0]), int(ellipse[0][1]))
@@ -1362,6 +1365,7 @@ def show_3d_plot_result():
             ax.scatter3D(obj3d['x'], obj3d['y'], obj3d['z'], c=obj3d['z'], cmap='hsv')
             plt.show()
 
+
         keys = sorted(app_pts.keys())
         keys_len = len(keys)
         '''
@@ -1487,12 +1491,21 @@ def show_3d_plot_result():
         f_list.append(folder)
         continue
 
-    folder = f_list[1]
+    folder = f_list[0]
     app_pts = algo_run_by_folder(folder)
-    app_pts_show3D(app_pts)
+    print(app_pts)
+    if app_pts != None:
+        app_pts_show3D(app_pts)
+    else:
+        print("app_pts is a returned None value from algo_run_by_folder() with folder = ", folder)
     print('folder = ', folder)
 
 
+
+def show_metric_line_in_tandem():
+
+
+    pass
 
 
 
