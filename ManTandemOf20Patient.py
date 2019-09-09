@@ -105,4 +105,28 @@ def example_case():
     apps_list = get_apps_list(rd_filepath)
     show_apps_list(apps_list)
 
-example_case()
+#example_case()
+
+def example_case_2():
+    root_folder = "RAL_plan"
+    process_list = get_process_list(root_folder)
+    p_list = get_process_list(root_folder)
+    for d in p_list:
+        rp_filepath = d['input']['rp_filepath']
+        print('\n\nrp_filepath = ', rp_filepath)
+        apps_list = get_apps_list(rp_filepath)
+        show_apps_list(apps_list)
+
+def example_case_3():
+    root_folder = "RAL_plan_new_20190905"
+    process_list = get_process_list(root_folder)
+    p_list = get_process_list(root_folder)
+    idx_cnt = 0
+    for d in p_list:
+
+        rp_filepath = d['input']['rp_filepath']
+        print('\n\n[{}] rp_filepath = ',idx_cnt,  rp_filepath)
+        apps_list = get_apps_list(rp_filepath)
+        show_apps_list(apps_list)
+        idx_cnt = idx_cnt + 1
+example_case_3()
