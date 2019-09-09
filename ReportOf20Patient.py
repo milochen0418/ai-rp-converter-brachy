@@ -820,7 +820,7 @@ def show_tandem( metric_line, first_purpose_distance_mm, each_purpose_distance_m
             break
 
 
-# Implementation of get_metric_pt_info_by_travel_distance(matric_line, pt_idx, pt_idx_remainder, travel_dist)
+# Implementation of get_metric_pt_info_by_travel_distance(metric_line, pt_idx, pt_idx_remainder, travel_dist)
 def get_metric_pt(metric_line, pt_idx, pt_idx_remainder):
     # print('get_metric_pt(metric_line={}, pt_idx={}, pt_idx_remainder={})'.format(metric_line, pt_idx, pt_idx_remainder))
     pt = metric_line[pt_idx].copy()
@@ -833,7 +833,7 @@ def get_metric_pt(metric_line, pt_idx, pt_idx_remainder):
         pt[axis_idx] += ((end_pt[axis_idx] - pt[axis_idx]) * pt_idx_remainder)
         # pt[axis_idx] = pt[axis_idx] + diff_with_ratio
     return pt
-def reduce_distance_step(matric_line, pt_idx, pt_idx_remainder, dist):
+def reduce_distance_step(metric_line, pt_idx, pt_idx_remainder, dist):
     # reduce dist and move further more step for (pt_idx, pt_idx_remainder)
     # ret_dist = ??  reduce dist into ret_dist
     # Just implement code here , so that the data move a little distance. (mean reduce dist and move more)
@@ -845,11 +845,11 @@ def reduce_distance_step(matric_line, pt_idx, pt_idx_remainder, dist):
 
     start_pt_idx = pt_idx
     start_pt_idx_remainder = pt_idx_remainder
-    start_pt = get_metric_pt(matric_line, start_pt_idx, start_pt_idx_remainder)
+    start_pt = get_metric_pt(metric_line, start_pt_idx, start_pt_idx_remainder)
 
     # To figure out what distance we perfer to reduce in this step
     # And the idea is seperate int to two case
-    if start_pt_idx < len(matric_line) - 1:
+    if start_pt_idx < len(metric_line) - 1:
         # CASE: there is a next pt_idx for start_pt_idx
         # In this case, we let end_pt_idx be the next pt_idx of start_pt_idx
         # So it start_pt_idx +1. and don't forget to reset remainder in to zero
@@ -863,7 +863,7 @@ def reduce_distance_step(matric_line, pt_idx, pt_idx_remainder, dist):
         end_pt_idx = start_pt_idx
         end_pt_idx_remainder = 1
 
-    end_pt = get_metric_pt(matric_line, end_pt_idx, end_pt_idx_remainder)
+    end_pt = get_metric_pt(metric_line, end_pt_idx, end_pt_idx_remainder)
     max_reducable_dist = distance(start_pt, end_pt)  # max_reducable_dist in this iteration
 
     # We have start_pt and end_pt , and we have the dist value
@@ -973,8 +973,6 @@ def get_maps_with_folder(folder):
         z_map[origin_z] = z_dict
         ct_filepath_map[ct_filepath] = z_dict
     return z_map, ct_filepath_map
-
-
 # The CT data is the format with 512 x 512, but we want to tranfer it into real metric space
 def convert_lines_in_metrics(lines, ct_folder):
     from decimal import Decimal
@@ -1002,9 +1000,6 @@ def convert_lines_in_metrics(lines, ct_folder):
             new_pt = [new_pt_x, new_pt_y, pt_z]
             new_line.append(new_pt)
     return new_lines
-
-
-
 def show_report_by_folder(folder):
     print('folder = ', folder )
     # the function will get all 3D pt of applicator
