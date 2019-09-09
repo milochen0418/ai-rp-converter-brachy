@@ -1000,6 +1000,33 @@ def convert_lines_in_metrics(lines, ct_folder):
             new_pt = [new_pt_x, new_pt_y, pt_z]
             new_line.append(new_pt)
     return new_lines
+
+
+def show_tandem(metric_line, first_purpose_distance_mm, each_purpose_distance_mm):
+    def distance(pt1, pt2):
+        import math
+        # print(r"pt1 = {}, pt2 = {}".format(pt1, pt2))
+        ret_dist = math.sqrt((pt1[0] - pt2[0]) ** 2 + (pt1[1] - pt2[1]) ** 2 + (pt1[2] - pt2[2]) ** 2)
+        return ret_dist
+
+    pt_idx = 0
+    pt_idx_remainder = 0
+    # first_purpose_distance_mm = 7 # get first RD point by 7mm
+    # each_purpose_distance_mm = 5
+    travel_dist = first_purpose_distance_mm
+    (t_pt, t_pt_idx, t_pt_idx_remainder, t_dist) = get_metric_pt_info_by_travel_distance(metric_line, pt_idx,pt_idx_remainder, travel_dist)
+    print(t_pt)
+
+    for i in range(100):
+        try:
+            travel_dist = each_purpose_distance_mm
+            (pt_idx, pt_idx_remainder) = (t_pt_idx, t_pt_idx_remainder)
+            (t_pt, t_pt_idx, t_pt_idx_remainder, t_dist) = get_metric_pt_info_by_travel_distance(metric_line, pt_idx,pt_idx_remainder,travel_dist)
+            print(t_pt, t_pt_idx, t_pt_idx_remainder)
+        except:
+
+            break
+
 def show_report_by_folder(folder):
     print('folder = ', folder )
     # the function will get all 3D pt of applicator
@@ -1038,12 +1065,15 @@ def show_report_by_folder(folder):
     (t_pt, t_pt_idx, t_pt_idx_remainder, t_dist) = get_metric_pt_info_by_travel_distance(metric_line, pt_idx, pt_idx_remainder, travel_dist)
     print('{} -> {}'.format((t_pt, t_pt_idx, t_pt_idx_remainder), distance(orig_pt, t_pt)))
 
+    show_tandem(metric_line, 4.5, 5)
+
     #max_mm = purpose_distance_mm
     #orig_pt = metric_line[0]
     #for mm in range(max_mm+1):
     #    travel_dist = mm
     #    (t_pt, t_pt_idx, t_pt_idx_remainder, t_dist) = get_metric_pt_info_by_travel_distance(metric_line, pt_idx, pt_idx_remainder, travel_dist)
     #    print( '{} -> {}'.format((t_pt, t_pt_idx, t_pt_idx_remainder), distance(orig_pt,t_pt) )  )
+
 
 
 show_report_by_folder(folder)
