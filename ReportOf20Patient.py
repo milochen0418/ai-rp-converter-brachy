@@ -186,7 +186,7 @@ def get_view_scope_by_slice(first_slice_dict, padding=30):
     return (view_min_y, view_max_y, view_min_x, view_max_x)
     # The way to use return value is
     # gray_img = gray_img[ view_min_y: view_max_y, view_min_x:view_max_x]
-def get_batch_process_dict(root_folder):
+def get_batch_process_dict_v01(root_folder):
     process_dict = {}
     if not os.path.isdir(root_folder):
         return process_dict
@@ -596,7 +596,8 @@ def algo_show_by_folder(folder):
         #
         prev_slice_dict = slice_dict
 
-def get_batch_process_dict(root_folder):
+
+def get_batch_process_dict_v02(root_folder):
     process_dict = {}
     if not os.path.isdir(root_folder):
         return process_dict
@@ -616,6 +617,8 @@ def get_batch_process_dict(root_folder):
         # TODO in future if you need
         process_dict[folder] = input_dict
     return process_dict
+
+
 def example_get_batch_process_dict():
     f_list = []
     # process_dict = get_batch_process_dict(r"AI_RS_Compare_20190724")
@@ -897,19 +900,6 @@ def get_metric_pt_info_by_travel_distance(metric_line, pt_idx, pt_idx_remainder,
 
 
 
-print('Hello ')
-
-f_list = []
-#process_dict = get_batch_process_dict(r"AI_RS_Compare_20190724")
-process_dict = get_batch_process_dict(r"RAL_plan_shift")
-for folder in sorted(process_dict.keys()):
-    if folder == r"AI_RS_Compare_20190724/35086187/0613":
-        continue
-    # algo_show_by_folder(folder)
-    print(folder)
-    f_list.append(folder)
-    continue
-
 
 def get_maps_with_folder(folder):
 
@@ -1139,11 +1129,55 @@ def predict_tandem_rp_line_by_folder(folder, start_mm, gap_mm):
     #show_tandem(metric_line, 4.5, 5)
     print('tandem_rp_line[-1] = ', tandem_rp_line[-1])
     enablePrint()
-
     return tandem_rp_line
 
-tandem_rp_line = predict_tandem_rp_line_by_folder(folder, start_mm=4.5, gap_mm=5)
-tandem_rp_line = predict_tandem_rp_line_by_folder(folder, start_mm=4.5, gap_mm=5)
 
-print(tandem_rp_line)
-print('end')
+
+print('Hello ')
+
+f_list = []
+#process_dict = get_batch_process_dict(r"AI_RS_Compare_20190724")
+#process_dict = get_batch_process_dict(r"RAL_plan_shift")
+
+
+
+
+def get_batch_process_dict_v03(root_folder):
+    process_dict = {}
+    if not os.path.isdir(root_folder):
+        return process_dict
+
+    dataset_folder_list = []
+    for patient_id_file in os.listdir(root_folder):
+        patient_id_filepath = r"{}/{}".format(root_folder, patient_id_file)
+        if not os.path.isdir(patient_id_filepath):
+            continue
+        dataset_folder_list.append(patient_id_filepath)
+
+    for folder in dataset_folder_list:
+        input_dict = {}
+        # TODO in future if you need
+        process_dict[folder] = input_dict
+    return process_dict
+
+
+
+process_dict = get_batch_process_dict_v03(r"RAL_plan_new_20190905")
+
+for folder in sorted(process_dict.keys()):
+    if folder == r"AI_RS_Compare_20190724/35086187/0613":
+        continue
+    # algo_show_by_folder(folder)
+    print(folder)
+    f_list.append(folder)
+    continue
+
+for folder in f_list:
+    try:
+        tandem_rp_line = predict_tandem_rp_line_by_folder(folder, start_mm=4.5, gap_mm=5)
+        print('folder = {}, tandem_rp_line= {}'.format(folder,tandem_rp_line))
+    except:
+        print('folder  = {} is break'.format(folder))
+        continue
+
+
