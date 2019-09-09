@@ -891,7 +891,7 @@ def reduce_distance_step(matric_line, pt_idx, pt_idx_remainder, dist):
 
     pass
     # return (ret_dist, ret_pt_idx, ret_pt_idx_remainder)
-def get_metric_pt_info_by_travel_distance(matric_line, pt_idx, pt_idx_remainder, travel_dist):
+def get_metric_pt_info_by_travel_distance(metric_line, pt_idx, pt_idx_remainder, travel_dist):
     dist = travel_dist
     count_max = len(metric_line)
     count = 0
@@ -899,22 +899,22 @@ def get_metric_pt_info_by_travel_distance(matric_line, pt_idx, pt_idx_remainder,
     while (True):
         (t_dist, t_pt_idx, t_pt_idx_remainder) = reduce_distance_step(metric_line, pt_idx, pt_idx_remainder, dist)
 
-        if pt_idx == len(matric_line) - 1 and pt_idx_remainder == 1:
+        if pt_idx == len(metric_line) - 1 and pt_idx_remainder == 1:
             # CASE 0: This is mean the distanced point will out of the line
             print('out of line and remaind unproces distance = ', t_dist)
-            t_pt = matric_line[-1].copy()
+            t_pt = metric_line[-1].copy()
             return (t_pt, t_pt_idx, t_pt_idx_remainder, t_dist)
             break
         if t_dist == 0:
             # CASE 1: All distance have been reduced
-            t_pt = get_metric_pt(matric_line, t_pt_idx, t_pt_idx_remainder)
+            t_pt = get_metric_pt(metric_line, t_pt_idx, t_pt_idx_remainder)
             return (t_pt, t_pt_idx, t_pt_idx_remainder, t_dist)
 
         count += 1
         if count > count_max:
             # CASE 2: over looping of what we expect. This is case of bug in my source code
             print('The out of counting in loop is happended. this is a bug')
-            t_pt = get_metric_pt(matric_line, t_pt_idx, t_pt_idx_remainder)
+            t_pt = get_metric_pt(metric_line, t_pt_idx, t_pt_idx_remainder)
             return (t_pt, t_pt_idx, t_pt_idx_remainder, t_dist)
         pt_idx = t_pt_idx
         pt_idx_remainder = t_pt_idx_remainder
@@ -1029,5 +1029,26 @@ def show_report_by_folder(folder):
     max_mm = purpose_distance_mm
     orig_pt = metric_line[0]
     print('metric_line = ', metric_line)
+
+    def distance(pt1, pt2):
+        import math
+        #print(r"pt1 = {}, pt2 = {}".format(pt1, pt2))
+        ret_dist = math.sqrt( (pt1[0]-pt2[0])**2 +  (pt1[1]-pt2[1])**2 + (pt1[2]-pt2[2])**2 )
+        return ret_dist
+    pt_idx = 0
+    pt_idx_remainder = 0
+    orig_pt = metric_line[0]
+    purpose_distance_mm = 7
+    travel_dist = purpose_distance_mm
+    (t_pt, t_pt_idx, t_pt_idx_remainder, t_dist) = get_metric_pt_info_by_travel_distance(metric_line, pt_idx, pt_idx_remainder, travel_dist)
+    print('{} -> {}'.format((t_pt, t_pt_idx, t_pt_idx_remainder), distance(orig_pt, t_pt)))
+
+    #max_mm = purpose_distance_mm
+    #orig_pt = metric_line[0]
+    #for mm in range(max_mm+1):
+    #    travel_dist = mm
+    #    (t_pt, t_pt_idx, t_pt_idx_remainder, t_dist) = get_metric_pt_info_by_travel_distance(metric_line, pt_idx, pt_idx_remainder, travel_dist)
+    #    print( '{} -> {}'.format((t_pt, t_pt_idx, t_pt_idx_remainder), distance(orig_pt,t_pt) )  )
+
 
 show_report_by_folder(folder)
