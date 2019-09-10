@@ -10,6 +10,25 @@ from numpy.random import randn
 import matplotlib as mpl
 from scipy import stats
 
+import pickle
+def python_object_dump(obj, filename):
+    file_w = open(filename, "wb")
+    pickle.dump(obj, file_w)
+    file_w.close()
+
+
+def python_object_load(filename):
+    try:
+        file_r = open(filename, "rb")
+        obj2 = pickle.load(file_r)
+        file_r.close()
+    except:
+        try:
+            file_r.close()
+            return None
+        except:
+            return None
+    return obj2
 
 def get_process_list(root_folder):
     import pydicom
@@ -123,10 +142,46 @@ def example_case_3():
     p_list = get_process_list(root_folder)
     idx_cnt = 0
     for d in p_list:
-
         rp_filepath = d['input']['rp_filepath']
-        print('\n\n[{}] rp_filepath = ',idx_cnt,  rp_filepath)
+        folder = os.path.dirname(rp_filepath)
+        print('\n\nfolder = ', folder)
+        print('[{}] rp_filepath = {}'.format(idx_cnt,  rp_filepath))
         apps_list = get_apps_list(rp_filepath)
         show_apps_list(apps_list)
         idx_cnt = idx_cnt + 1
-example_case_3()
+
+#example_case_3()
+
+
+def wrap_man_rp_data(root_folder):
+    ret_dict = {}
+    process_list = get_process_list(root_folder)
+    p_list = get_process_list(root_folder)
+    idx_cnt = 0
+    for d in p_list:
+        rp_filepath = d['input']['rp_filepath']
+        folder = os.path.dirname(rp_filepath)
+        #print('\n\nfolder = ', folder)
+        #print('[{}] rp_filepath = {}'.format(idx_cnt,  rp_filepath))
+        apps_list = get_apps_list(rp_filepath)
+        #show_apps_list(apps_list)
+        idx_cnt = idx_cnt + 1
+        ret_dict[folder] = {}
+        ret_dict[folder]['apps_list'] = apps_list
+        ret_dict[folder]['d'] = d
+    return ret_dict
+
+root_folder = "RAL_plan_new_20190905"
+ret_dict_filename = 'man_patient_rp_data.bytes'
+def save_ret_dict():
+    ret_dict = wrap_man_rp_data(root_folder)
+    print(ret_dict)
+    python_object_dump(ret_dict, ret_dict_filename)
+
+def show_ret_dict():
+    ret_dict = python_object_load(ret_dict_filename)
+    print('Hello World')
+    print(ret_dict)
+#save_ret_dict()
+show_ret_dict()
+
