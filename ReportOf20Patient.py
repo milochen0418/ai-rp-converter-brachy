@@ -1161,6 +1161,56 @@ def get_batch_process_dict_v03(root_folder):
     return process_dict
 
 
+import pickle
+def python_object_dump(obj, filename):
+    file_w = open(filename, "wb")
+    pickle.dump(obj, file_w)
+    file_w.close()
+def python_object_load(filename):
+    try:
+        file_r = open(filename, "rb")
+        obj2 = pickle.load(file_r)
+        file_r.close()
+    except:
+        try:
+            file_r.close()
+            return None
+        except:
+            return None
+    return obj2
+
+
+def get_man_dict():
+    ret_dict_filename = 'man_patient_rp_data.bytes'
+    ret_dict = python_object_load(ret_dict_filename)
+    return ret_dict
+
+
+def get_tandem_from_man(man_dict, folder):
+    dict = man_dict[folder]
+    if dict == None:
+        print('[get_tandem_from_man()] {} is not exist in man_dict'.format(folder))
+        return None
+    line = None
+    apps_list = dict['apps_list']
+    for line_dict in apps_list:
+        if line_dict['name'] == 'Tandom' or line_dict['name'] == 'Tandem':
+            # Some case is Tandom but some case is Tandem in rp filepath
+            line = line_dict['points'].copy()
+            break
+    return line
+
+
+def show_man_dict():
+    man_dict = get_man_dict()
+    for folder in sorted(man_dict.keys()):
+        tandem = get_tandem_from_man(man_dict, folder)
+        print('folder = {}, and tandem = {}'.format(folder,tandem))
+
+
+
+show_man_dict()
+exit(0)
 
 process_dict = get_batch_process_dict_v03(r"RAL_plan_new_20190905")
 
@@ -1179,5 +1229,6 @@ for folder in f_list:
     except:
         print('folder  = {} is break'.format(folder))
         continue
+
 
 
