@@ -97,7 +97,7 @@ def get_max_contours(A, constant_value=None):
     _, contours, _ = cv2.findContours(gray_image, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
     # return contours (list of np.array) and constant (you assume they are almsot highest)
     return (contours, constant)
-def get_rect_infos_and_center_pts(contours):
+def get_rect_infos_and_center_pts(contours,h_min=13, w_min=13, h_max=19, w_max=19):
     app_center_pts = []
     rect_infos = []
     for contour in contours:
@@ -115,9 +115,14 @@ def get_rect_infos_and_center_pts(contours):
         x_mean = int(x_mean)
         y_mean = int(y_mean)
         rect_info = [(x_min, x_max, y_min, y_max), (w, h), (x_mean, y_mean)]
-        if h >= 13 and h < 19 and w >= 13 and h < 19:
+        #if h >= 13 and h < 19 and w >= 13 and h < 19:
+        if h >= h_min and h < h_max and w >= w_min and w < w_max:
             cen_pt = [x_mean, y_mean]
             app_center_pts.append(cen_pt)
+        else:
+            #print('(h={},{} , w={},{})'.format(h_max, h_min, w_max, w_min))
+            #print('Not matching ! rect_info = ', rect_info)
+            pass
         # print(rect_info)
         rect_infos.append(rect_info)
     sorted_app_center_pts = sorted(app_center_pts, key=lambda cen_pt: cen_pt[0], reverse=False)
@@ -148,11 +153,23 @@ def get_app_center_pts_of_first_slice(first_slice_dict):
     pass
 def get_view_scope_by_slice(first_slice_dict, padding=30):
     (contours, constant) = get_max_contours(first_slice_dict['rescale_pixel_array'])
-    (sorted_app_center_pts, rect_infos, app_center_pts) = get_rect_infos_and_center_pts(contours)
-    print(sorted_app_center_pts)
+    print('PixelSpacing_(x,y)=({}, {})'.format(first_slice_dict['PixelSpacing_x'], first_slice_dict['PixelSpacing_y']))
+    ps_x = first_slice_dict['PixelSpacing_x']
+    ps_y = first_slice_dict['PixelSpacing_y']
+    h_max = int((19.0*4.19921e-1) / ps_y)
+    h_min = int((13.0*4.19921e-1) / ps_y)
+    w_max = int((19.0*4.19921e-1) / ps_x)
+    w_min = int((13.0*4.19921e-1) / ps_x)
+    print('(h={},{} , w={},{})'.format(h_max, h_min, w_max, w_min))
+
+    #(sorted_app_center_pts, rect_infos, app_center_pts) = get_rect_infos_and_center_pts(contours)
+    (sorted_app_center_pts, rect_infos, app_center_pts) = get_rect_infos_and_center_pts(contours,h_max=h_max,w_max=w_max,h_min=h_min,w_min=w_min)
+    print('sorted_app_center_pts = ',sorted_app_center_pts)
 
     x_sorted_pts = sorted(app_center_pts, key=lambda cen_pt: cen_pt[0], reverse=False)
     y_sorted_pts = sorted(app_center_pts, key=lambda cen_pt: cen_pt[1], reverse=False)
+
+
     (min_x, max_x) = (x_sorted_pts[0][0], x_sorted_pts[-1][0])
     (min_y, max_y) = (y_sorted_pts[0][1], y_sorted_pts[-1][1])
     print('X:({}, {})'.format(min_x, max_x))
@@ -484,14 +501,23 @@ def pure_show_slice_dict(slice_dict, view_rect):
     # print out all image in the same row
     plt.show()
     pass
-def algo_show_by_folder(folder):
+def algo_show_by_folder(folder, is_debug = False):
     ct_filelist = get_ct_filelist_by_folder(folder)
     ct_dicom_dict = gen_ct_dicom_dict(ct_filelist)
-    sorted_ct_dicom_dict_keys = sorted(ct_dicom_dict['SliceLocation'].keys())
+    sorted_ct_dicom_dict_keys = sorted(ct_dicom_dict['SliceLocation'].keys(), reverse=False)
+    print('z = ',sorted_ct_dicom_dict_keys[0])
     first_slice_dict = ct_dicom_dict['SliceLocation'][sorted_ct_dicom_dict_keys[0]]
     based_center_pts = get_app_center_pts_of_first_slice(first_slice_dict)
     if len(based_center_pts) != 3:
         print('len(based_center_pts) is wrong, folder = ', folder)
+        print('based_center_pts = ', based_center_pts)
+        if is_debug == True:
+            print('debug to show plt ')
+            slice_dict = first_slice_dict
+            (view_min_y, view_max_y, view_min_x, view_max_x) = get_view_scope_by_slice(first_slice_dict, padding=100)
+            pure_show_slice_dict(slice_dict, (view_min_y, view_max_y, view_min_x, view_max_x))
+
+
         return
     else:
         print(based_center_pts)
@@ -500,11 +526,6 @@ def algo_show_by_folder(folder):
     first_slice_dict['data']['center_pts'] = based_center_pts
 
     (view_min_y, view_max_y, view_min_x, view_max_x) = get_view_scope_by_slice(first_slice_dict, padding=100)
-
-    zlines = []  # every element in zlines is a list that link to all circle component
-    zlines.append([])
-    zlines.append([])
-    zlines.append([])
 
     prev_slice_dict = None
     for z in sorted_ct_dicom_dict_keys:
@@ -1084,10 +1105,12 @@ def blockPrint():
 def enablePrint():
     sys.stdout = sys.__stdout__
 
-def predict_tandem_rp_line_by_folder(folder, start_mm, gap_mm):
+def predict_tandem_rp_line_by_folder(folder, start_mm, gap_mm, is_debug = False):
     tandem_rp_line = []
     print('folder = ', folder )
-    blockPrint()
+    if is_debug == False:
+        blockPrint()
+
     # the function will get all 3D pt of applicator
     app_pts = algo_run_by_folder(folder)
     # transform all 3D pt of applicator into each line for each applicator and the line have been sorted by z
@@ -1128,7 +1151,8 @@ def predict_tandem_rp_line_by_folder(folder, start_mm, gap_mm):
     tandem_rp_line = get_and_show_tandem(metric_line, start_mm, gap_mm)
     #show_tandem(metric_line, 4.5, 5)
     print('tandem_rp_line[-1] = ', tandem_rp_line[-1])
-    enablePrint()
+    if is_debug == False:
+        enablePrint()
     return tandem_rp_line
 
 
@@ -1250,11 +1274,24 @@ def dist_3d(pt1, pt2):
     return math.sqrt( (pt1[0]-pt2[0])**2 +  (pt1[1]-pt2[1])**2 + (pt1[2]-pt2[2])**2 )
 
 
+
+broken_f_list = ['RAL_plan_new_20190905/29059811-2', 'RAL_plan_new_20190905/34698361-2', 'RAL_plan_new_20190905/34698361-5', 'RAL_plan_new_20190905/35252020-2', 'RAL_plan_new_20190905/35413048-1', 'RAL_plan_new_20190905/370648-2', 'RAL_plan_new_20190905/413382-2', 'RAL_plan_new_20190905/413382-3', 'RAL_plan_new_20190905/413382-4']
+debug_idx = 0
+for folder in broken_f_list:
+    if debug_idx != -1 :
+        print('debug for folder = ', folder)
+        algo_show_by_folder(folder, is_debug = True)
+    #ai_tandem_rp_line = predict_tandem_rp_line_by_folder(folder, start_mm=4.5, gap_mm=5, is_debug = True)
+    debug_idx = debug_idx + 1
+exit(0)
+
+
+#exit(0)
 broken_f_list = []
 for folder in f_list:
     try:
         ai_tandem_rp_line = predict_tandem_rp_line_by_folder(folder, start_mm=4.5, gap_mm=5)
-        #man_tandem_rp_line = get_tandem_from_man(man_dict, folder)
+        man_tandem_rp_line = get_tandem_from_man(man_dict, folder)
         #print('folder = {}, \nai_tandem_rp_line= {}, \nman_tandem_rp_line={}\n'.format(folder,ai_tandem_rp_line, man_tandem_rp_line))
     except:
         enablePrint() # Because predict_tandem_rp_line_by_folder() use blockPrint(), so enablePrint when catch exception
