@@ -1250,17 +1250,20 @@ def dist_3d(pt1, pt2):
     return math.sqrt( (pt1[0]-pt2[0])**2 +  (pt1[1]-pt2[1])**2 + (pt1[2]-pt2[2])**2 )
 
 
-
+broken_f_list = []
 for folder in f_list:
     try:
         ai_tandem_rp_line = predict_tandem_rp_line_by_folder(folder, start_mm=4.5, gap_mm=5)
-        man_tandem_rp_line = get_tandem_from_man(man_dict, folder)
+        #man_tandem_rp_line = get_tandem_from_man(man_dict, folder)
         #print('folder = {}, \nai_tandem_rp_line= {}, \nman_tandem_rp_line={}\n'.format(folder,ai_tandem_rp_line, man_tandem_rp_line))
     except:
         enablePrint() # Because predict_tandem_rp_line_by_folder() use blockPrint(), so enablePrint when catch exception
         print('folder  = {} is break'.format(folder))
+        broken_f_list.append(folder)
         continue
 
+print('len = {}, f_list = {}'.format(len(f_list), f_list))
+print('len = {}, broken_f_list = {}'.format(len(broken_f_list), broken_f_list) )
 
 
 exit(0)
