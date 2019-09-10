@@ -1194,10 +1194,36 @@ def get_tandem_from_man(man_dict, folder):
     line = None
     apps_list = dict['apps_list']
     for line_dict in apps_list:
-        if line_dict['name'] == 'Tandom' or line_dict['name'] == 'Tandem':
+        n = line_dict['name']
+        if n == 'Tandom' or n == 'Tandem' or 'Tandem_' in n or 'Tabdem_' in n:
             # Some case is Tandom but some case is Tandem in rp filepath
             line = line_dict['points'].copy()
             break
+
+    # Another rules to query Tandem line are by the case of ['Applicator1', 'Applicator2_R', 'Applicator3_L',...]
+    if line == None:
+        names = []
+        for d in apps_list:
+            n = d['name']
+            names.append(n)
+
+        queryName = None
+        if 'Applicator1' in names and 'Applicator2_R' in names and 'Applicator3_L' in names:
+            queryName = 'Applicator1'
+        if queryName != None:
+            for line_dict in apps_list:
+                n = line_dict['name']
+                if n == queryName:
+                    # Some case is Tandom but some case is Tandem in rp filepath
+                    line = line_dict['points'].copy()
+                    break
+
+
+    if line == None:
+        names = []
+        for ld in apps_list:
+            names.append(ld['name'])
+        print('line == None, and names = {}'.format(names))
     return line
 
 
