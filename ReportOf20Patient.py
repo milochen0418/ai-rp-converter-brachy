@@ -146,8 +146,18 @@ def show_diagram(np_array):
     plt.hist(data, bins=the_bins, color=sns.desaturate("indianred", .8), alpha=.4)
     plt.show()
 def get_app_center_pts_of_first_slice(first_slice_dict):
+    ps_x = first_slice_dict['PixelSpacing_x']
+    ps_y = first_slice_dict['PixelSpacing_y']
+    h_max = int((19.0*4.19921e-1) / ps_y)
+    h_min = int((13.0*4.19921e-1) / ps_y)
+    w_max = int((19.0*4.19921e-1) / ps_x)
+    w_min = int((13.0*4.19921e-1) / ps_x)
+    #print('(h={},{} , w={},{})'.format(h_max, h_min, w_max, w_min))
+
     (contours, constant) = get_max_contours(first_slice_dict['rescale_pixel_array'])
-    (sorted_app_center_pts, rect_infos, app_center_pts) = get_rect_infos_and_center_pts(contours)
+
+    #(sorted_app_center_pts, rect_infos, app_center_pts) = get_rect_infos_and_center_pts(contours)
+    (sorted_app_center_pts, rect_infos, app_center_pts) = get_rect_infos_and_center_pts(contours, h_max=h_max,h_min=h_min, w_max=w_max,w_min=w_min)
     x_sorted_pts = sorted(app_center_pts, key=lambda cen_pt: cen_pt[0], reverse=False)
     return x_sorted_pts
     pass
@@ -1113,6 +1123,7 @@ def predict_tandem_rp_line_by_folder(folder, start_mm, gap_mm, is_debug = False)
 
     # the function will get all 3D pt of applicator
     app_pts = algo_run_by_folder(folder)
+    print('app_pts = {}'.format(app_pts))
     # transform all 3D pt of applicator into each line for each applicator and the line have been sorted by z
     lines = make_lines_process(app_pts)
     # The CT data is the format with 512 x 512, but we want to tranfer it into real metric space
@@ -1278,21 +1289,23 @@ def dist_3d(pt1, pt2):
 broken_f_list = ['RAL_plan_new_20190905/29059811-2', 'RAL_plan_new_20190905/34698361-2', 'RAL_plan_new_20190905/34698361-5', 'RAL_plan_new_20190905/35252020-2', 'RAL_plan_new_20190905/35413048-1', 'RAL_plan_new_20190905/370648-2', 'RAL_plan_new_20190905/413382-2', 'RAL_plan_new_20190905/413382-3', 'RAL_plan_new_20190905/413382-4']
 debug_idx = 0
 for folder in broken_f_list:
+    break
     if debug_idx != -1 :
         print('debug for folder = ', folder)
         algo_show_by_folder(folder, is_debug = True)
     #ai_tandem_rp_line = predict_tandem_rp_line_by_folder(folder, start_mm=4.5, gap_mm=5, is_debug = True)
     debug_idx = debug_idx + 1
-exit(0)
 
 
-#exit(0)
+
+
 broken_f_list = []
 for folder in f_list:
+
     try:
         ai_tandem_rp_line = predict_tandem_rp_line_by_folder(folder, start_mm=4.5, gap_mm=5)
         man_tandem_rp_line = get_tandem_from_man(man_dict, folder)
-        #print('folder = {}, \nai_tandem_rp_line= {}, \nman_tandem_rp_line={}\n'.format(folder,ai_tandem_rp_line, man_tandem_rp_line))
+        print('folder = {}, \nai_tandem_rp_line= {}, \nman_tandem_rp_line={}\n'.format(folder,ai_tandem_rp_line, man_tandem_rp_line))
     except:
         enablePrint() # Because predict_tandem_rp_line_by_folder() use blockPrint(), so enablePrint when catch exception
         print('folder  = {} is break'.format(folder))
@@ -1301,7 +1314,17 @@ for folder in f_list:
 
 print('len = {}, f_list = {}'.format(len(f_list), f_list))
 print('len = {}, broken_f_list = {}'.format(len(broken_f_list), broken_f_list) )
+exit(0)
+broken_f_list = ['RAL_plan_new_20190905/29059811-2','RAL_plan_new_20190905/34698361-2','RAL_plan_new_20190905/34698361-5','RAL_plan_new_20190905/35252020-2','RAL_plan_new_20190905/35413048-1','RAL_plan_new_20190905/370648-2','RAL_plan_new_20190905/413382-2','RAL_plan_new_20190905/413382-3','RAL_plan_new_20190905/413382-4']
 
+folder_idx = 0
+for folder in broken_f_list:
+    if folder_idx != 0:
+
+        ai_tandem_rp_line = predict_tandem_rp_line_by_folder(folder, start_mm=4.5, gap_mm=5, is_debug=False)
+        print('processed error folder name = ', folder)
+        break
+    folder_idx = folder_idx + 1
 
 exit(0)
 
