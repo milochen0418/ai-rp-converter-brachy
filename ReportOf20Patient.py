@@ -1226,12 +1226,12 @@ def get_tandem_from_man(man_dict, folder):
     return line
 
 
+
 def show_man_dict():
     man_dict = get_man_dict()
     for folder in sorted(man_dict.keys()):
         tandem = get_tandem_from_man(man_dict, folder)
         print('folder = {}, and tandem = {}'.format(folder,tandem))
-
 
 process_dict = get_batch_process_dict_v03(r"RAL_plan_new_20190905")
 
@@ -1244,14 +1244,52 @@ for folder in sorted(process_dict.keys()):
     continue
 
 man_dict = get_man_dict()
+folder_idx = 0
+import math
+def dist_3d(pt1, pt2):
+    return math.sqrt( (pt1[0]-pt2[0])**2 +  (pt1[1]-pt2[1])**2 + (pt1[2]-pt2[2])**2 )
+
+
+
 for folder in f_list:
     try:
         ai_tandem_rp_line = predict_tandem_rp_line_by_folder(folder, start_mm=4.5, gap_mm=5)
         man_tandem_rp_line = get_tandem_from_man(man_dict, folder)
-        print('folder = {}, \nai_tandem_rp_line= {}, \nman_tandem_rp_line={}\n'.format(folder,ai_tandem_rp_line, man_tandem_rp_line))
+        #print('folder = {}, \nai_tandem_rp_line= {}, \nman_tandem_rp_line={}\n'.format(folder,ai_tandem_rp_line, man_tandem_rp_line))
     except:
+        enablePrint() # Because predict_tandem_rp_line_by_folder() use blockPrint(), so enablePrint when catch exception
         print('folder  = {} is break'.format(folder))
         continue
 
+
+
+exit(0)
+
+
+
+for folder in sorted(man_dict.keys()):
+    print('folder = {}, with folder_idx = {}'.format(folder, folder_idx))
+    # figure out the distance between ai tandem line and manual tandem line
+
+    man_line = get_tandem_from_man(man_dict, folder)
+    ai_line = []
+    try:
+        ai_line = predict_tandem_rp_line_by_folder(folder, start_mm=0.1, gap_mm=5)
+    except:
+        enablePrint()
+        print('Why dead on case of folder = {}? finding it '.format(folder))
+
+    print('folder = {}\nman_line={}\nai_line={}\n\n'.format(folder, man_line, ai_line))
+    continue
+    man_line_len = len(man_line)
+    if man_line_len > len(ai_line):
+        print('In case folder = {}, len of man line = {} > len of ai line = {}'.format(folder, man_line_len, len(ai_line)))
+        continue
+    man_1st_pt = man_line[0]
+    ai_1st_pt = ai_line[0]
+    man_list_pt = man_line[man_line_len - 1]
+    ai_last_pt = ai_line[man_line_len -1]
+    folder_idx = folder_idx + 1
+    break
 
 
