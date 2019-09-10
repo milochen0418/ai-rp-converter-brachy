@@ -1187,6 +1187,7 @@ def get_man_dict():
 
 
 def get_tandem_from_man(man_dict, folder):
+    # Here show the different rules in different rp filepath to get tandem
     dict = man_dict[folder]
     if dict == None:
         print('[get_tandem_from_man()] {} is not exist in man_dict'.format(folder))
@@ -1217,8 +1218,6 @@ def get_tandem_from_man(man_dict, folder):
                     # Some case is Tandom but some case is Tandem in rp filepath
                     line = line_dict['points'].copy()
                     break
-
-
     if line == None:
         names = []
         for ld in apps_list:
@@ -1234,10 +1233,6 @@ def show_man_dict():
         print('folder = {}, and tandem = {}'.format(folder,tandem))
 
 
-
-show_man_dict()
-exit(0)
-
 process_dict = get_batch_process_dict_v03(r"RAL_plan_new_20190905")
 
 for folder in sorted(process_dict.keys()):
@@ -1248,10 +1243,12 @@ for folder in sorted(process_dict.keys()):
     f_list.append(folder)
     continue
 
+man_dict = get_man_dict()
 for folder in f_list:
     try:
-        tandem_rp_line = predict_tandem_rp_line_by_folder(folder, start_mm=4.5, gap_mm=5)
-        print('folder = {}, tandem_rp_line= {}'.format(folder,tandem_rp_line))
+        ai_tandem_rp_line = predict_tandem_rp_line_by_folder(folder, start_mm=4.5, gap_mm=5)
+        man_tandem_rp_line = get_tandem_from_man(man_dict, folder)
+        print('folder = {}, \nai_tandem_rp_line= {}, \nman_tandem_rp_line={}\n'.format(folder,ai_tandem_rp_line, man_tandem_rp_line))
     except:
         print('folder  = {} is break'.format(folder))
         continue
