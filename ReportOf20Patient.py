@@ -1286,22 +1286,21 @@ def dist_3d(pt1, pt2):
 
 
 
-broken_f_list = ['RAL_plan_new_20190905/29059811-2', 'RAL_plan_new_20190905/34698361-2', 'RAL_plan_new_20190905/34698361-5', 'RAL_plan_new_20190905/35252020-2', 'RAL_plan_new_20190905/35413048-1', 'RAL_plan_new_20190905/370648-2', 'RAL_plan_new_20190905/413382-2', 'RAL_plan_new_20190905/413382-3', 'RAL_plan_new_20190905/413382-4']
+
+broken_f_list = ['RAL_plan_new_20190905/29059811-2', 'RAL_plan_new_20190905/35252020-2']
 debug_idx = 0
 for folder in broken_f_list:
-    break
-    if debug_idx != -1 :
+    if debug_idx != -1:
         print('debug for folder = ', folder)
         algo_show_by_folder(folder, is_debug = True)
     #ai_tandem_rp_line = predict_tandem_rp_line_by_folder(folder, start_mm=4.5, gap_mm=5, is_debug = True)
     debug_idx = debug_idx + 1
-
-
+exit(0)
 
 
 broken_f_list = []
 for folder in f_list:
-
+    break
     try:
         ai_tandem_rp_line = predict_tandem_rp_line_by_folder(folder, start_mm=4.5, gap_mm=5)
         man_tandem_rp_line = get_tandem_from_man(man_dict, folder)
@@ -1312,10 +1311,11 @@ for folder in f_list:
         broken_f_list.append(folder)
         continue
 
-print('len = {}, f_list = {}'.format(len(f_list), f_list))
-print('len = {}, broken_f_list = {}'.format(len(broken_f_list), broken_f_list) )
-exit(0)
-broken_f_list = ['RAL_plan_new_20190905/29059811-2','RAL_plan_new_20190905/34698361-2','RAL_plan_new_20190905/34698361-5','RAL_plan_new_20190905/35252020-2','RAL_plan_new_20190905/35413048-1','RAL_plan_new_20190905/370648-2','RAL_plan_new_20190905/413382-2','RAL_plan_new_20190905/413382-3','RAL_plan_new_20190905/413382-4']
+#print('len = {}, f_list = {}'.format(len(f_list), f_list))
+#print('len = {}, broken_f_list = {}'.format(len(broken_f_list), broken_f_list) )
+#exit(0)
+
+broken_f_list = ['RAL_plan_new_20190905/29059811-2', 'RAL_plan_new_20190905/35252020-2']
 
 folder_idx = 0
 for folder in broken_f_list:
