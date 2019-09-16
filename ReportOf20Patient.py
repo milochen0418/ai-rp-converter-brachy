@@ -161,7 +161,8 @@ def get_app_center_pts_of_first_slice(first_slice_dict):
     print('\n\n')
     print(sorted_app_center_pts)
     #TODO After researching done, write the code to finish this task
-
+    if sorted_app_center_pts == None or len(sorted_app_center_pts) != 3:
+        pass
     print('\n\n')
 
 
