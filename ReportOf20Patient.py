@@ -158,7 +158,21 @@ def get_app_center_pts_of_first_slice(first_slice_dict):
 
     #(sorted_app_center_pts, rect_infos, app_center_pts) = get_rect_infos_and_center_pts(contours)
     (sorted_app_center_pts, rect_infos, app_center_pts) = get_rect_infos_and_center_pts(contours, h_max=h_max,h_min=h_min, w_max=w_max,w_min=w_min)
+    print('\n\n')
+    print(sorted_app_center_pts)
+    #TODO After researching done, write the code to finish this task
+
+    print('\n\n')
+
+
+
+
+
+
     x_sorted_pts = sorted(app_center_pts, key=lambda cen_pt: cen_pt[0], reverse=False)
+    print('get_app_center_pts_of_first_slice() -> x_sorted_pts = ', x_sorted_pts)
+
+
     return x_sorted_pts
     pass
 def get_view_scope_by_slice(first_slice_dict, padding=30):
@@ -526,8 +540,6 @@ def algo_show_by_folder(folder, is_debug = False):
             slice_dict = first_slice_dict
             (view_min_y, view_max_y, view_min_x, view_max_x) = get_view_scope_by_slice(first_slice_dict, padding=100)
             pure_show_slice_dict(slice_dict, (view_min_y, view_max_y, view_min_x, view_max_x))
-
-
         return
     else:
         print(based_center_pts)
@@ -782,16 +794,13 @@ def algo_run_by_folder(folder):
                 continue
             ellipse = cv2.fitEllipse(contour)  # auto-figure the ellipse to fit contour
             # print(ellipse)
-            ellipse_poly = cv2.ellipse2Poly((int(ellipse[0][0]), int(ellipse[0][1])),
-                                            (int(ellipse[1][0] / 2), int(ellipse[1][1] / 2)), int(ellipse[2]), 0, 360,
-                                            5)
+            ellipse_poly = cv2.ellipse2Poly((int(ellipse[0][0]), int(ellipse[0][1])),(int(ellipse[1][0] / 2), int(ellipse[1][1] / 2)), int(ellipse[2]), 0, 360,5)
             draw_x = int(ellipse[0][0])
             draw_y = int(ellipse[0][1])
             draw_ellipse_center_pts.append([draw_x, draw_y])
             x = int(ellipse[0][0]) + view_min_x
             y = int(ellipse[0][1]) + view_min_y
             ellipse_center_pts.append([x, y])
-
             reshape_poly = ellipse_poly.reshape(ellipse_poly.shape[0], 1, ellipse_poly.shape[1])
             cv2.drawContours(proc_img, reshape_poly, -1, (255, 0, 0), 1)
             # cv2.line(proc_img,(draw_x,draw_y),(draw_x,draw_y),(255,0,0),3)
@@ -816,7 +825,6 @@ def algo_run_by_folder(folder):
         #plt.subplot(1, 4, 4)
         for [x, y] in figure_center_pts:
             app_pts_dict[z].append([x,y,z])
-
             draw_x = x - view_min_x
             draw_y = y - view_min_y
             cv2.line(proc_img, (draw_x, draw_y), (draw_x, draw_y), (255, 0, 0), 3)
@@ -1295,12 +1303,12 @@ for folder in broken_f_list:
         algo_show_by_folder(folder, is_debug = True)
     #ai_tandem_rp_line = predict_tandem_rp_line_by_folder(folder, start_mm=4.5, gap_mm=5, is_debug = True)
     debug_idx = debug_idx + 1
-exit(0)
+#exit(0)
 
 
 broken_f_list = []
 for folder in f_list:
-    break
+
     try:
         ai_tandem_rp_line = predict_tandem_rp_line_by_folder(folder, start_mm=4.5, gap_mm=5)
         man_tandem_rp_line = get_tandem_from_man(man_dict, folder)
@@ -1311,22 +1319,23 @@ for folder in f_list:
         broken_f_list.append(folder)
         continue
 
-#print('len = {}, f_list = {}'.format(len(f_list), f_list))
-#print('len = {}, broken_f_list = {}'.format(len(broken_f_list), broken_f_list) )
-#exit(0)
+print('len = {}, f_list = {}'.format(len(f_list), f_list))
+print('len = {}, broken_f_list = {}'.format(len(broken_f_list), broken_f_list) )
+
+exit(0)
 
 broken_f_list = ['RAL_plan_new_20190905/29059811-2', 'RAL_plan_new_20190905/35252020-2']
 
 folder_idx = 0
 for folder in broken_f_list:
     if folder_idx != 0:
-
         ai_tandem_rp_line = predict_tandem_rp_line_by_folder(folder, start_mm=4.5, gap_mm=5, is_debug=False)
         print('processed error folder name = ', folder)
         break
     folder_idx = folder_idx + 1
 
-exit(0)
+#exit(0)
+
 
 
 
