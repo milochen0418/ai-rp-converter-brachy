@@ -1505,10 +1505,10 @@ for folder in broken_f_list:
 
 broken_f_list = []
 for folder in f_list:
-    if folder != 'RAL_plan_new_20190905/35252020-2':
-        continue
+    #if folder != 'RAL_plan_new_20190905/35252020-2':
+    #    continue
     try:
-        ai_tandem_rp_line = predict_tandem_rp_line_by_folder(folder, start_mm=4.5, gap_mm=5, is_debug=True)
+        ai_tandem_rp_line = predict_tandem_rp_line_by_folder(folder, start_mm=4.5, gap_mm=5, is_debug=False)
         man_tandem_rp_line = get_tandem_from_man(man_dict, folder)
         print('folder = {}, \nai_tandem_rp_line= {}, \nman_tandem_rp_line={}\n'.format(folder,ai_tandem_rp_line, man_tandem_rp_line))
     except:
