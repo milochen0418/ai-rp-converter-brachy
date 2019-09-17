@@ -68,14 +68,15 @@ def get_ct_filelist_by_folder(folder):
         ct_filelist.append(filepath)
 
     return ct_filelist
-def get_max_contours_by_filter_img(A, filter_img):
+def get_max_contours_by_filter_img(A, filter_img,ContourRetrievalMode = cv2.RETR_EXTERNAL ):
     # gray_image = cv2.cvtColor(filter_img, cv2.COLOR_RGB2GRAY)
     gray_image = filter_img
     # findContours
     # _, contours, _ = cv2.findContours(gray_image, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
-    _, contours, _ = cv2.findContours(gray_image, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+    #_, contours, _ = cv2.findContours(gray_image, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+    _, contours, _ = cv2.findContours(gray_image, ContourRetrievalMode, cv2.CHAIN_APPROX_NONE)
     return contours
-def get_max_contours(A, constant_value=None):
+def get_max_contours(A, constant_value=None, ContourRetrievalMode = cv2.RETR_EXTERNAL):
     constant = None
     if constant_value == None:
         # Algoruthm to find constant value
@@ -94,7 +95,8 @@ def get_max_contours(A, constant_value=None):
     gray_image = cv2.cvtColor(filter_img, cv2.COLOR_RGB2GRAY)
     # findContours
     # _, contours, _ = cv2.findContours(gray_image, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
-    _, contours, _ = cv2.findContours(gray_image, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+    #_, contours, _ = cv2.findContours(gray_image, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+    _, contours, _ = cv2.findContours(gray_image, ContourRetrievalMode, cv2.CHAIN_APPROX_NONE)
     # return contours (list of np.array) and constant (you assume they are almsot highest)
     return (contours, constant)
 def get_rect_infos_and_center_pts(contours,h_min=13, w_min=13, h_max=19, w_max=19):
@@ -465,6 +467,8 @@ def process_first_slice_with_folder(folder):
     filter_img = threshed_im
 
     contours = get_max_contours_by_filter_img(img, filter_img)
+
+
     (sorted_app_center_pts, rect_infos, app_center_pts) = get_rect_infos_and_center_pts(contours)
     proc_img = np.copy(img)
 
@@ -571,7 +575,11 @@ def process_with_folder(folder):
         filter_img = threshed_im
 
         # contours = get_max_contours_by_filter_img(first_slice_dict['rescale_pixel_array'])
-        contours = get_max_contours_by_filter_img(img, filter_img)
+        #contours = get_max_contours_by_filter_img(img, filter_img)
+        contours = get_max_contours_by_filter_img(img, filter_img, ContourRetrievalMode=cv2.RETR_TREE)
+        print(contours)
+
+
         (sorted_app_center_pts, rect_infos, app_center_pts) = get_rect_infos_and_center_pts(contours)
         proc_img = np.copy(img)
 
@@ -837,8 +845,6 @@ def get_batch_process_dict_v02(root_folder):
         # TODO in future if you need
         process_dict[folder] = input_dict
     return process_dict
-
-
 def example_get_batch_process_dict():
     f_list = []
     # process_dict = get_batch_process_dict(r"AI_RS_Compare_20190724")
@@ -960,14 +966,27 @@ def algo_run_by_folder(folder):
         threshed_im = cv2.adaptiveThreshold(gray_img, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 15, -22)
         # I'm not sure why it is the perfect value in our case.
         filter_img = threshed_im
-        contours = get_max_contours_by_filter_img(img, filter_img)
+        #contours = get_max_contours_by_filter_img(img, filter_img)
+        contours = get_max_contours_by_filter_img(img, filter_img, ContourRetrievalMode=cv2.RETR_TREE)
+        (contours_without_filter,constant) = get_max_contours(img, ContourRetrievalMode=cv2.RETR_TREE)
         proc_img = np.copy(img)
+        contours.extend(contours_without_filter)
 
         ellipse_center_pts = []
         draw_ellipse_center_pts = []
         for contour in contours:
             if len(contour) < 5:
                 # You need at least 5 points in contour, so that you can use fitEllipse
+
+                reshape_contour = contour.reshape(contour.shape[0], contour.shape[2])
+                xs = [pt[0] for pt in reshape_contour]
+                ys = [pt[1] for pt in reshape_contour]
+                x = int( (min(xs) + max(xs) ) / 2 )
+                y = int( (min(ys) + max(ys) ) / 2 )
+                #enablePrint()
+                #print("special fitEllipse(x,y) = ({},{})".format(x,y))
+                #blockPrint()
+                ellipse_center_pts.append([x, y])
                 continue
             ellipse = cv2.fitEllipse(contour)  # auto-figure the ellipse to fit contour
             # print(ellipse)
@@ -1489,7 +1508,7 @@ for folder in f_list:
     if folder != 'RAL_plan_new_20190905/35252020-2':
         continue
     try:
-        ai_tandem_rp_line = predict_tandem_rp_line_by_folder(folder, start_mm=4.5, gap_mm=5)
+        ai_tandem_rp_line = predict_tandem_rp_line_by_folder(folder, start_mm=4.5, gap_mm=5, is_debug=True)
         man_tandem_rp_line = get_tandem_from_man(man_dict, folder)
         print('folder = {}, \nai_tandem_rp_line= {}, \nman_tandem_rp_line={}\n'.format(folder,ai_tandem_rp_line, man_tandem_rp_line))
     except:
