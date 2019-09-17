@@ -207,10 +207,10 @@ def get_2level_max_contours(img, gray_img):
                         y_min = y
                     if y > y_max:
                         y_max = y
-        x_min -= 2
-        x_max += 2
-        y_min -= 2
-        y_max += 2
+        x_min -= padding
+        x_max += padding
+        y_min -= padding
+        y_max += padding
         rect = (x_min, x_max, y_min, y_max)
         return rect
     def is_point_in_rect(pt, rect=(0, 0, 0, 0)):
@@ -1486,7 +1486,7 @@ for folder in broken_f_list:
 
 broken_f_list = []
 for folder in f_list:
-    if folder == 'RAL_plan_new_20190905/35252020-2':
+    if folder != 'RAL_plan_new_20190905/35252020-2':
         continue
     try:
         ai_tandem_rp_line = predict_tandem_rp_line_by_folder(folder, start_mm=4.5, gap_mm=5)
