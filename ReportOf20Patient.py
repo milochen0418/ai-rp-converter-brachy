@@ -1505,6 +1505,7 @@ for folder in broken_f_list:
 
 broken_f_list = []
 for folder in f_list:
+    break
     #if folder != 'RAL_plan_new_20190905/35252020-2':
     #    continue
     try:
@@ -1516,16 +1517,14 @@ for folder in f_list:
         print('folder  = {} is break'.format(folder))
         broken_f_list.append(folder)
         continue
-
 print('len = {}, f_list = {}'.format(len(f_list), f_list))
 print('len = {}, broken_f_list = {}'.format(len(broken_f_list), broken_f_list) )
-
-exit(0)
 
 broken_f_list = ['RAL_plan_new_20190905/29059811-2', 'RAL_plan_new_20190905/35252020-2']
 
 folder_idx = 0
 for folder in broken_f_list:
+    break
     if folder_idx != 0:
         ai_tandem_rp_line = predict_tandem_rp_line_by_folder(folder, start_mm=4.5, gap_mm=5, is_debug=False)
         print('processed error folder name = ', folder)
@@ -1536,7 +1535,9 @@ for folder in broken_f_list:
 
 
 
-
+broken_f_list=[]
+f_list = []
+correct_dir_f_list = []
 for folder in sorted(man_dict.keys()):
     print('folder = {}, with folder_idx = {}'.format(folder, folder_idx))
     # figure out the distance between ai tandem line and manual tandem line
@@ -1544,22 +1545,30 @@ for folder in sorted(man_dict.keys()):
     man_line = get_tandem_from_man(man_dict, folder)
     ai_line = []
     try:
-        ai_line = predict_tandem_rp_line_by_folder(folder, start_mm=0.1, gap_mm=5)
+        ai_line = predict_tandem_rp_line_by_folder(folder, start_mm=0, gap_mm=5)
     except:
         enablePrint()
         print('Why dead on case of folder = {}? finding it '.format(folder))
-
+        broken_f_list.append(folder)
+        continue
+    f_list.append(folder)
     print('folder = {}\nman_line={}\nai_line={}\n\n'.format(folder, man_line, ai_line))
-    continue
+
     man_line_len = len(man_line)
     if man_line_len > len(ai_line):
         print('In case folder = {}, len of man line = {} > len of ai line = {}'.format(folder, man_line_len, len(ai_line)))
         continue
+    else:
+        correct_dir_f_list.append(folder)
     man_1st_pt = man_line[0]
     ai_1st_pt = ai_line[0]
     man_list_pt = man_line[man_line_len - 1]
     ai_last_pt = ai_line[man_line_len -1]
     folder_idx = folder_idx + 1
-    break
 
+print('broken_f_list = {}'.format(broken_f_list))
+print('f_list = {}'.format(f_list))
+print('correct_dir_f_list = {}'.format(correct_dir_f_list.append(folder)) )
+
+print('folder_idx = ', folder_idx)
 
