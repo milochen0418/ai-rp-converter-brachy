@@ -145,6 +145,175 @@ def show_diagram(np_array):
     the_bins = 64
     plt.hist(data, bins=the_bins, color=sns.desaturate("indianred", .8), alpha=.4)
     plt.show()
+
+
+def get_2level_max_contours(img, gray_img):
+    def get_max_contours_by_filter_img(A, filter_img, ContourRetrievalMode=cv2.RETR_TREE):
+        # gray_image = cv2.cvtColor(filter_img, cv2.COLOR_RGB2GRAY)
+        gray_image = filter_img
+        # findContours
+        # _, contours, _ = cv2.findContours(gray_image, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
+        # _, contours, _ = cv2.findContours(gray_image, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+        _, contours, _ = cv2.findContours(gray_image, ContourRetrievalMode, cv2.CHAIN_APPROX_NONE)
+        return contours
+    def get_max_contours(A, constant_value=None, ContourRetrievalMode=cv2.RETR_TREE):
+        constant = None
+        if constant_value == None:
+            # Algoruthm to find constant value
+            data = A.ravel()
+            sorted_data = np.copy(data)
+            sorted_data.sort()
+            constant = sorted_data[-20] - 100
+
+        else:
+            constant = constant_value
+        # The RGB format for cv2 is
+        filter_img = np.zeros((A.shape[0], A.shape[1], 3), np.uint8)
+        # Make filter_img be mask array
+        filter_img[A <= constant] = (0, 0, 0)
+        filter_img[A > constant] = (255, 255, 255)
+        # convert mask array to gray image format
+        gray_image = cv2.cvtColor(filter_img, cv2.COLOR_RGB2GRAY)
+        # findContours
+        # RETR_TREE will show the contour included in contour
+        # _, contours, _ = cv2.findContours(gray_image, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
+        # _, contours, _ = cv2.findContours(gray_image, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+        _, contours, _ = cv2.findContours(gray_image, ContourRetrievalMode, cv2.CHAIN_APPROX_NONE)
+
+        # RETR_EXTERNAL will NOT show the contour inclued in contour
+        # _, contours, _ = cv2.findContours(gray_image, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+        # return contours (list of np.array) and constant (you assume they are almsot highest)
+        return (contours, constant)
+    def get_minimum_rect_from_contours(contours, padding=2):
+        rect = (x_min, x_max, y_min, y_max) = (0, 0, 0, 0)
+        is_first = True
+        for contour in contours:
+            reshaped_contour = contour.reshape(contour.shape[0], contour.shape[2])
+            for pt in reshaped_contour:
+                x = pt[0]
+                y = pt[1]
+                if is_first == True:
+                    x_min = x
+                    x_max = x
+                    y_min = y
+                    y_max = y
+                    is_first = False
+                else:
+                    if x < x_min:
+                        x_min = x
+                    if x > x_max:
+                        x_max = x
+                    if y < y_min:
+                        y_min = y
+                    if y > y_max:
+                        y_max = y
+        x_min -= 2
+        x_max += 2
+        y_min -= 2
+        y_max += 2
+        rect = (x_min, x_max, y_min, y_max)
+        return rect
+    def is_point_in_rect(pt, rect=(0, 0, 0, 0)):
+        (x_min, x_max, y_min, y_max) = rect
+        x = pt[0]
+        y = pt[1]
+        if x >= x_min and x < x_max and y >= y_min and y < y_max:
+            return True
+        else:
+            return False
+    def is_contour_in_rect(contour, rect=(0, 0, 0, 0)):
+        (x_min, x_max, y_min, y_max) = rect
+        isContourInRect = True
+        reshaped_contour = contour.reshape(contour.shape[0], contour.shape[2])
+        for pt in reshaped_contour:
+            if False == is_point_in_rect(pt, rect):
+                isContourInRect = False
+                break
+        return isContourInRect
+    def is_just_found_3_contained_contour(contours):
+        # contained_countour is mean a contour which continaed by some large contour
+        contained_contour_num = 0
+        contained_contours = []
+        for idx, contour in enumerate(contours):
+            other_contours = copy.deepcopy(contours)
+            other_contours.pop(idx)  # remove the contour in other_contours
+            is_contour_to_be_contained = False
+            for large_contour in other_contours:
+                rect = (min_x, max_x, min_y, max_y) = get_minimum_rect_from_contours([large_contour], padding=0)
+                if is_contour_in_rect(contour, rect):
+                    is_contour_to_be_contained = True
+                    contained_contours.append(contour)
+                    break
+            if is_contour_to_be_contained == True:
+                contained_contour_num = contained_contour_num + 1
+        if contained_contour_num == 3:
+            return (True, contained_contours)
+        else:
+            return (False, None)
+
+    # When two applicator touch together,
+    # inner contour case of level1_contour is better one case of then level2_contour
+
+    # When middle applicator cutting,
+    # inner tontour case of level2_contour is better one case of then level1_contour
+
+    # So, how to decide which case is for use between these two cases both touching and middle cutting?
+    # and then we can process it easily after decision.
+
+    (level1_contours, constant) = get_max_contours(img, ContourRetrievalMode=cv2.RETR_TREE)
+    print('shape of level1_contours[0] = ', level1_contours[0].shape)
+    is_just_found_3_contained_contour(level1_contours)
+    (is_found, contained_contours) = is_just_found_3_contained_contour(level1_contours)
+    if is_found:
+        print('This is case of two applicator touched together (maybe)')
+        return contained_contours
+
+    # the remain case is process the middle-cut problem
+
+    (x_min, x_max, y_min, y_max) = get_minimum_rect_from_contours(level1_contours, padding=2)
+
+    threshed_im = cv2.adaptiveThreshold(gray_img, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 15, -22)
+    filter_img = threshed_im
+    level2_contours = get_max_contours_by_filter_img(img, filter_img)
+
+    # level1_contours make a rectangle scope. Then select leve2 contour which is in this rectangle scope.
+    filtered_level2_contours = []
+    for contour in level2_contours:
+        if True == is_contour_in_rect(contour, rect=(x_min, x_max, y_min, y_max)):
+            filtered_level2_contours.append(contour)
+
+    (is_found, contained_contours) = is_just_found_3_contained_contour(filtered_level2_contours)
+    if is_found == True:
+        return contained_contours
+    else:
+        print('we cannot found our expected case, please see data to process different case')
+        return None
+
+    return filtered_level2_contours
+
+
+def get_contours_of_first_slice_in_special_case(first_slice_dict):
+    def convert_to_gray_image(pixel_array):
+        img = np.copy(pixel_array)
+        # Convert to float to avoid overflow or underflow losses.
+        img_2d = img.astype(float)
+        # Rescaling grey scale between 0-255
+        img_2d_scaled = (np.maximum(img_2d, 0) / img_2d.max()) * 255.0
+        # Convert to uint
+        img_2d_scaled = np.uint8(img_2d_scaled)
+        return img_2d_scaled
+    def get_gray_img_of_slice_dict(slice_dict):
+        img = slice_dict['rescale_pixel_array']
+        gray_img = convert_to_gray_image(img)
+        return gray_img
+    img = first_slice_dict['rescale_pixel_array']
+    gray_img = get_gray_img_of_slice_dict(first_slice_dict)
+    contours = get_2level_max_contours(img, gray_img)
+    return contours
+
+
+    pass
+
 def get_app_center_pts_of_first_slice(first_slice_dict):
     ps_x = first_slice_dict['PixelSpacing_x']
     ps_y = first_slice_dict['PixelSpacing_y']
@@ -162,20 +331,21 @@ def get_app_center_pts_of_first_slice(first_slice_dict):
     print(sorted_app_center_pts)
     #TODO After researching done, write the code to finish this task
     if sorted_app_center_pts == None or len(sorted_app_center_pts) != 3:
+        contours = get_contours_of_first_slice_in_special_case(first_slice_dict)
+        if len(contours) != 3:
+            print('Error process for special case of first slice')
+        (sorted_app_center_pts, rect_infos, app_center_pts) = get_rect_infos_and_center_pts(contours, h_max=h_max, h_min=0, w_max=w_max, w_min=0)
+        x_sorted_pts = sorted(app_center_pts, key=lambda cen_pt: cen_pt[0], reverse=False)
+        return x_sorted_pts
         pass
     print('\n\n')
 
-
-
-
-
-
     x_sorted_pts = sorted(app_center_pts, key=lambda cen_pt: cen_pt[0], reverse=False)
     print('get_app_center_pts_of_first_slice() -> x_sorted_pts = ', x_sorted_pts)
-
-
     return x_sorted_pts
     pass
+
+
 def get_view_scope_by_slice(first_slice_dict, padding=30):
     (contours, constant) = get_max_contours(first_slice_dict['rescale_pixel_array'])
     print('PixelSpacing_(x,y)=({}, {})'.format(first_slice_dict['PixelSpacing_x'], first_slice_dict['PixelSpacing_y']))
@@ -190,6 +360,12 @@ def get_view_scope_by_slice(first_slice_dict, padding=30):
     #(sorted_app_center_pts, rect_infos, app_center_pts) = get_rect_infos_and_center_pts(contours)
     (sorted_app_center_pts, rect_infos, app_center_pts) = get_rect_infos_and_center_pts(contours,h_max=h_max,w_max=w_max,h_min=h_min,w_min=w_min)
     print('sorted_app_center_pts = ',sorted_app_center_pts)
+    if sorted_app_center_pts == None or len(sorted_app_center_pts) != 3:
+        contours = get_contours_of_first_slice_in_special_case(first_slice_dict)
+        if len(contours) != 3:
+            print('Error process for special case of first slice')
+        (sorted_app_center_pts, rect_infos, app_center_pts) = get_rect_infos_and_center_pts(contours, h_max=h_max, h_min=0, w_max=w_max, w_min=0)
+        padding = padding + 30
 
     x_sorted_pts = sorted(app_center_pts, key=lambda cen_pt: cen_pt[0], reverse=False)
     y_sorted_pts = sorted(app_center_pts, key=lambda cen_pt: cen_pt[1], reverse=False)
@@ -1299,6 +1475,7 @@ def dist_3d(pt1, pt2):
 broken_f_list = ['RAL_plan_new_20190905/29059811-2', 'RAL_plan_new_20190905/35252020-2']
 debug_idx = 0
 for folder in broken_f_list:
+    break
     if debug_idx != -1:
         print('debug for folder = ', folder)
         algo_show_by_folder(folder, is_debug = True)
@@ -1309,7 +1486,8 @@ for folder in broken_f_list:
 
 broken_f_list = []
 for folder in f_list:
-
+    if folder == 'RAL_plan_new_20190905/35252020-2':
+        continue
     try:
         ai_tandem_rp_line = predict_tandem_rp_line_by_folder(folder, start_mm=4.5, gap_mm=5)
         man_tandem_rp_line = get_tandem_from_man(man_dict, folder)
