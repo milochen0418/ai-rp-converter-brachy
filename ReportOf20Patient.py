@@ -859,6 +859,8 @@ def example_get_batch_process_dict():
 def make_lines_process(app_pts):
     lines = [[], [], []]
     sorted_app_pts_keys = sorted(app_pts.keys())
+    print(sorted_app_pts_keys)
+
     for key_idx in range(len(sorted_app_pts_keys)):
         key = sorted_app_pts_keys[key_idx]
         pts = app_pts[key]
@@ -1368,6 +1370,7 @@ def predict_tandem_rp_line_by_folder(folder, start_mm, gap_mm, is_debug = False)
     print('tandem_rp_line[-1] = ', tandem_rp_line[-1])
     if is_debug == False:
         enablePrint()
+
     return tandem_rp_line
 
 
@@ -1462,6 +1465,8 @@ def get_tandem_from_man(man_dict, folder):
         for ld in apps_list:
             names.append(ld['name'])
         print('line == None, and names = {}'.format(names))
+
+
     return line
 
 
@@ -1539,6 +1544,9 @@ broken_f_list=[]
 f_list = []
 correct_dir_f_list = []
 for folder in sorted(man_dict.keys()):
+    if folder != 'RAL_plan_new_20190905/35252020-2':
+        continue
+
     print('folder = {}, with folder_idx = {}'.format(folder, folder_idx))
     # figure out the distance between ai tandem line and manual tandem line
 
@@ -1552,7 +1560,35 @@ for folder in sorted(man_dict.keys()):
         broken_f_list.append(folder)
         continue
     f_list.append(folder)
+    ai_line = list(reversed(ai_line))
     print('folder = {}\nman_line={}\nai_line={}\n\n'.format(folder, man_line, ai_line))
+    print('p2p compare')
+    max_len = max( [len(ai_line), len(man_line)] )
+    for idx in range(max_len):
+        ai_pt = []
+        man_pt = []
+        if idx < len(ai_line):
+            ai_pt = ai_line[idx]
+        if idx < len(man_line):
+            man_pt = man_line[idx]
+        print('idx = {} '.format(idx))
+        print('ai_pt = {}'.format(ai_pt))
+        print('man_pt = {}'.format(man_pt))
+        if len(man_pt) > 0 and len(ai_pt) > 0:
+            d = math.sqrt( (ai_pt[0]-man_pt[0])**2 + (ai_pt[1]-man_pt[1])**2 + (ai_pt[2]-man_pt[2])**2 )
+            print('distance = {}'.format(d))
+        print('\n')
+
+
+
+
+    #ai_line = reversed(ai_line)
+    #ai_line is generated from outside into deeper-side
+    #But brachy is tag light  from most deepr-side first.
+    # So we reverse the order of tandem ai_line.
+    # Them we can compare
+
+    print(ai_line)
 
     man_line_len = len(man_line)
     if man_line_len > len(ai_line):
