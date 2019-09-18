@@ -1547,9 +1547,10 @@ for folder in broken_f_list:
 broken_f_list=[]
 f_list = []
 correct_dir_f_list = []
+incorrect_dir_f_list = []
 for folder in sorted(man_dict.keys()):
-    if folder != 'RAL_plan_new_20190905/35252020-2':
-        continue
+    #if folder != 'RAL_plan_new_20190905/35252020-2':
+    #    continue
 
     print('folder = {}, with folder_idx = {}'.format(folder, folder_idx))
     # figure out the distance between ai tandem line and manual tandem line
@@ -1597,6 +1598,7 @@ for folder in sorted(man_dict.keys()):
     man_line_len = len(man_line)
     if man_line_len > len(ai_line):
         print('In case folder = {}, len of man line = {} > len of ai line = {}'.format(folder, man_line_len, len(ai_line)))
+        incorrect_dir_f_list.append(folder)
         continue
     else:
         correct_dir_f_list.append(folder)
@@ -1608,7 +1610,8 @@ for folder in sorted(man_dict.keys()):
 
 print('broken_f_list = {}'.format(broken_f_list))
 print('f_list = {}'.format(f_list))
-print('correct_dir_f_list = {}'.format(correct_dir_f_list.append(folder)) )
+print('correct_dir_f_list = {}'.format(correct_dir_f_list))
+print('incorrect_dir_f_list = {}'.format(incorrect_dir_f_list))
 
 print('folder_idx = ', folder_idx)
 
