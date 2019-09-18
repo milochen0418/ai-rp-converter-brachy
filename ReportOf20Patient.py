@@ -652,7 +652,13 @@ def example_first_slice():
 def distance(pt1, pt2):
     # return ( (pt1[0]-pt2[0])**2 + (pt1[1]-pt2[1])**2 )
     import math
-    return math.sqrt((pt1[0] - pt2[0]) ** 2 + (pt1[1] - pt2[1]) ** 2)
+    axis_num = len(pt1)
+    sum = 0.0
+    for idx in range(axis_num):
+        sum = sum + (pt1[idx] - pt2[idx]) ** 2
+    ans = math.sqrt(sum)
+    return ans
+    #return math.sqrt((pt1[0] - pt2[0]) ** 2 + (pt1[1] - pt2[1]) ** 2)
 
 
 def get_most_closed_pt(src_pt, pts, allowed_distance=100):
@@ -1895,11 +1901,14 @@ correct_dir_f_list = []
 incorrect_dir_f_list = []
 loop_idx = 0
 for folder in sorted(man_dict.keys()):
-    #if folder != 'RAL_plan_new_20190905/35252020-2':
+    #if folder != 'RAL_plan_new_20190905/35252020-2': #Case
     #    continue
 
-    #if folder != 'RAL_plan_new_20190905/35413048-3':
+    #if folder != 'RAL_plan_new_20190905/35413048-3': #Case tandem cannot get to over middle button
     #    continue
+
+    if folder != 'RAL_plan_new_20190905/34698361-1': # Case of diff_dist > 7mm
+        continue
     print('<START> loop_idx = {}'.format(loop_idx))
     print('folder = {}, with folder_idx = {}'.format(folder, folder_idx))
     # figure out the distance between ai tandem line and manual tandem line
@@ -1950,9 +1959,21 @@ for folder in sorted(man_dict.keys()):
         correct_dir_f_list.append(folder)
     man_1st_pt = man_line[0]
     ai_1st_pt = ai_line[0]
-    man_list_pt = man_line[man_line_len - 1]
+    man_last_pt = man_line[man_line_len - 1]
     ai_last_pt = ai_line[man_line_len -1]
-    diff_distance = distance(ai_last_pt, man_list_pt) - distance(ai_1st_pt, man_1st_pt)
+    dist_1st = distance(ai_1st_pt, man_1st_pt)
+
+    dist_last = distance(ai_last_pt, man_last_pt)
+    #diff_distance = distance(ai_last_pt, man_last_pt) - distance(ai_1st_pt, man_1st_pt)
+    diff_distance = dist_last - dist_1st
+    print('ai_1st_pt = ', ai_1st_pt)
+    print('man_1st_pt = ', man_1st_pt)
+    print('dist_1st = ', dist_1st)
+    print('')
+    print('ai_last_pt = ', ai_last_pt)
+    print('man_last_pt = ', man_last_pt)
+    print('dist_last = ', dist_last)
+    print('')
     print('folder = {}, diff_distance = {}'.format(folder, diff_distance))
 
     folder_idx = folder_idx + 1
