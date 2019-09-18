@@ -1466,8 +1466,12 @@ def get_tandem_from_man(man_dict, folder):
             names.append(ld['name'])
         print('line == None, and names = {}'.format(names))
 
-
-    return line
+    # To remove duplicated element and still keep sorting order
+    tuple_line = [tuple(pt) for pt in line]
+    tuple_new_line = sorted(set(tuple_line), key=tuple_line.index)
+    new_line = [list(t) for t in tuple_new_line]
+    return new_line
+    #return line
 
 
 
