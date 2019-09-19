@@ -951,7 +951,7 @@ def algo_show_by_folder_v03(folder, is_debug=True):
                 pp_slice_dict = prev_slice_dict['data']['prev_slice_dict']
                 # pp_slice_dict is prev_prev_slice_dict
                 # if prev_prev_slice_dict != None and len(prev_prev_slice_dict['data']['center_pts'])==1:
-                if pp_slice_dict != None and len(pp_slice_dict['data']['center_pts']) == 1:
+                if False == True and pp_slice_dict != None and len(pp_slice_dict['data']['center_pts']) == 1:
                     # prev_prev_pt = prev_prev_slice_dict['data']['center_pts'][0]
                     pp_pt = pp_slice_dict['data']['center_pts'][0]
                     prev_pt = prev_slice_dict['data']['center_pts'][0]
@@ -964,17 +964,14 @@ def algo_show_by_folder_v03(folder, is_debug=True):
                     ps_x = slice_dict['PixelSpacing_x']
                     ps_y = slice_dict['PixelSpacing_y']
                     # print("(ps_x, ps_y) = ({},{})".format(ps_x,ps_y))
-                    a_distance_mm = 15.0
+                    a_distance_mm = 2.0
                     a_distance = int(a_distance_mm / ps_x)
-
                 dst_pt = get_most_closed_pt(eval_pt, ellipse_center_pts, allowed_distance=a_distance)
-
-
             else:
                 ps_x = slice_dict['PixelSpacing_x']
                 ps_y = slice_dict['PixelSpacing_y']
                 # print("(ps_x, ps_y) = ({},{})".format(ps_x,ps_y))
-                a_distance_mm = 10.0
+                a_distance_mm = 2.0
                 a_distance = int(a_distance_mm / ps_x)
                 dst_pt = get_most_closed_pt(pt, ellipse_center_pts, allowed_distance=a_distance)
             if dst_pt != None:
@@ -1900,15 +1897,19 @@ f_list = []
 correct_dir_f_list = []
 incorrect_dir_f_list = []
 loop_idx = 0
+
+test_f_list = ['RAL_plan_new_20190905/34698361-5', 'RAL_plan_new_20190905/35413048-3']
 for folder in sorted(man_dict.keys()):
+    if folder not in test_f_list:
+        continue
     #if folder != 'RAL_plan_new_20190905/35252020-2': #Case
     #    continue
 
     #if folder != 'RAL_plan_new_20190905/35413048-3': #Case tandem cannot get to over middle button
     #    continue
 
-    if folder != 'RAL_plan_new_20190905/34698361-1': # Case of diff_dist > 7mm
-        continue
+    #if folder != 'RAL_plan_new_20190905/34698361-1': # Case of diff_dist > 7mm
+    #    continue
     print('<START> loop_idx = {}'.format(loop_idx))
     print('folder = {}, with folder_idx = {}'.format(folder, folder_idx))
     # figure out the distance between ai tandem line and manual tandem line
@@ -1949,7 +1950,7 @@ for folder in sorted(man_dict.keys()):
     # So we reverse the order of tandem ai_line.
     # Them we can compare
 
-    print(ai_line)
+    #print(ai_line)
     man_line_len = len(man_line)
     if man_line_len > len(ai_line):
         print('In case folder = {}, len of man line = {} > len of ai line = {}'.format(folder, man_line_len, len(ai_line)))
