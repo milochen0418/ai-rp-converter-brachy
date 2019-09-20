@@ -660,7 +660,6 @@ def distance(pt1, pt2):
     return ans
     #return math.sqrt((pt1[0] - pt2[0]) ** 2 + (pt1[1] - pt2[1]) ** 2)
 
-
 def get_most_closed_pt(src_pt, pts, allowed_distance=100):
     if pts == None:
         return None
@@ -679,8 +678,6 @@ def get_most_closed_pt(src_pt, pts, allowed_distance=100):
                 dst_pt = pt
         pass
     return dst_pt
-
-
 
 def pure_show_slice_dict(slice_dict, view_rect):
     (view_min_y, view_max_y, view_min_x, view_max_x) = view_rect
@@ -1090,6 +1087,7 @@ def example_show_lines(folder):
     app_pts = algo_run_by_folder(folder)
     lines = make_lines_process(app_pts)
     show_lines(lines)
+
 
 
 folder = r"RAL_plan_shift/35086187/0101"
@@ -1694,8 +1692,8 @@ def predict_tandem_rp_line_by_folder(folder, start_mm, gap_mm, is_debug = False)
         return ret_dist
     pt_idx = 0
     pt_idx_remainder = 0
-    purpose_distance_mm = 7
-    max_mm = purpose_distance_mm
+    #purpose_distance_mm = 7
+    #max_mm = purpose_distance_mm
     orig_pt = metric_line[0]
     print('metric_line = ', metric_line)
 
@@ -1707,10 +1705,11 @@ def predict_tandem_rp_line_by_folder(folder, start_mm, gap_mm, is_debug = False)
     pt_idx = 0
     pt_idx_remainder = 0
     orig_pt = metric_line[0]
-    purpose_distance_mm = 7
-    travel_dist = purpose_distance_mm
-    (t_pt, t_pt_idx, t_pt_idx_remainder, t_dist) = get_metric_pt_info_by_travel_distance(metric_line, pt_idx, pt_idx_remainder, travel_dist)
-    print('{} -> {}'.format((t_pt, t_pt_idx, t_pt_idx_remainder), distance(orig_pt, t_pt)))
+    #purpose_distance_mm = 7
+    #travel_dist = purpose_distance_mm
+    #travel_dist = start_mm
+    #(t_pt, t_pt_idx, t_pt_idx_remainder, t_dist) = get_metric_pt_info_by_travel_distance(metric_line, pt_idx, pt_idx_remainder, travel_dist)
+    #print('{} -> {}'.format((t_pt, t_pt_idx, t_pt_idx_remainder), distance(orig_pt, t_pt)))
 
     #tandem_rp_line = get_and_show_tandem(metric_line, 4.5, 5)
     tandem_rp_line = get_and_show_tandem(metric_line, start_mm, gap_mm)
@@ -1821,8 +1820,6 @@ def get_tandem_from_man(man_dict, folder):
     return new_line
     #return line
 
-
-
 def show_man_dict():
     man_dict = get_man_dict()
     for folder in sorted(man_dict.keys()):
@@ -1860,132 +1857,436 @@ for folder in broken_f_list:
 #exit(0)
 
 
-broken_f_list = []
+folder = 'RAL_plan_new_20190905/34698361-5'
+#folder = RAL_plan_new_20190905/34698361-5, diff_distance = 6.003273315338627
+
+#folder = 'RAL_plan_new_20190905/35413048-3'
+#folder = RAL_plan_new_20190905/35413048-3, diff_distance = 9.305148954892925
+
+def app_pts_show3D(app_pts):
+    def distance(pt1, pt2):
+        return ((pt1[0] - pt2[0]) ** 2 + (pt1[1] - pt2[1]) ** 2)
+
+    # strict 3D pt=[x,y,z] into [x,y]
+    def get_most_closed_pt_strictly(src_pt, pts, allowed_distance=1000):
+        if pts == None:
+            return None
+        if pts == []:
+            return None
+        strictly_src_pt = src_pt[0:2]
+        strictly_pts = []
+        for pt in pts:
+            strictly_pt = pt[0:2]
+            strictly_pts.append(strictly_pt)
+        return get_most_closed_pt(strictly_src_pt, strictly_pts, allowed_distance)
+
+    def get_most_closed_pt(src_pt, pts, allowed_distance=1000):
+        if pts == None:
+            return None
+        if pts == []:
+            return None
+        dst_pt = None
+        for pt in pts:
+            if distance(src_pt, pt) > allowed_distance:
+                # the point , whoes distance with src_pt < allowed_distance, cannot join this loop
+                continue
+
+            if dst_pt == None:
+                dst_pt = pt
+            else:
+                if distance(src_pt, pt) < distance(src_pt, dst_pt):
+                    dst_pt = pt
+            pass
+        return dst_pt
+
+    # app_pts[DSfloat(z)] = [ [int(x), int(y), DSfloat(z)], ...  ]
+    # Draw in 3D
+    from mpl_toolkits import mplot3d
+    import numpy as np
+    import matplotlib.pyplot as plt
+
+    obj3d = {}
+    obj3d['x'] = []
+    obj3d['y'] = []
+    obj3d['z'] = []
+
+    def drawPoint(obj3d, x, y, z):
+        obj3d['x'].append(x)
+        obj3d['y'].append(y)
+        obj3d['z'].append(z)
+
+    def drawShow(obj3d):
+        fig = plt.figure()
+        ax = plt.axes(projection="3d")
+        ax.scatter3D(obj3d['x'], obj3d['y'], obj3d['z'], c=obj3d['z'], cmap='hsv')
+        plt.show()
+
+    keys = sorted(app_pts.keys())
+    keys_len = len(keys)
+    '''
+    for z in sorted(app_pts.keys()):
+        for pt in app_pts[z]:
+            drawPoint(obj3d, pt[0], pt[1], pt[2])
+    '''
+    for idx, z in enumerate(keys):
+        prev_z = None
+        pprev_z = None  # prev of prev z
+        next_z = None
+        if idx > 0:
+            prev_z = keys[idx - 1]
+        if idx > 1:
+            pprev_z = keys[idx - 2]
+        if idx < keys_len - 1:
+            next_z = keys[idx + 1]
+        prev_app_pts = None
+        pprev_app_pts = None
+        next_app_pts = None
+        if next_z != None:
+            next_app_pts = app_pts[next_z]
+        if prev_z != None:
+            prev_app_pts = app_pts[prev_z]
+        if pprev_z != None:
+            pprev_app_pts = app_pts[pprev_z]
+
+        sorted_app_pts = sorted(app_pts[z], key=lambda pt: pt[0])
+        # for pt in app_pts[z]:
+        for pt in sorted_app_pts:
+            # Case of 3 point and this is center point
+            if len(sorted_app_pts) == 3 and pt == sorted_app_pts[1]:  # if pt is center point
+                # TODO
+                drawPoint(obj3d, pt[0], pt[1], pt[2])
+                continue
+            # Case of only 1 point and we assume it is center point
+            if len(sorted_app_pts) == 1:
+                # TODO
+                drawPoint(obj3d, pt[0], pt[1], pt[2])
+                continue
+
+            # The following code is fine tune code for Left and right applicator
+            pprev_pt = None
+            prev_pt = None
+            next_pt = None
+            if prev_app_pts != None:
+                prev_pt = get_most_closed_pt_strictly(pt, prev_app_pts, allowed_distance=100)
+            if next_app_pts != None:
+                next_pt = get_most_closed_pt_strictly(pt, next_app_pts, allowed_distance=100)
+            if pprev_app_pts != None and prev_pt != None:
+                pprev_pt = get_most_closed_pt_strictly(prev_pt, pprev_app_pts, allowed_distance=100)
+
+            # prev_pt (or next_pt) is 2D(pt[0]=x,pt[1]=y) point if  prev_pt (or next_pt) is not None
+            if prev_pt != None and next_pt != None and pprev_pt != None:
+                prev_dist = distance(pt[0:2], prev_pt)
+                next_dist = distance(pt[0:2], next_pt)
+                pprev_dist = distance(prev_pt, pprev_pt)
+                np_dist = distance(next_pt, prev_pt)  # distance of next_dist to prev_dist
+
+                # comment old tune decision
+                # tune_val = 50
+                # if prev_dist + next_dist > tune_val:
+                #    print('need to tune point at pt = ', pt)
+                # distance change speed < 5 dist unit / z
+                tune_val = 4 * 4  # distance change speed is allowed in 5
+                # if (abs(prev_dist - pprev_dist) + tune_val> abs(next_dist - prev_dist)):
+                # if ( abs(prev_dist - pprev_dist)  > abs(next_dist - prev_dist) + tune_val ):
+
+                is_tune = False
+                # the case of ppD = 0 will cause failed, so we set ppD <- 1 when ppD == 0
+                ref_pprev_dist = pprev_dist
+                if pprev_dist == 0:
+                    ref_pprev_dist = 1
+
+                if prev_dist > ref_pprev_dist * 4:  # pD >> ppD
+                    if next_dist > ref_pprev_dist * 4:  # nD >> ppD
+                        if np_dist < 2 * ref_pprev_dist + 9:  # npD ~< 2 ppD
+
+                            is_tune = True
+                # tune_val = pprev_dist + 3*3
+                # if prev_dist > tune_val and next_dist > tune_val:
+                if is_tune == True:
+                    print('\nneed to tune point at pt = ', pt)
+                    print('(pprev_pt,prev_pt,pt,next_pt)=', "({},{},{},{})".format(pprev_pt, prev_pt, pt, next_pt))
+                    print('(pprev_z,prev_z,z,next_z)=', "({},{},{},{})".format(pprev_z, prev_z, z, next_z))
+                    print('(pprev_dist,prev_dist,next_dist)=',
+                          "({},{},{})".format(ref_pprev_dist, prev_dist, next_dist))
+
+                    # fine tune procedure
+                    # (prev_pt[0] - pprev_pt[0])
+
+                    # (pt[0] - prev_pt[0])
+                    '''
+                    offset_x = pt[0] - prev_pt[0]
+                    offset_y = pt[1] - prev_pt[1]
+                    '''
+
+                    prev_offset_x = prev_pt[0] - pprev_pt[0]
+                    prev_offset_y = prev_pt[1] - pprev_pt[1]
+
+                    # prev_offset_x = prev_pt[0] - pprev_pt[0]
+                    # prev_offset_y = prev_pt[1] - pprev_pt[1]
+
+                    for p_pt in sorted_app_pts:
+                        if pt[0] == p_pt[0] and pt[1] == p_pt[1]:
+                            print('before, z = ', z, 'pts = ', sorted_app_pts)
+                            p_pt[0] = prev_pt[0] + prev_offset_x
+                            p_pt[1] = prev_pt[1] + prev_offset_y
+                            print(' after, z = ', z, 'pts = ', sorted_app_pts)
+                            pass
+            drawPoint(obj3d, pt[0], pt[1], pt[2])
+    drawShow(obj3d)
+
+
+
+def get_CT_tandem_line_by_folder(folder):
+    # the function will get all 3D pt of applicator
+    app_pts = algo_run_by_folder(folder)
+    # transform all 3D pt of applicator into each line for each applicator and the line have been sorted by z
+    lines = make_lines_process(app_pts)
+    # The CT data is the format with 512 x 512, but we want to tranfer it into real metric space
+    line = lines[1].copy()
+    return line
+
+def get_CT_tandem_metric_line_by_folder(folder):
+    app_pts = algo_run_by_folder(folder)
+    lines = make_lines_process(app_pts)
+    metric_lines = convert_lines_in_metrics(lines, folder)
+    tandem_metric_line = metric_lines[1].copy()
+    return tandem_metric_line
+
+def get_CT_tandem_metric_rp_line_by_folder(folder):
+    man_dict = get_man_dict()
+    return get_tandem_from_man(man_dict, folder)
+print('\n\n\n\n\n interpolate \n')
+
+def line_interpolate( line, point_num=20):
+    # GET linspace between two points [pt1, pt2)
+    def get_linspace_list(pt1, pt2, point_num):
+        linspace = []
+        for i in range(point_num):
+            scale_num = float(point_num)
+            s = float(i) / scale_num
+            x = pt1[0]
+            y = pt1[1]
+            z = pt1[2]
+            x_diff = s * (pt2[0] - pt1[0])
+            y_diff = s * (pt2[1] - pt1[1])
+            z_diff = s * (pt2[2] - pt1[2])
+            x = x + x_diff
+            y = y + y_diff
+            z = z + z_diff
+            new_pt = [x, y, z]
+            linspace.append(new_pt)
+        return linspace
+
+    new_line = []
+    for i in range(len(line)-1):
+        pt1 = line[i]
+        pt2 = line[i+1]
+        linspace = get_linspace_list(pt1, pt2, point_num)
+        new_line.extend(linspace)
+    new_line.append(line[-1])
+    return new_line
+
+def get_closed_ai_pt(ai_interpolated_line, pt):
+    def distance(pt1, pt2):
+        # return ( (pt1[0]-pt2[0])**2 + (pt1[1]-pt2[1])**2 )
+        import math
+        axis_num = len(pt1)
+        sum = 0.0
+        for idx in range(axis_num):
+            sum = sum + (pt1[idx] - pt2[idx]) ** 2
+        ans = math.sqrt(sum)
+        return ans
+        # return math.sqrt((pt1[0] - pt2[0]) ** 2 + (pt1[1] - pt2[1]) ** 2)
+    def get_most_closed_pt(src_pt, pts):
+        if pts == None:
+            return None
+        if pts == []:
+            return None
+        dst_pt = None
+        for pt in pts:
+            if dst_pt == None:
+                dst_pt = pt
+            else:
+                if distance(src_pt, pt) < distance(src_pt, dst_pt):
+                    dst_pt = pt
+            pass
+        return (dst_pt, distance(src_pt, dst_pt))
+    return get_most_closed_pt(pt, ai_interpolated_line)
+
+idx = 0
 for folder in f_list:
-    break
-    #if folder != 'RAL_plan_new_20190905/35252020-2':
-    #    continue
-    try:
-        ai_tandem_rp_line = predict_tandem_rp_line_by_folder(folder, start_mm=4.5, gap_mm=5, is_debug=False)
-        man_tandem_rp_line = get_tandem_from_man(man_dict, folder)
-        print('folder = {}, \nai_tandem_rp_line= {}, \nman_tandem_rp_line={}\n'.format(folder,ai_tandem_rp_line, man_tandem_rp_line))
-    except:
-        enablePrint() # Because predict_tandem_rp_line_by_folder() use blockPrint(), so enablePrint when catch exception
-        print('folder  = {} is break'.format(folder))
-        broken_f_list.append(folder)
+    if idx <= 1:
+        idx = idx + 1
         continue
-print('len = {}, f_list = {}'.format(len(f_list), f_list))
-print('len = {}, broken_f_list = {}'.format(len(broken_f_list), broken_f_list) )
+    print(folder)
+    blockPrint()
+    line = get_CT_tandem_metric_line_by_folder(folder)
+    enablePrint()
+    print('len(line) = {}, line = {}'.format(len(line),line))
+    interpolated_line = line_interpolate(line,20)
+    print('len() = {}, interpolated_line = {}'.format(len(interpolated_line), interpolated_line))
+    print(interpolated_line)
 
-broken_f_list = ['RAL_plan_new_20190905/29059811-2', 'RAL_plan_new_20190905/35252020-2']
+    man_line = get_CT_tandem_metric_rp_line_by_folder(folder)
+    print('number points of man_line = {}'.format(len(man_line)))
+    for pt in man_line:
+        #print(pt)
+        ai_pt, dist = get_closed_ai_pt(interpolated_line, pt)
+        print('man_pt = {},  most closed ai_pt = {} with dist={}'.format(pt, ai_pt,dist))
 
-folder_idx = 0
-for folder in broken_f_list:
     break
-    if folder_idx != 0:
-        ai_tandem_rp_line = predict_tandem_rp_line_by_folder(folder, start_mm=4.5, gap_mm=5, is_debug=False)
-        print('processed error folder name = ', folder)
+
+
+
+exit(0)
+
+
+
+# Above code is remained.
+
+
+
+
+exit(0)
+
+
+if True:
+    broken_f_list = []
+    for folder in f_list:
         break
-    folder_idx = folder_idx + 1
+        #if folder != 'RAL_plan_new_20190905/35252020-2':
+        #    continue
+        try:
+            ai_tandem_rp_line = predict_tandem_rp_line_by_folder(folder, start_mm=4.5, gap_mm=5, is_debug=False)
+            man_tandem_rp_line = get_tandem_from_man(man_dict, folder)
+            print('folder = {}, \nai_tandem_rp_line= {}, \nman_tandem_rp_line={}\n'.format(folder,ai_tandem_rp_line, man_tandem_rp_line))
+        except:
+            enablePrint() # Because predict_tandem_rp_line_by_folder() use blockPrint(), so enablePrint when catch exception
+            print('folder  = {} is break'.format(folder))
+            broken_f_list.append(folder)
+            continue
+    print('len = {}, f_list = {}'.format(len(f_list), f_list))
+    print('len = {}, broken_f_list = {}'.format(len(broken_f_list), broken_f_list) )
 
-#exit(0)
+    broken_f_list = ['RAL_plan_new_20190905/29059811-2', 'RAL_plan_new_20190905/35252020-2']
+
+    folder_idx = 0
+    for folder in broken_f_list:
+        break
+        if folder_idx != 0:
+            ai_tandem_rp_line = predict_tandem_rp_line_by_folder(folder, start_mm=4.5, gap_mm=5, is_debug=False)
+            print('processed error folder name = ', folder)
+            break
+        folder_idx = folder_idx + 1
+
+    #exit(0)
 
 
 
-broken_f_list=[]
-f_list = []
-correct_dir_f_list = []
-incorrect_dir_f_list = []
-loop_idx = 0
+    broken_f_list=[]
+    f_list = []
+    correct_dir_f_list = []
+    incorrect_dir_f_list = []
+    loop_idx = 0
 
-test_f_list = ['RAL_plan_new_20190905/34698361-5', 'RAL_plan_new_20190905/35413048-3']
-for folder in sorted(man_dict.keys()):
-    if folder not in test_f_list:
-        continue
-    #if folder != 'RAL_plan_new_20190905/35252020-2': #Case
-    #    continue
+    test_f_list = ['RAL_plan_new_20190905/34698361-5', 'RAL_plan_new_20190905/35413048-3']
+    for folder in sorted(man_dict.keys()):
+        if folder not in test_f_list:
+            continue
+        #if folder != 'RAL_plan_new_20190905/35252020-2': #Case
+        #    continue
 
-    #if folder != 'RAL_plan_new_20190905/35413048-3': #Case tandem cannot get to over middle button
-    #    continue
+        #if folder != 'RAL_plan_new_20190905/35413048-3': #Case tandem cannot get to over middle button
+        #    continue
 
-    #if folder != 'RAL_plan_new_20190905/34698361-1': # Case of diff_dist > 7mm
-    #    continue
-    print('<START> loop_idx = {}'.format(loop_idx))
-    print('folder = {}, with folder_idx = {}'.format(folder, folder_idx))
-    # figure out the distance between ai tandem line and manual tandem line
+        #if folder != 'RAL_plan_new_20190905/34698361-1': # Case of diff_dist > 7mm
+        #    continue
+        print('<START> loop_idx = {}'.format(loop_idx))
+        print('folder = {}, with folder_idx = {}'.format(folder, folder_idx))
+        # figure out the distance between ai tandem line and manual tandem line
 
-    man_line = get_tandem_from_man(man_dict, folder)
-    ai_line = []
-    try:
-        ai_line = predict_tandem_rp_line_by_folder(folder, start_mm=0, gap_mm=5)
-    except:
+        man_line = get_tandem_from_man(man_dict, folder)
+        ai_line = []
+        try:
+            ai_line = predict_tandem_rp_line_by_folder(folder, start_mm=0, gap_mm=5)
+        except:
+            enablePrint()
+            print('Why dead on case of folder = {}? finding it '.format(folder))
+            broken_f_list.append(folder)
+            continue
+        f_list.append(folder)
+        ai_line = list(reversed(ai_line))
+        print('folder = {}\nman_line={}\nai_line={}\n\n'.format(folder, man_line, ai_line))
+        print('p2p compare')
+        max_len = max( [len(ai_line), len(man_line)] )
+        for idx in range(max_len):
+            ai_pt = []
+            man_pt = []
+            if idx < len(ai_line):
+                ai_pt = ai_line[idx]
+            if idx < len(man_line):
+                man_pt = man_line[idx]
+            print('idx = {} '.format(idx))
+            print('ai_pt = {}'.format(ai_pt))
+            print('man_pt = {}'.format(man_pt))
+            if len(man_pt) > 0 and len(ai_pt) > 0:
+                d = math.sqrt( (ai_pt[0]-man_pt[0])**2 + (ai_pt[1]-man_pt[1])**2 + (ai_pt[2]-man_pt[2])**2 )
+                print('distance = {}'.format(d))
+            print('\n')
+
+
+        #ai_line = reversed(ai_line)
+        #ai_line is generated from outside into deeper-side
+        #But brachy is tag light  from most deepr-side first.
+        # So we reverse the order of tandem ai_line.
+        # Them we can compare
+
+        #print(ai_line)
+        man_line_len = len(man_line)
+        if man_line_len > len(ai_line):
+            print('In case folder = {}, len of man line = {} > len of ai line = {}'.format(folder, man_line_len, len(ai_line)))
+            incorrect_dir_f_list.append(folder)
+            continue
+        else:
+            correct_dir_f_list.append(folder)
+        man_1st_pt = man_line[0]
+        ai_1st_pt = ai_line[0]
+        man_last_pt = man_line[man_line_len - 1]
+        ai_last_pt = ai_line[man_line_len -1]
+        dist_1st = distance(ai_1st_pt, man_1st_pt)
+
+        dist_last = distance(ai_last_pt, man_last_pt)
+        #diff_distance = distance(ai_last_pt, man_last_pt) - distance(ai_1st_pt, man_1st_pt)
+        diff_distance = dist_last - dist_1st
+        print('ai_1st_pt = ', ai_1st_pt)
+        print('man_1st_pt = ', man_1st_pt)
+        print('dist_1st = ', dist_1st)
+        print('')
+        print('ai_last_pt = ', ai_last_pt)
+        print('man_last_pt = ', man_last_pt)
+        print('dist_last = ', dist_last)
+        print('')
+        print('folder = {}, diff_distance = {}'.format(folder, diff_distance))
+
+        blockPrint()
+        #app_pts = algo_run_by_folder(folder)
+        #app_pts_show3D(app_pts)
         enablePrint()
-        print('Why dead on case of folder = {}? finding it '.format(folder))
-        broken_f_list.append(folder)
-        continue
-    f_list.append(folder)
-    ai_line = list(reversed(ai_line))
-    print('folder = {}\nman_line={}\nai_line={}\n\n'.format(folder, man_line, ai_line))
-    print('p2p compare')
-    max_len = max( [len(ai_line), len(man_line)] )
-    for idx in range(max_len):
-        ai_pt = []
-        man_pt = []
-        if idx < len(ai_line):
-            ai_pt = ai_line[idx]
-        if idx < len(man_line):
-            man_pt = man_line[idx]
-        print('idx = {} '.format(idx))
-        print('ai_pt = {}'.format(ai_pt))
-        print('man_pt = {}'.format(man_pt))
-        if len(man_pt) > 0 and len(ai_pt) > 0:
-            d = math.sqrt( (ai_pt[0]-man_pt[0])**2 + (ai_pt[1]-man_pt[1])**2 + (ai_pt[2]-man_pt[2])**2 )
-            print('distance = {}'.format(d))
-        print('\n')
-
-
-    #ai_line = reversed(ai_line)
-    #ai_line is generated from outside into deeper-side
-    #But brachy is tag light  from most deepr-side first.
-    # So we reverse the order of tandem ai_line.
-    # Them we can compare
-
-    #print(ai_line)
-    man_line_len = len(man_line)
-    if man_line_len > len(ai_line):
-        print('In case folder = {}, len of man line = {} > len of ai line = {}'.format(folder, man_line_len, len(ai_line)))
-        incorrect_dir_f_list.append(folder)
-        continue
-    else:
-        correct_dir_f_list.append(folder)
-    man_1st_pt = man_line[0]
-    ai_1st_pt = ai_line[0]
-    man_last_pt = man_line[man_line_len - 1]
-    ai_last_pt = ai_line[man_line_len -1]
-    dist_1st = distance(ai_1st_pt, man_1st_pt)
-
-    dist_last = distance(ai_last_pt, man_last_pt)
-    #diff_distance = distance(ai_last_pt, man_last_pt) - distance(ai_1st_pt, man_1st_pt)
-    diff_distance = dist_last - dist_1st
-    print('ai_1st_pt = ', ai_1st_pt)
-    print('man_1st_pt = ', man_1st_pt)
-    print('dist_1st = ', dist_1st)
-    print('')
-    print('ai_last_pt = ', ai_last_pt)
-    print('man_last_pt = ', man_last_pt)
-    print('dist_last = ', dist_last)
-    print('')
-    print('folder = {}, diff_distance = {}'.format(folder, diff_distance))
-
-    folder_idx = folder_idx + 1
-    loop_idx = loop_idx + 1
+        folder_idx = folder_idx + 1
+        loop_idx = loop_idx + 1
 
 
 
-print('broken_f_list = {}'.format(broken_f_list))
-print('f_list = {}'.format(f_list))
-print('correct_dir_f_list = {}'.format(correct_dir_f_list))
-print('incorrect_dir_f_list = {}'.format(incorrect_dir_f_list))
+    print('broken_f_list = {}'.format(broken_f_list))
+    print('f_list = {}'.format(f_list))
+    print('correct_dir_f_list = {}'.format(correct_dir_f_list))
+    print('incorrect_dir_f_list = {}'.format(incorrect_dir_f_list))
 
-print('folder_idx = ', folder_idx)
+    print('folder_idx = ', folder_idx)
+    exit(0)
+
+
+
+
+
 
