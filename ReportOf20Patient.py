@@ -2247,6 +2247,7 @@ def process_manual_point_5mm_check(f_list, csv_filepath):
         folder_data['pure_dists'] = pure_dists
         folder_data['dists_max'] = max(pure_dists)
         folder_data['dists_avg'] = mean(pure_dists)
+        folder_data['dists_min'] = min(pure_dists)
         print('max = {}'.format(max(pure_dists)))
         print('avg(mean) = {}'.format(mean(pure_dists)))
         print('\n')
@@ -2269,30 +2270,55 @@ def process_manual_point_5mm_check(f_list, csv_filepath):
             row_folder_name.extend([folder, '',''])
         row_max_dist = []
         for folder in sorted_folders:
-            row_max_dist.extend(['','',out_dict[folder]['dists_max']])
+            row_max_dist.extend(['','max distance = ',out_dict[folder]['dists_max']])
         row_avg_dist = []
         for folder in sorted_folders:
-            row_avg_dist.extend(['','',out_dict[folder]['dists_avg']])
+            row_avg_dist.extend(['','avg distance = ',out_dict[folder]['dists_avg']])
+        row_min_dist = []
+        for folder in sorted_folders:
+            row_min_dist.extend(['','min distance = ',out_dict[folder]['dists_min']])
+
+        row_empty = []
+        for folder in sorted_folders:
+            row_empty.extend(['','',''])
+
+        row_header_of_body = []
+        for folder in sorted_folders:
+            row_header_of_body.extend(['start_pt','end_pt','distance'])
         csv_writter.writerow(row_folder_name)
         csv_writter.writerow(row_max_dist)
         csv_writter.writerow(row_avg_dist)
+        csv_writter.writerow(row_min_dist)
+        csv_writter.writerow(row_empty)
+        csv_writter.writerow(row_header_of_body)
+
         # Step 2.2 body row prepare
         print(out_dict[folder].keys())
-        dists = out_dict[folder]['dists']
-        for record_data in dists:
-            from_pt = record_data[0]
-            to_pt = record_data[1]
-            dist = record_data[2]
-            from_pt = [round(float(v),3) for v in from_pt]
-            to_pt = [round(float(v),3) for v in to_pt]
-            tuple_from_pt = tuple(from_pt)
-            tuple_to_pt = tuple(to_pt)
-            the_dist = round(dist, 6)
-            row = [tuple_from_pt, tuple_to_pt, the_dist]
+        maximum_len = 0
+        for folder in sorted_folders:
+            if maximum_len < len(out_dict[folder]['dists']):
+                maximum_len = len(out_dict[folder]['dists'])
+        for idx in range(maximum_len):
+            row = []
+            for folder in sorted_folders:
+                dists = out_dict[folder]['dists']
+
+                if idx >= len(dists):
+                    cell_datas = ['','','']
+                else:
+                    record_data = dists[idx]
+                    from_pt = record_data[0]
+                    to_pt = record_data[1]
+                    dist = record_data[2]
+                    from_pt = [round(float(v),3) for v in from_pt]
+                    to_pt = [round(float(v),3) for v in to_pt]
+                    tuple_from_pt = tuple(from_pt)
+                    tuple_to_pt = tuple(to_pt)
+                    the_dist = round(dist, 6)
+                    cell_datas = [tuple_from_pt, tuple_to_pt, the_dist]
+
+                row.extend(cell_datas)
             csv_writter.writerow(row)
-
-
-
 
         #for row in sheet.rows:
         #    csv_writter.writerow([cell.value for cell in row])
