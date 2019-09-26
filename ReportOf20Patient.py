@@ -2114,6 +2114,7 @@ def get_closed_ai_pt(ai_interpolated_line, pt):
     return get_most_closed_pt(pt, ai_interpolated_line)
 
 idx = 0
+drwang_output_result = {}
 for folder in f_list:
     if idx <= 1:
         idx = idx + 1
@@ -2127,16 +2128,34 @@ for folder in f_list:
     print('len() = {}, interpolated_line = {}'.format(len(interpolated_line), interpolated_line))
     print(interpolated_line)
 
+    out3_list = [] # interpolated_line, [man_pt, distance]
+    out3_dict = {}
+    for pt in interpolated_line:
+        float_ai_pt = [float(i) for i in pt]
+        tuple_pt = tuple(float_ai_pt)
+        item = [None,'','']
+        item[0] = tuple_pt
+        out3_dict[tuple_pt] = item
+        out3_list.append(item)
+
     man_line = get_CT_tandem_metric_rp_line_by_folder(folder)
     print('number points of man_line = {}'.format(len(man_line)))
     for pt in man_line:
         #print(pt)
         ai_pt, dist = get_closed_ai_pt(interpolated_line, pt)
         print('man_pt = {},  most closed ai_pt = {} with dist={}'.format(pt, ai_pt,dist))
+        tuple_ai_pt = tuple(ai_pt)
+        item = out3_dict[tuple_ai_pt]
+        float_man_pt = [float(i) for i in pt] # convert man_pt in list type into float man_pt
+        item[1] = tuple(float_man_pt)
+        item[2] = dist
 
-    break
+
+    # show data
+    drwang_output_result[folder] = out3_list
 
 
+print('abcde')
 
 exit(0)
 
