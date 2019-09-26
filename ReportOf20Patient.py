@@ -2187,6 +2187,23 @@ def drwang_output_result_to_csv(dump_filepath, csv_filepath):
             else:
                 row_item.extend(['','',''])
         maximum_list.append(row_item)
+    # Step 3.1.2 Eliminate the float, whose decimal point are too long,  value by round() (optional)
+    for row_idx, rowlist in enumerate(maximum_list):
+        if row_idx == 0: # if header, ignore it
+            continue
+
+        for col_idx, tuple_item in enumerate(rowlist):
+            #cell_item = [] #maximum_list[row_idx][col_idx]
+            if type(tuple_item) == tuple:
+                cell_item = []
+                for float_item in tuple_item:
+                    cell_item.append(round(float_item, 3))
+                tuple_cell_item = tuple(cell_item)
+                maximum_list[row_idx][col_idx] = tuple_cell_item
+
+
+
+
     # Step 3.2 generate csv file
     output_csv_filepath = csv_filepath
     with open(output_csv_filepath, mode='w', newline='') as csv_file:
