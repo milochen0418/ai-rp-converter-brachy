@@ -2113,6 +2113,69 @@ def get_closed_ai_pt(ai_interpolated_line, pt):
         return (dst_pt, distance(src_pt, dst_pt))
     return get_most_closed_pt(pt, ai_interpolated_line)
 
+def drwang_output_result_dump(f_list, dump_filepath):
+
+    idx = 0
+    drwang_output_result = {}
+    for folder in f_list:
+        if idx <= 1:
+            idx = idx + 1
+            continue
+        print(folder)
+        blockPrint()
+        line = get_CT_tandem_metric_line_by_folder(folder)
+        enablePrint()
+        print('len(line) = {}, line = {}'.format(len(line), line))
+        interpolated_line = line_interpolate(line, 20)
+        print('len() = {}, interpolated_line = {}'.format(len(interpolated_line), interpolated_line))
+        print(interpolated_line)
+
+        out3_list = []  # interpolated_line, [man_pt, distance]
+        out3_dict = {}
+        for pt in interpolated_line:
+            float_ai_pt = [float(i) for i in pt]
+            tuple_pt = tuple(float_ai_pt)
+            item = [None, '', '']
+            item[0] = tuple_pt
+            out3_dict[tuple_pt] = item
+            out3_list.append(item)
+
+        man_line = get_CT_tandem_metric_rp_line_by_folder(folder)
+        print('number points of man_line = {}'.format(len(man_line)))
+        for pt in man_line:
+            # print(pt)
+            ai_pt, dist = get_closed_ai_pt(interpolated_line, pt)
+            print('man_pt = {},  most closed ai_pt = {} with dist={}'.format(pt, ai_pt, dist))
+            tuple_ai_pt = tuple(ai_pt)
+            item = out3_dict[tuple_ai_pt]
+            float_man_pt = [float(i) for i in pt]  # convert man_pt in list type into float man_pt
+            item[1] = tuple(float_man_pt)
+            item[2] = dist
+
+        # show data
+        drwang_output_result[folder] = out3_list
+    #python_object_dump(drwang_output_result, 'drwang_output_result.bytes')
+    python_object_dump(drwang_output_result, dump_filepath)
+
+def drwang_output_result_to_csv(dump_filepath, csv_filepath):
+    drwang_output_result = python_object_load(dump_filepath)
+    sorted_folder = sorted(drwang_output_result.keys())
+    # insert header behind body
+    for folder in sorted_folder:
+        print(folder)
+        header = [folder,'','']
+        body = drwang_output_result[folder] # body is list for data, which are 3 element list
+        body = body.insert(0, header)
+
+
+    pass
+
+
+bytes_filepath = 'drwang_output_result.bytes'
+#drwang_output_result_dump(f_list, dump_filepath=bytes_filepath)
+drwang_output_result_to_csv(dump_filepath=bytes_filepath, csv_filepath='drwang_output_result.csv')
+
+exit(0)
 idx = 0
 drwang_output_result = {}
 for folder in f_list:
@@ -2153,7 +2216,7 @@ for folder in f_list:
 
     # show data
     drwang_output_result[folder] = out3_list
-
+python_object_dump(drwang_output_result, 'drwang_output_result.bytes')
 
 print('abcde')
 
