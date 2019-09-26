@@ -2218,60 +2218,88 @@ def process_drwang_output_csv_compare_output():
     drwang_output_result_dump(f_list, dump_filepath=bytes_filepath)
     drwang_output_result_to_csv(dump_filepath=bytes_filepath, csv_filepath='drwang_output_result.csv')
 
-process_drwang_output_csv_compare_output()
-exit(0)
-idx = 0
-drwang_output_result = {}
-for folder in f_list:
-    if idx <= 1:
-        idx = idx + 1
-        continue
-    print(folder)
-    blockPrint()
-    line = get_CT_tandem_metric_line_by_folder(folder)
-    enablePrint()
-    print('len(line) = {}, line = {}'.format(len(line),line))
-    interpolated_line = line_interpolate(line,20)
-    print('len() = {}, interpolated_line = {}'.format(len(interpolated_line), interpolated_line))
-    print(interpolated_line)
-
-    out3_list = [] # interpolated_line, [man_pt, distance]
-    out3_dict = {}
-    for pt in interpolated_line:
-        float_ai_pt = [float(i) for i in pt]
-        tuple_pt = tuple(float_ai_pt)
-        item = [None,'','']
-        item[0] = tuple_pt
-        out3_dict[tuple_pt] = item
-        out3_list.append(item)
-
-    man_line = get_CT_tandem_metric_rp_line_by_folder(folder)
-    print('number points of man_line = {}'.format(len(man_line)))
-    for pt in man_line:
-        #print(pt)
-        ai_pt, dist = get_closed_ai_pt(interpolated_line, pt)
-        print('man_pt = {},  most closed ai_pt = {} with dist={}'.format(pt, ai_pt,dist))
-        tuple_ai_pt = tuple(ai_pt)
-        item = out3_dict[tuple_ai_pt]
-        float_man_pt = [float(i) for i in pt] # convert man_pt in list type into float man_pt
-        item[1] = tuple(float_man_pt)
-        item[2] = dist
+# process_drwang_output_csv_compare_output()
 
 
-    # show data
-    drwang_output_result[folder] = out3_list
-python_object_dump(drwang_output_result, 'drwang_output_result.bytes')
+def process_manual_point_5mm_check(f_list, csv_filepath):
+    # Step 1. Set out_dict
+    from statistics import mean
+    out_dict = {}
+    for folder in f_list:
+        print(folder)
+        folder_data = {}
 
-print('abcde')
+        man_line = get_CT_tandem_metric_rp_line_by_folder(folder)
+        #print(man_line)
+        dists = []
+        for idx, pt in enumerate(man_line):
+            if idx == 0:
+                continue
+            pt1 = man_line[idx-1]
+            pt2 = pt
+            record_data = [pt1, pt2, distance(pt1, pt2)]
+            dists.append(record_data)
 
-exit(0)
+        for idx,d in enumerate(dists):
+            print('dists[{}]={}'.format(idx,dists[idx]))
+        folder_data['dists'] = dists
+        pure_dists = [item[2] for item in dists]
+        folder_data['pure_dists'] = pure_dists
+        folder_data['dists_max'] = max(pure_dists)
+        folder_data['dists_avg'] = mean(pure_dists)
+        print('max = {}'.format(max(pure_dists)))
+        print('avg(mean) = {}'.format(mean(pure_dists)))
+        print('\n')
+        out_dict[folder] = folder_data
+
+
+    sorted_folders = sorted(out_dict.keys())
+    for folder in sorted_folders:
+        folder_data = out_dict[folder]
+        print(folder_data)
+        break
+    # Step 2. save out_dict into csv file
+    output_csv_filepath = csv_filepath
+    with open(output_csv_filepath, mode='w', newline='') as csv_file:
+        csv_writter = csv.writer(csv_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+        sorted_folders = sorted(out_dict.keys())
+        # Step 2.1 header row prepare
+        row_folder_name = []
+        for folder in sorted_folders:
+            row_folder_name.extend([folder, '',''])
+        row_max_dist = []
+        for folder in sorted_folders:
+            row_max_dist.extend(['','',out_dict[folder]['dists_max']])
+        row_avg_dist = []
+        for folder in sorted_folders:
+            row_avg_dist.extend(['','',out_dict[folder]['dists_avg']])
+        csv_writter.writerow(row_folder_name)
+        csv_writter.writerow(row_max_dist)
+        csv_writter.writerow(row_avg_dist)
+        # Step 2.2 body row prepare
+        print(out_dict[folder].keys())
+        dists = out_dict[folder]['dists']
+        for record_data in dists:
+            from_pt = record_data[0]
+            to_pt = record_data[1]
+            dist = record_data[2]
+            from_pt = [round(float(v),3) for v in from_pt]
+            to_pt = [round(float(v),3) for v in to_pt]
+            tuple_from_pt = tuple(from_pt)
+            tuple_to_pt = tuple(to_pt)
+            the_dist = round(dist, 6)
+            row = [tuple_from_pt, tuple_to_pt, the_dist]
+            csv_writter.writerow(row)
 
 
 
-# Above code is remained.
 
+        #for row in sheet.rows:
+        #    csv_writter.writerow([cell.value for cell in row])
+    print('Done to write csv_filepath = {}'.format(output_csv_filepath))
+    pass
 
-
+process_manual_point_5mm_check(f_list, 'manual_point_5mm_check.csv')
 
 exit(0)
 
