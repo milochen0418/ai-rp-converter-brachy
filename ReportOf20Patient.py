@@ -9,7 +9,7 @@ import seaborn as sns
 from numpy.random import randn
 import matplotlib as mpl
 from scipy import stats
-
+import csv, codecs
 
 def gen_ct_dicom_dict(ct_filelist):
     CtCache = {}
@@ -2160,16 +2160,13 @@ def drwang_output_result_dump(f_list, dump_filepath):
 def drwang_output_result_to_csv(dump_filepath, csv_filepath):
     drwang_output_result = python_object_load(dump_filepath)
     sorted_folder = sorted(drwang_output_result.keys())
-
     # Step 1. insert header behind body
     for folder in sorted_folder:
         print(folder)
         header = [folder,'','']
         body = drwang_output_result[folder] # body is list for data, which are 3 element list
         body.insert(0, header)
-        for item in body:
-            if len(item) != 3:
-                print('item len is not 3')
+
     # Step 2. figure which is the maxminum value ofr len of each body
     maximum_len = 0
     for folder in sorted_folder:
@@ -2179,9 +2176,24 @@ def drwang_output_result_to_csv(dump_filepath, csv_filepath):
             maximum_len = len_body
 
     # Step 3. Start to generate csv
-    
-
-
+    # Step 3.1 generate total maxiumum list
+    maximum_list = []
+    for idx in range(maximum_len):
+        row_item = []
+        for folder in sorted_folder:
+            body = drwang_output_result[folder]
+            if idx < len(body):
+                row_item.extend(body[idx])
+            else:
+                row_item.extend(['','',''])
+        maximum_list.append(row_item)
+    # Step 3.2 generate csv file
+    output_csv_filepath = csv_filepath
+    with open(output_csv_filepath, mode='w', newline='') as csv_file:
+        csv_writter = csv.writer(csv_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+        #csv_writter.writerow(out_dict['header'])
+        for rowlist in maximum_list:
+            csv_writter.writerow(rowlist)
     pass
 
 
