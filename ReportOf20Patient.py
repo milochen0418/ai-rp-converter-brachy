@@ -2213,11 +2213,12 @@ def drwang_output_result_to_csv(dump_filepath, csv_filepath):
             csv_writter.writerow(rowlist)
     pass
 
+def process_drwang_output_csv_compare_output():
+    bytes_filepath = 'drwang_output_result.bytes'
+    drwang_output_result_dump(f_list, dump_filepath=bytes_filepath)
+    drwang_output_result_to_csv(dump_filepath=bytes_filepath, csv_filepath='drwang_output_result.csv')
 
-bytes_filepath = 'drwang_output_result.bytes'
-#drwang_output_result_dump(f_list, dump_filepath=bytes_filepath)
-drwang_output_result_to_csv(dump_filepath=bytes_filepath, csv_filepath='drwang_output_result.csv')
-
+process_drwang_output_csv_compare_output()
 exit(0)
 idx = 0
 drwang_output_result = {}
