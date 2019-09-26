@@ -2160,12 +2160,26 @@ def drwang_output_result_dump(f_list, dump_filepath):
 def drwang_output_result_to_csv(dump_filepath, csv_filepath):
     drwang_output_result = python_object_load(dump_filepath)
     sorted_folder = sorted(drwang_output_result.keys())
-    # insert header behind body
+
+    # Step 1. insert header behind body
     for folder in sorted_folder:
         print(folder)
         header = [folder,'','']
         body = drwang_output_result[folder] # body is list for data, which are 3 element list
-        body = body.insert(0, header)
+        body.insert(0, header)
+        for item in body:
+            if len(item) != 3:
+                print('item len is not 3')
+    # Step 2. figure which is the maxminum value ofr len of each body
+    maximum_len = 0
+    for folder in sorted_folder:
+        body = drwang_output_result[folder]
+        len_body= len(body)
+        if len_body > maximum_len :
+            maximum_len = len_body
+
+    # Step 3. Start to generate csv
+    
 
 
     pass
