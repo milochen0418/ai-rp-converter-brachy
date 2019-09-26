@@ -2284,7 +2284,7 @@ def process_manual_point_5mm_check(f_list, csv_filepath):
 
         row_header_of_body = []
         for folder in sorted_folders:
-            row_header_of_body.extend(['start_pt','end_pt','distance'])
+            row_header_of_body.extend(['start point','end point','distance'])
         csv_writter.writerow(row_folder_name)
         csv_writter.writerow(row_max_dist)
         csv_writter.writerow(row_avg_dist)
