@@ -2205,6 +2205,79 @@ def drwang_output_result_to_csv(dump_filepath, csv_filepath):
             csv_writter.writerow(rowlist)
     pass
 
+
+
+wang_f_list = [
+    'RAL_plan_new_20190905/29059811-3', #(max = 1.38, avg = 1.02)
+    'RAL_plan_new_20190905/34698361-1', #(max = 4.103, avg = 0.906 )
+    'RAL_plan_new_20190905/34698361-5',#(max = 2.47, avg = 0.545 )
+    'RAL_plan_new_20190905/35413048-3' #(max = 2.936, avg = 0.598 )
+]
+
+def drwang_output_show_3D(dump_filepath, show_folder = 'RAL_plan_new_20190905/29059811-3'):
+    from mpl_toolkits import mplot3d
+    import numpy as np
+    from matplotlib import cm
+    import matplotlib.pyplot as plt
+    fig = plt.figure()
+    ax = plt.axes(projection="3d")
+    x_list = []
+    y_list = []
+    z_list = []
+    c_ai = 255
+    c_ai_diff = 128
+    c_man = 0
+    c_list = []
+
+    # Write code to fill x_list,y_list, z_list and c_list
+    drwang_output_result = python_object_load(dump_filepath)
+    sorted_folder = sorted(drwang_output_result.keys())
+    summary_result = {}
+    for folder in sorted_folder:
+        data_list = drwang_output_result[folder]
+        folder_summary = {}
+        summary_result[folder] = folder_summary
+        summary_list = []
+        folder_summary['list'] = summary_list
+        for data_item in data_list:
+            d = data_item
+            # data_item is in format of
+            # [(ai_x,ai_y,ai_z), '', ''] or
+            # [(ai_x,ai_y,ai_z), (man_x,man_y,man_z), dist]
+            # if dist != '', it mean manual pt(man_x,man_y,man_z) is matching to closed ai differential point in (ai_x,ai_y,ai_z)
+            if (type(d[2]) != str):
+                ai_pt = d[0]
+                man_pt = d[1]
+                dist = d[2]
+                #print(dist)
+                summary_list.append( [ai_pt, man_pt, dist] )
+
+    d = summary_result[show_folder]
+    d_list = d['list']
+    for item in d_list:
+        ai_pt = item[0]
+        man_pt = item[1]
+        x_list.append(ai_pt[0])
+        y_list.append(ai_pt[1])
+        z_list.append(ai_pt[2])
+        c_list.append(c_ai)
+
+        x_list.append(man_pt[0])
+        y_list.append(man_pt[1])
+        z_list.append(man_pt[2])
+        c_list.append(c_man)
+
+    ax.scatter3D(x_list, y_list, z_list, c=c_list, cmap=cm.coolwarm)
+    plt.show()
+
+#drwang_output_show_3D(dump_filepath = 'drwang_output_result.bytes')
+
+for f in wang_f_list:
+    show_folder = f
+    print('3D data for show_folder = ', show_folder)
+    drwang_output_show_3D(dump_filepath = 'drwang_output_result.bytes', show_folder = show_folder)
+
+
 def drawang_output_show_avg_max_min(dump_filepath):
     drwang_output_result = python_object_load(dump_filepath)
     sorted_folder = sorted(drwang_output_result.keys())
@@ -2241,15 +2314,6 @@ def drawang_output_show_avg_max_min(dump_filepath):
         d['avg_dist'] = dist_avg
         print('folder={}\n dist_max={}\n dist_avg={}\n\n'.format(folder, d['max_dist'], d['avg_dist']))
 
-wang_f_list = [
-    'RAL_plan_new_20190905/29059811-3', #(max = 1.38, avg = 1.02)
-    'RAL_plan_new_20190905/34698361-1', #(max = 4.103, avg = 0.906 )
-    'RAL_plan_new_20190905/34698361-5',#(max = 2.47, avg = 0.545 )
-    'RAL_plan_new_20190905/35413048-3' #(max = 2.936, avg = 0.598 )
-]
-
-
-
 
 
 def process_drwang_output_csv_compare_output():
@@ -2258,9 +2322,7 @@ def process_drwang_output_csv_compare_output():
     #drawang_output_show_avg_max_min(dump_filepath=bytes_filepath)
     drawang_output_show_avg_max_min(dump_filepath=bytes_filepath)
     #drwang_output_result_to_csv(dump_filepath=bytes_filepath, csv_filepath='drwang_output_result.csv')
-
 process_drwang_output_csv_compare_output()
-
 
 
 def test_draw_3d():
@@ -2280,8 +2342,7 @@ def test_draw_3d():
     c_list = [c_ai] * maxlen
     ax.scatter3D(x_list, y_list, z_list, c=c_list, cmap=cm.coolwarm)
     plt.show()
-test_draw_3d()
-
+#test_draw_3d()
 
 def process_manual_point_5mm_check(f_list, csv_filepath):
     # Step 1. Set out_dict
