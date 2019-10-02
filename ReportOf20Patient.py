@@ -2114,7 +2114,6 @@ def get_closed_ai_pt(ai_interpolated_line, pt):
     return get_most_closed_pt(pt, ai_interpolated_line)
 
 def drwang_output_result_dump(f_list, dump_filepath):
-
     idx = 0
     drwang_output_result = {}
     for folder in f_list:
@@ -2139,7 +2138,6 @@ def drwang_output_result_dump(f_list, dump_filepath):
             item[0] = tuple_pt
             out3_dict[tuple_pt] = item
             out3_list.append(item)
-
         man_line = get_CT_tandem_metric_rp_line_by_folder(folder)
         print('number points of man_line = {}'.format(len(man_line)))
         for pt in man_line:
@@ -2151,7 +2149,6 @@ def drwang_output_result_dump(f_list, dump_filepath):
             float_man_pt = [float(i) for i in pt]  # convert man_pt in list type into float man_pt
             item[1] = tuple(float_man_pt)
             item[2] = dist
-
         # show data
         drwang_output_result[folder] = out3_list
     #python_object_dump(drwang_output_result, 'drwang_output_result.bytes')
@@ -2159,6 +2156,7 @@ def drwang_output_result_dump(f_list, dump_filepath):
 
 def drwang_output_result_to_csv(dump_filepath, csv_filepath):
     drwang_output_result = python_object_load(dump_filepath)
+    print('aaa')
     sorted_folder = sorted(drwang_output_result.keys())
     # Step 1. insert header behind body
     for folder in sorted_folder:
@@ -2166,7 +2164,6 @@ def drwang_output_result_to_csv(dump_filepath, csv_filepath):
         header = [folder,'','']
         body = drwang_output_result[folder] # body is list for data, which are 3 element list
         body.insert(0, header)
-
     # Step 2. figure which is the maxminum value ofr len of each body
     maximum_len = 0
     for folder in sorted_folder:
@@ -2191,7 +2188,6 @@ def drwang_output_result_to_csv(dump_filepath, csv_filepath):
     for row_idx, rowlist in enumerate(maximum_list):
         if row_idx == 0: # if header, ignore it
             continue
-
         for col_idx, tuple_item in enumerate(rowlist):
             #cell_item = [] #maximum_list[row_idx][col_idx]
             if type(tuple_item) == tuple:
@@ -2200,10 +2196,6 @@ def drwang_output_result_to_csv(dump_filepath, csv_filepath):
                     cell_item.append(round(float_item, 3))
                 tuple_cell_item = tuple(cell_item)
                 maximum_list[row_idx][col_idx] = tuple_cell_item
-
-
-
-
     # Step 3.2 generate csv file
     output_csv_filepath = csv_filepath
     with open(output_csv_filepath, mode='w', newline='') as csv_file:
@@ -2213,12 +2205,82 @@ def drwang_output_result_to_csv(dump_filepath, csv_filepath):
             csv_writter.writerow(rowlist)
     pass
 
+def drawang_output_show_avg_max_min(dump_filepath):
+    drwang_output_result = python_object_load(dump_filepath)
+    sorted_folder = sorted(drwang_output_result.keys())
+    summary_result = {}
+    for folder in sorted_folder:
+        data_list = drwang_output_result[folder]
+        folder_summary = {}
+        summary_result[folder] = folder_summary
+        summary_list = []
+        folder_summary['list'] = summary_list
+        for data_item in data_list:
+            d = data_item
+            # data_item is in format of
+            # [(ai_x,ai_y,ai_z), '', ''] or
+            # [(ai_x,ai_y,ai_z), (man_x,man_y,man_z), dist]
+            # if dist != '', it mean manual pt(man_x,man_y,man_z) is matching to closed ai differential point in (ai_x,ai_y,ai_z)
+            if (type(d[2]) != str):
+                ai_pt = d[0]
+                man_pt = d[1]
+                dist = d[2]
+                #print(dist)
+                summary_list.append( [ai_pt, man_pt, dist] )
+    for folder in sorted_folder:
+        d = summary_result[folder]
+        dist_max = 0.0
+        dist_sum = 0.0
+        for item in d['list']:
+            dist = item[2]
+            if dist > dist_max:
+                dist_max = dist
+            dist_sum = dist_sum + dist
+        dist_avg = dist_sum / len(d['list'])
+        d['max_dist'] = dist_max
+        d['avg_dist'] = dist_avg
+        print('folder={}\n dist_max={}\n dist_avg={}\n\n'.format(folder, d['max_dist'], d['avg_dist']))
+
+wang_f_list = [
+    'RAL_plan_new_20190905/29059811-3', #(max = 1.38, avg = 1.02)
+    'RAL_plan_new_20190905/34698361-1', #(max = 4.103, avg = 0.906 )
+    'RAL_plan_new_20190905/34698361-5',#(max = 2.47, avg = 0.545 )
+    'RAL_plan_new_20190905/35413048-3' #(max = 2.936, avg = 0.598 )
+]
+
+
+
+
+
 def process_drwang_output_csv_compare_output():
     bytes_filepath = 'drwang_output_result.bytes'
-    drwang_output_result_dump(f_list, dump_filepath=bytes_filepath)
-    drwang_output_result_to_csv(dump_filepath=bytes_filepath, csv_filepath='drwang_output_result.csv')
+    #drwang_output_result_dump(f_list, dump_filepath=bytes_filepath)
+    #drawang_output_show_avg_max_min(dump_filepath=bytes_filepath)
+    drawang_output_show_avg_max_min(dump_filepath=bytes_filepath)
+    #drwang_output_result_to_csv(dump_filepath=bytes_filepath, csv_filepath='drwang_output_result.csv')
 
-# process_drwang_output_csv_compare_output()
+process_drwang_output_csv_compare_output()
+
+
+
+def test_draw_3d():
+    from mpl_toolkits import mplot3d
+    import numpy as np
+    from matplotlib import cm
+    import matplotlib.pyplot as plt
+    fig = plt.figure()
+    ax = plt.axes(projection="3d")
+    maxlen = 256
+    x_list = [i for i in range(maxlen)]
+    y_list = [i for i in range(maxlen)]
+    z_list = [i for i in range(maxlen)]
+    c_ai = 255
+    c_ai_diff = 128
+    c_man = 0
+    c_list = [c_ai] * maxlen
+    ax.scatter3D(x_list, y_list, z_list, c=c_list, cmap=cm.coolwarm)
+    plt.show()
+test_draw_3d()
 
 
 def process_manual_point_5mm_check(f_list, csv_filepath):
@@ -2316,16 +2378,14 @@ def process_manual_point_5mm_check(f_list, csv_filepath):
                     tuple_to_pt = tuple(to_pt)
                     the_dist = round(dist, 6)
                     cell_datas = [tuple_from_pt, tuple_to_pt, the_dist]
-
                 row.extend(cell_datas)
             csv_writter.writerow(row)
-
         #for row in sheet.rows:
         #    csv_writter.writerow([cell.value for cell in row])
     print('Done to write csv_filepath = {}'.format(output_csv_filepath))
     pass
 
-process_manual_point_5mm_check(f_list, 'manual_point_5mm_check.csv')
+#process_manual_point_5mm_check(f_list, 'manual_point_5mm_check.csv')
 
 exit(0)
 
