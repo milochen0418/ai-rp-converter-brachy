@@ -1481,9 +1481,6 @@ def get_metric_pt_info_by_travel_distance(metric_line, pt_idx, pt_idx_remainder,
         dist = t_dist
 
 
-
-
-
 def get_maps_with_folder(folder):
 
     import pydicom
@@ -2055,6 +2052,7 @@ def get_CT_tandem_metric_line_by_folder(folder):
 def get_CT_tandem_metric_rp_line_by_folder(folder):
     man_dict = get_man_dict()
     return get_tandem_from_man(man_dict, folder)
+
 print('\n\n\n\n\n interpolate \n')
 
 def line_interpolate( line, point_num=20):
@@ -2272,10 +2270,12 @@ def drwang_output_show_3D(dump_filepath, show_folder = 'RAL_plan_new_20190905/29
 
 #drwang_output_show_3D(dump_filepath = 'drwang_output_result.bytes')
 
-for f in wang_f_list:
-    show_folder = f
-    print('3D data for show_folder = ', show_folder)
-    drwang_output_show_3D(dump_filepath = 'drwang_output_result.bytes', show_folder = show_folder)
+
+for f in wang_f_list :
+    if (True == False):
+        show_folder = f
+        print('3D data for show_folder = ', show_folder)
+        drwang_output_show_3D(dump_filepath = 'drwang_output_result.bytes', show_folder = show_folder)
 
 
 def drawang_output_show_avg_max_min(dump_filepath):
@@ -2314,15 +2314,14 @@ def drawang_output_show_avg_max_min(dump_filepath):
         d['avg_dist'] = dist_avg
         print('folder={}\n dist_max={}\n dist_avg={}\n\n'.format(folder, d['max_dist'], d['avg_dist']))
 
-
-
 def process_drwang_output_csv_compare_output():
     bytes_filepath = 'drwang_output_result.bytes'
     #drwang_output_result_dump(f_list, dump_filepath=bytes_filepath)
     #drawang_output_show_avg_max_min(dump_filepath=bytes_filepath)
     drawang_output_show_avg_max_min(dump_filepath=bytes_filepath)
     #drwang_output_result_to_csv(dump_filepath=bytes_filepath, csv_filepath='drwang_output_result.csv')
-process_drwang_output_csv_compare_output()
+
+#process_drwang_output_csv_compare_output()
 
 
 def test_draw_3d():
@@ -2400,11 +2399,9 @@ def process_manual_point_5mm_check(f_list, csv_filepath):
         row_min_dist = []
         for folder in sorted_folders:
             row_min_dist.extend(['','min distance = ',out_dict[folder]['dists_min']])
-
         row_empty = []
         for folder in sorted_folders:
             row_empty.extend(['','',''])
-
         row_header_of_body = []
         for folder in sorted_folders:
             row_header_of_body.extend(['start point','end point','distance'])
@@ -2425,7 +2422,6 @@ def process_manual_point_5mm_check(f_list, csv_filepath):
             row = []
             for folder in sorted_folders:
                 dists = out_dict[folder]['dists']
-
                 if idx >= len(dists):
                     cell_datas = ['','','']
                 else:
@@ -2447,6 +2443,62 @@ def process_manual_point_5mm_check(f_list, csv_filepath):
     pass
 
 #process_manual_point_5mm_check(f_list, 'manual_point_5mm_check.csv')
+
+
+def get_ai_man_endpoints(folder):
+    print('folder = ', folder )
+    # STEP 1. get endpoint from AI predict points
+    # the function will get all 3D pt of applicator
+    app_pts = algo_run_by_folder(folder)
+    # transform all 3D pt of applicator into each line for each applicator and the line have been sorted by z
+    lines = make_lines_process(app_pts)
+    # The CT data is the format with 512 x 512, but we want to tranfer it into real metric space
+    metric_lines = convert_lines_in_metrics(lines, folder)
+    # Show the lines information in metrics
+    show_lines(metric_lines)
+    metric_line = metric_lines[1].copy()
+    print('metric_line = ',metric_line)
+    float_ai_metric_line = [(float(pt[0]), float(pt[1]),float(pt[2]) ) for pt in metric_line]
+    max_z = max([pt[2] for pt in float_ai_metric_line])
+    pt_with_max_z = [pt for pt in float_ai_metric_line if pt[2]==max_z][0]
+    print('max_z = {}'.format(max_z))
+    print('pt_with_max_z = {}'.format(pt_with_max_z))
+    ai_endpoint_pt = pt_with_max_z
+
+    man_endpoint_pt = (0.0, 0.0, 0.0)
+
+    man_line = get_CT_tandem_metric_rp_line_by_folder(folder)
+    float_man_metric_line = [(float(pt[0]), float(pt[1]), float(pt[2])) for pt in man_line]
+    max_z = max([pt[2] for pt in float_man_metric_line])
+    pt_with_max_z = [pt for pt in float_man_metric_line if pt[2] == max_z][0]
+    man_endpoint_pt = pt_with_max_z
+    #print('float_man_metric_line printing')
+    #for pt in float_man_metric_line:
+    #    print(pt)
+
+    print('ai_endpoint_pt = {}'.format(ai_endpoint_pt))
+    print('man_endpoint_pt = {}'.format(man_endpoint_pt))
+    return ( ai_endpoint_pt, man_endpoint_pt )
+
+def pickle_dump_ai_man_endpoints_dict(f_list, dump_filepath='bytes'):
+    out_dict = {}
+    for folder in f_list:
+        blockPrint()
+        (ai_endpoint_pt, man_endpoint_pt) = get_ai_man_endpoints(folder)
+        enablePrint()
+        print('folder = {}\nai_endpoint_pt = {}\nman_endpoint_pt={}\n\n'.format(folder, ai_endpoint_pt, man_endpoint_pt))
+        out_dict[folder] = (ai_endpoint_pt, man_endpoint_pt)
+    print('The dumped out_dict = {}'.format(out_dict))
+    python_object_dump( out_dict, dump_filepath)
+
+pickle_dump_ai_man_endpoints_dict(f_list, dump_filepath='ai_man_endpoints.bytes')
+
+
+#for folder in wang_f_list:
+#    get_ai_man_endpoints(folder)
+#    break
+
+
 
 exit(0)
 
