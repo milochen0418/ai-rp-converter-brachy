@@ -1054,18 +1054,22 @@ def make_lines_process(app_pts):
                 last_line_pt_x = last_line_pt[0]
 
                 candidate_pt = None
-                # looking forware for candidate_pt
+                # looking forward for candidate_pt
                 for pt_idx in range(len(pts)):
                     pt = pts[pt_idx]
                     pt_x = pt[0]
 
-                    if abs(last_line_pt_x - pt_x) < 5:
+                    if abs(last_line_pt_x - pt_x) < 5 or (lines[0][-1] == None and lines[2][-1] == None):
                         if candidate_pt == None:
                             candidate_pt = pt
                         else:
                             candidate_pt_x = candidate_pt[0]
                             if abs(candidate_pt_x - last_line_pt_x) > abs(pt_x - last_line_pt_x):
                                 candidate_pt = last_line_pt
+                                #print('last_line_pt = {}'.format(last_line_pt))
+                                #If only lines[1] is None in lines[1][-1], then still append this pt
+                                #if lines[0][-1] == None and lines[2][-1] == None:
+                                #    candidate_pt = last_line_pt
                 line.append(candidate_pt)
                 # the data structure fo each line will be like
                 # [(x0,y0,z0), (x1,y1,z1), ... ,(xn,yn,zn),None]
@@ -2529,7 +2533,19 @@ def pickle_dump_ai_man_points_dict(f_list, dump_filepath='ai_man_points.bytes'):
         print('out_dict[{}] = {}'.format(folder, out_dict[folder]))
     python_object_dump(out_dict, dump_filepath)
 
-pickle_dump_ai_man_points_dict(f_list, dump_filepath='ai_man_points.bytes')
+#pickle_dump_ai_man_points_dict(f_list, dump_filepath='ai_man_points.bytes')
+
+folder = 'RAL_plan_new_20190905/34698361-1'
+print('folder = {}'.format(folder))
+app_pts = algo_run_by_folder(folder)
+print('app_pts = \n {}', app_pts)
+lines = make_lines_process(app_pts)
+# The CT data is the format with 512 x 512, but we want to tranfer it into real metric space
+#metric_lines = convert_lines_in_metrics(lines, folder)
+
+print('lines[0] = {}\n'.format(lines[0]))
+print('lines[1] = {}\n'.format(lines[1]))
+print('lines[2] = {}\n'.format(lines[2]))
 
 #for folder in wang_f_list:
 #    get_ai_man_endpoints(folder)
