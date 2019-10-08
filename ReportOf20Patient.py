@@ -2444,6 +2444,29 @@ def process_manual_point_5mm_check(f_list, csv_filepath):
 
 #process_manual_point_5mm_check(f_list, 'manual_point_5mm_check.csv')
 
+def get_man_points(folder):
+    print('folder = ', folder)
+    man_line = get_CT_tandem_metric_rp_line_by_folder(folder)
+    float_man_metric_line = [(float(pt[0]), float(pt[1]), float(pt[2])) for pt in man_line]
+    return float_man_metric_line
+
+def get_ai_points(folder):
+    print('folder = ', folder )
+    # STEP 1. get endpoint from AI predict points
+    # the function will get all 3D pt of applicator
+    app_pts = algo_run_by_folder(folder)
+    # transform all 3D pt of applicator into each line for each applicator and the line have been sorted by z
+    lines = make_lines_process(app_pts)
+    # The CT data is the format with 512 x 512, but we want to tranfer it into real metric space
+    metric_lines = convert_lines_in_metrics(lines, folder)
+    # Show the lines information in metrics
+    show_lines(metric_lines)
+    metric_line = metric_lines[1].copy()
+    float_ai_metric_line = [(float(pt[0]), float(pt[1]), float(pt[2])) for pt in metric_line]
+    return float_ai_metric_line
+
+
+
 
 def get_ai_man_endpoints(folder):
     print('folder = ', folder )
@@ -2457,10 +2480,10 @@ def get_ai_man_endpoints(folder):
     # Show the lines information in metrics
     show_lines(metric_lines)
     metric_line = metric_lines[1].copy()
-    print('metric_line = ',metric_line)
-    float_ai_metric_line = [(float(pt[0]), float(pt[1]),float(pt[2]) ) for pt in metric_line]
+    print('metric_line = ', metric_line)
+    float_ai_metric_line = [(float(pt[0]), float(pt[1]), float(pt[2])) for pt in metric_line]
     max_z = max([pt[2] for pt in float_ai_metric_line])
-    pt_with_max_z = [pt for pt in float_ai_metric_line if pt[2]==max_z][0]
+    pt_with_max_z = [pt for pt in float_ai_metric_line if pt[2] == max_z][0]
     print('max_z = {}'.format(max_z))
     print('pt_with_max_z = {}'.format(pt_with_max_z))
     ai_endpoint_pt = pt_with_max_z
@@ -2480,7 +2503,7 @@ def get_ai_man_endpoints(folder):
     print('man_endpoint_pt = {}'.format(man_endpoint_pt))
     return ( ai_endpoint_pt, man_endpoint_pt )
 
-def pickle_dump_ai_man_endpoints_dict(f_list, dump_filepath='bytes'):
+def pickle_dump_ai_man_endpoints_dict(f_list, dump_filepath='ai_man_endpoints.bytes'):
     out_dict = {}
     for folder in f_list:
         blockPrint()
@@ -2491,8 +2514,22 @@ def pickle_dump_ai_man_endpoints_dict(f_list, dump_filepath='bytes'):
     print('The dumped out_dict = {}'.format(out_dict))
     python_object_dump( out_dict, dump_filepath)
 
-pickle_dump_ai_man_endpoints_dict(f_list, dump_filepath='ai_man_endpoints.bytes')
+#pickle_dump_ai_man_endpoints_dict(f_list, dump_filepath='ai_man_endpoints.bytes')
 
+def pickle_dump_ai_man_points_dict(f_list, dump_filepath='ai_man_points.bytes'):
+    out_dict = {}
+    for folder in f_list:
+        blockPrint()
+        ai_points = get_ai_points(folder)
+        man_points = get_man_points(folder)
+        enablePrint()
+        out_dict[folder] = {}
+        out_dict[folder]['ai_points'] = ai_points
+        out_dict[folder]['man_points'] = man_points
+        print('out_dict[{}] = {}'.format(folder, out_dict[folder]))
+    python_object_dump(out_dict, dump_filepath)
+
+pickle_dump_ai_man_points_dict(f_list, dump_filepath='ai_man_points.bytes')
 
 #for folder in wang_f_list:
 #    get_ai_man_endpoints(folder)
