@@ -1058,7 +1058,7 @@ def make_lines_process(app_pts):
                 for pt_idx in range(len(pts)):
                     pt = pts[pt_idx]
                     pt_x = pt[0]
-
+                    ##if abs(last_line_pt_x - pt_x) < 5
                     #if abs(last_line_pt_x - pt_x) < 5 or (lines[0][-1] == None and lines[2][-1] == None):
                     if abs(last_line_pt_x - pt_x) < 10:
                         if candidate_pt == None:
@@ -2513,7 +2513,7 @@ def pickle_dump_ai_man_endpoints_dict(f_list, dump_filepath='ai_man_endpoints.by
     print('The dumped out_dict = {}'.format(out_dict))
     python_object_dump( out_dict, dump_filepath)
 
-pickle_dump_ai_man_endpoints_dict(f_list, dump_filepath='ai_man_endpoints.bytes')
+#pickle_dump_ai_man_endpoints_dict(f_list, dump_filepath='ai_man_endpoints.bytes')
 
 def pickle_dump_ai_man_points_dict(f_list, dump_filepath='ai_man_points.bytes'):
     out_dict = {}
@@ -2528,8 +2528,54 @@ def pickle_dump_ai_man_points_dict(f_list, dump_filepath='ai_man_points.bytes'):
         print('out_dict[{}] = {}'.format(folder, out_dict[folder]))
     python_object_dump(out_dict, dump_filepath)
 
-pickle_dump_ai_man_points_dict(f_list, dump_filepath='ai_man_points.bytes')
+#pickle_dump_ai_man_points_dict(f_list, dump_filepath='ai_man_points.bytes')
 
+
+
+
+def travel_5mm_check_with_man_first_point(f_list, dump_filepath):
+
+    drwang_output_result = {}
+    for f_idx, folder in enumerate(f_list):
+        if f_idx > 1:
+            break
+
+        print(folder)
+        blockPrint()
+        line = get_CT_tandem_metric_line_by_folder(folder)
+        enablePrint()
+        print('len(line) = {}, line = {}'.format(len(line), line))
+        interpolated_line = line_interpolate(line, 20)
+        print('len() = {}, interpolated_line = {}'.format(len(interpolated_line), interpolated_line))
+        print(interpolated_line)
+
+        out3_list = []  # interpolated_line, [man_pt, distance]
+        out3_dict = {}
+        for pt in interpolated_line:
+            float_ai_pt = [float(i) for i in pt]
+            tuple_pt = tuple(float_ai_pt)
+            item = [None, '', '']
+            item[0] = tuple_pt
+            out3_dict[tuple_pt] = item
+            out3_list.append(item)
+        man_line = get_CT_tandem_metric_rp_line_by_folder(folder)
+        print('number points of man_line = {}'.format(len(man_line)))
+        for pt in man_line:
+            # print(pt)
+            ai_pt, dist = get_closed_ai_pt(interpolated_line, pt)
+            print('man_pt = {},  most closed ai_pt = {} with dist={}'.format(pt, ai_pt, dist))
+            break
+            tuple_ai_pt = tuple(ai_pt)
+            item = out3_dict[tuple_ai_pt]
+            float_man_pt = [float(i) for i in pt]  # convert man_pt in list type into float man_pt
+            item[1] = tuple(float_man_pt)
+            item[2] = dist
+        # show data
+        drwang_output_result[folder] = out3_list
+    #python_object_dump(drwang_output_result, 'drwang_output_result.bytes')
+    #python_object_dump(drwang_output_result, dump_filepath)
+
+travel_5mm_check_with_man_first_point(f_list = f_list, dump_filepath='travel_5mm_with_manual_tip.bytes')
 
 #folder = 'RAL_plan_new_20190905/34698361-1'
 #print('folder = {}'.format(folder))
