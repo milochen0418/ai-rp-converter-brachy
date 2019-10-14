@@ -1089,8 +1089,6 @@ def example_show_lines(folder):
     lines = make_lines_process(app_pts)
     show_lines(lines)
 
-
-
 folder = r"RAL_plan_shift/35086187/0101"
 print('Usage of make_lines_process() with folder = ', folder)
 
@@ -1260,8 +1258,6 @@ def algo_run_by_folder(folder):
     print(app_pts_dict)
     return app_pts_dict
 
-
-
 def algo_run_by_folder_v02(folder):
     # app_pts_dict[z] = [[x,y,z], [x,y,z], [x,y,z] ]
     app_pts_dict = {}
@@ -1381,6 +1377,7 @@ def algo_run_by_folder_v02(folder):
         prev_slice_dict = slice_dict
     print(app_pts_dict)
     return app_pts_dict
+
 # Implementation of get_metric_pt_info_by_travel_distance(metric_line, pt_idx, pt_idx_remainder, travel_dist)
 def get_metric_pt(metric_line, pt_idx, pt_idx_remainder):
     # print('get_metric_pt(metric_line={}, pt_idx={}, pt_idx_remainder={})'.format(metric_line, pt_idx, pt_idx_remainder))
@@ -1577,7 +1574,7 @@ def get_and_show_tandem( metric_line, first_purpose_distance_mm, each_purpose_di
     def distance(pt1, pt2):
         import math
         # print(r"pt1 = {}, pt2 = {}".format(pt1, pt2))
-        ret_dist = math.sqrt( (pt1[0 ] -pt2[0] )**2 +  (pt1[1 ] -pt2[1] )**2 + (pt1[2 ] -pt2[2] )**2 )
+        ret_dist = math.sqrt( (pt1[0 ] -pt2[0] )**2 +  (pt1[1] -pt2[1] )**2 + (pt1[2 ] -pt2[2] )**2 )
         return ret_dist
     pt_idx = 0
     pt_idx_remainder = 0
