@@ -2531,7 +2531,7 @@ def pickle_dump_ai_man_points_dict(f_list, dump_filepath='ai_man_points.bytes'):
 
 
 def travel_5mm_check_with_man_first_point(f_list, dump_filepath):
-
+    import math
     drwang_output_result = {}
     for f_idx, folder in enumerate(f_list):
         if f_idx > 1:
@@ -2546,6 +2546,31 @@ def travel_5mm_check_with_man_first_point(f_list, dump_filepath):
         print('len() = {}, interpolated_line = {}'.format(len(interpolated_line), interpolated_line))
         print(interpolated_line)
 
+        float_tuple_line = [(float(pt[0]), float(pt[1]), float(pt[2])) for pt in line]
+        print('float_tuple_line = {}'.format(float_tuple_line))
+        #Find the closed point in interpolated_line s.t. it most clost to first man point
+        tmp_man_line = get_CT_tandem_metric_rp_line_by_folder(folder)
+        float_tuple_man_line = [(float(pt[0]), float(pt[1]), float(pt[2])) for pt in tmp_man_line]
+        float_tuple_interpolated_line = [(float(pt[0]), float(pt[1]), float(pt[2])) for pt in interpolated_line]
+        print(float_tuple_man_line[0]) # it is with max z -> tips
+        print(float_tuple_man_line[-1]) # it is with min z
+        print(float_tuple_interpolated_line[0]) # it is with min z
+        print(float_tuple_interpolated_line[-1]) # it is with max_z -> tips
+
+        man_tips_pt = float_tuple_man_line[0] # man_tips_pt is tips point in man line
+        closed_pt = float_tuple_interpolated_line[-1]
+        def figure_dist(pt1,pt2):
+            return math.sqrt( (pt1[0]-pt2[0])**2 + (pt1[1]-pt2[1])**2 + (pt1[2]-pt2[2])**2 )
+        closed_dist = figure_dist(man_tips_pt, closed_pt)
+        for pt in float_tuple_interpolated_line:
+            dist = figure_dist(man_tips_pt, pt)
+            if dist < closed_dist:
+                closed_dist = dist
+                closed_pt = pt
+        # Now closed_pt is the pt in interpolated_line that most closed to man_tips_pt
+
+        # Assump tips is with max_z
+        break
         out3_list = []  # interpolated_line, [man_pt, distance]
         out3_dict = {}
         for pt in interpolated_line:
@@ -2555,6 +2580,7 @@ def travel_5mm_check_with_man_first_point(f_list, dump_filepath):
             item[0] = tuple_pt
             out3_dict[tuple_pt] = item
             out3_list.append(item)
+
         man_line = get_CT_tandem_metric_rp_line_by_folder(folder)
         print('number points of man_line = {}'.format(len(man_line)))
         for pt in man_line:
