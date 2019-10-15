@@ -2628,10 +2628,20 @@ def travel_5mm_check_with_man_first_point(f_list, dump_filepath):
     #python_object_dump(drwang_output_result, 'drwang_output_result.bytes')
     python_object_dump(drwang_output_result, dump_filepath)
 
-travel_5mm_check_with_man_first_point(f_list = f_list, dump_filepath='travel_5mm_with_manual_tip.bytes')
+#travel_5mm_check_with_man_first_point(f_list = f_list, dump_filepath='travel_5mm_with_manual_tip.bytes')
 
-result = python_object_load('travel_5mm_with_manual_tip.bytes')
-print(result)
+#result = python_object_load('travel_5mm_with_manual_tip.bytes')
+
+def process_new_drwang_output_csv_compare_output():
+    bytes_filepath = 'travel_5mm_with_manual_tip.bytes'
+    #drwang_output_result_dump(f_list, dump_filepath=bytes_filepath)
+    #drawang_output_show_avg_max_min(dump_filepath=bytes_filepath)
+    drawang_output_show_avg_max_min(dump_filepath=bytes_filepath)
+    drwang_output_result_to_csv(dump_filepath=bytes_filepath, csv_filepath='travel_5mm_with_manual_tip.csv')
+
+process_new_drwang_output_csv_compare_output()
+
+
 
 #folder = 'RAL_plan_new_20190905/34698361-1'
 #print('folder = {}'.format(folder))
