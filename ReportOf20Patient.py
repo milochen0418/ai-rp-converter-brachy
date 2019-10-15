@@ -2552,15 +2552,20 @@ def travel_5mm_check_with_man_first_point(f_list, dump_filepath):
         tmp_man_line = get_CT_tandem_metric_rp_line_by_folder(folder)
         float_tuple_man_line = [(float(pt[0]), float(pt[1]), float(pt[2])) for pt in tmp_man_line]
         float_tuple_interpolated_line = [(float(pt[0]), float(pt[1]), float(pt[2])) for pt in interpolated_line]
-        print(float_tuple_man_line[0]) # it is with max z -> tips
+        print('man tips with idx=0->',float_tuple_man_line[0]) # it is with max z -> tips
         print(float_tuple_man_line[-1]) # it is with min z
         print(float_tuple_interpolated_line[0]) # it is with min z
         print(float_tuple_interpolated_line[-1]) # it is with max_z -> tips
+        print(float_tuple_line[0]) # it is with min z
+        print('ai tips with idx=-1->',float_tuple_line[-1]) # it is with max_z -> tips
 
-        man_tips_pt = float_tuple_man_line[0] # man_tips_pt is tips point in man line
+        man_tips_pt = float_tuple_man_line[0]  # man_tips_pt is tips point in man line
+        ai_tips_pt = float_tuple_line[-1]
         closed_pt = float_tuple_interpolated_line[-1]
+
         def figure_dist(pt1,pt2):
             return math.sqrt( (pt1[0]-pt2[0])**2 + (pt1[1]-pt2[1])**2 + (pt1[2]-pt2[2])**2 )
+
         closed_dist = figure_dist(man_tips_pt, closed_pt)
         for pt in float_tuple_interpolated_line:
             dist = figure_dist(man_tips_pt, pt)
@@ -2568,8 +2573,23 @@ def travel_5mm_check_with_man_first_point(f_list, dump_filepath):
                 closed_dist = dist
                 closed_pt = pt
         # Now closed_pt is the pt in interpolated_line that most closed to man_tips_pt
-
-        # Assump tips is with max_z
+        # Process the case if closed_pt is never in man_line (maybe ai predict too much error)
+        if closed_pt == ai_tips_pt:
+            print('man_tips_pt = {}, closed_pt {} is equal to ai_tips_pt {}'.format(man_tips_pt, closed_pt, ai_tips_pt))
+        else:
+            print('man_tips_pt ={}, closed_pt {} is NOT equal to ai_tips_pt {}'.format(man_tips_pt, closed_pt, ai_tips_pt))
+        # we remove all float_tuple_line's pt that z > closed_pt'z
+        # And then add closed_pt into float_tuple_line if there is no closed_pt in float_tuple_line
+        new_float_tuple_line = float_tuple_line.copy()
+        print('new len{}, old len{} '.format(len(new_float_tuple_line), len(float_tuple_line)))
+        for pt in float_tuple_line:
+            if pt[2] >= closed_pt[2]:
+                if pt in new_float_tuple_line:
+                    new_float_tuple_line.remove(pt)
+        print('new len{}, old len{} '.format(len(new_float_tuple_line), len(float_tuple_line)))
+        new_float_tuple_line.append(closed_pt)
+        print('new len{}, old len{} '.format(len(new_float_tuple_line), len(float_tuple_line)))
+        print('new ai_tips_pt = {}'.format(new_float_tuple_line[-1]))
         break
         out3_list = []  # interpolated_line, [man_pt, distance]
         out3_dict = {}
