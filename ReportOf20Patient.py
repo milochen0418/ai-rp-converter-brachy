@@ -2534,8 +2534,8 @@ def travel_5mm_check_with_man_first_point(f_list, dump_filepath):
     import math
     drwang_output_result = {}
     for f_idx, folder in enumerate(f_list):
-        if f_idx > 1:
-            break
+        #if f_idx > 1:
+        #    break
 
         print(folder)
         blockPrint()
@@ -2629,6 +2629,9 @@ def travel_5mm_check_with_man_first_point(f_list, dump_filepath):
     python_object_dump(drwang_output_result, dump_filepath)
 
 travel_5mm_check_with_man_first_point(f_list = f_list, dump_filepath='travel_5mm_with_manual_tip.bytes')
+
+result = python_object_load('travel_5mm_with_manual_tip.bytes')
+print(result)
 
 #folder = 'RAL_plan_new_20190905/34698361-1'
 #print('folder = {}'.format(folder))
