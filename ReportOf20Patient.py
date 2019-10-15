@@ -2563,7 +2563,7 @@ def travel_5mm_check_with_man_first_point(f_list, dump_filepath):
         ai_tips_pt = float_tuple_line[-1]
         closed_pt = float_tuple_interpolated_line[-1]
 
-        def figure_dist(pt1,pt2):
+        def figure_dist(pt1, pt2):
             return math.sqrt( (pt1[0]-pt2[0])**2 + (pt1[1]-pt2[1])**2 + (pt1[2]-pt2[2])**2 )
 
         closed_dist = figure_dist(man_tips_pt, closed_pt)
@@ -2590,7 +2590,17 @@ def travel_5mm_check_with_man_first_point(f_list, dump_filepath):
         new_float_tuple_line.append(closed_pt)
         print('new len{}, old len{} '.format(len(new_float_tuple_line), len(float_tuple_line)))
         print('new ai_tips_pt = {}'.format(new_float_tuple_line[-1]))
-        break
+
+        # Now we have new_Float_tuple_line, and then we can create interpolated_line again
+        # Because the following code is start to travel each node in 5mm
+        #line = get_CT_tandem_metric_line_by_folder(folder)
+        #enablePrint()
+
+        #interpolated_line = line_interpolate(line, 20)
+        interpolated_line = line_interpolate(new_float_tuple_line, 20)
+        print('new_interpolated_line = {}'.format(interpolated_line))
+
+
         out3_list = []  # interpolated_line, [man_pt, distance]
         out3_dict = {}
         for pt in interpolated_line:
@@ -2607,7 +2617,7 @@ def travel_5mm_check_with_man_first_point(f_list, dump_filepath):
             # print(pt)
             ai_pt, dist = get_closed_ai_pt(interpolated_line, pt)
             print('man_pt = {},  most closed ai_pt = {} with dist={}'.format(pt, ai_pt, dist))
-            break
+
             tuple_ai_pt = tuple(ai_pt)
             item = out3_dict[tuple_ai_pt]
             float_man_pt = [float(i) for i in pt]  # convert man_pt in list type into float man_pt
@@ -2616,7 +2626,7 @@ def travel_5mm_check_with_man_first_point(f_list, dump_filepath):
         # show data
         drwang_output_result[folder] = out3_list
     #python_object_dump(drwang_output_result, 'drwang_output_result.bytes')
-    #python_object_dump(drwang_output_result, dump_filepath)
+    python_object_dump(drwang_output_result, dump_filepath)
 
 travel_5mm_check_with_man_first_point(f_list = f_list, dump_filepath='travel_5mm_with_manual_tip.bytes')
 
