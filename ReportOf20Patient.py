@@ -2629,7 +2629,6 @@ def travel_5mm_check_with_man_first_point(f_list, dump_filepath):
     python_object_dump(drwang_output_result, dump_filepath)
 
 #travel_5mm_check_with_man_first_point(f_list = f_list, dump_filepath='travel_5mm_with_manual_tip.bytes')
-
 #result = python_object_load('travel_5mm_with_manual_tip.bytes')
 
 def process_new_drwang_output_csv_compare_output():
@@ -2639,9 +2638,51 @@ def process_new_drwang_output_csv_compare_output():
     drawang_output_show_avg_max_min(dump_filepath=bytes_filepath)
     drwang_output_result_to_csv(dump_filepath=bytes_filepath, csv_filepath='travel_5mm_with_manual_tip.csv')
 
-process_new_drwang_output_csv_compare_output()
+#process_new_drwang_output_csv_compare_output()
 
 
+def run_and_make_rp(folder, out_rp_filepath):
+    rp_template_filepath = r'RP_Template/Brachy_RP.1.2.246.352.71.5.417454940236.2063186.20191015164204.dcm'
+    rs_filepath = ''
+    ct_filelist = []
+    for file in os.listdir(folder):
+        filepath = os.path.join(folder, file)
+        fp = pydicom.read_file(filepath)
+        if (fp.Modality == 'CT'):
+            ct_filelist.append(filepath)
+        elif (fp.Modality == 'RTSTRUCT'):
+            rs_filepath = filepath
+    # Read RS file as input
+    rs_fp = pydicom.read_file(rs_filepath)
+    # read RP tempalte into rp_fp
+    rp_fp = pydicom.read_file(rp_template_filepath)
+
+    rp_fp.OperatorsName = 'cylin'
+    rp_fp.PhysiciansOfRecord = rs_fp.PhysiciansOfRecord
+    rp_fp.FrameOfReferenceUID = rs_fp.ReferencedFrameOfReferenceSequence[0].FrameOfReferenceUID
+    rp_fp.ReferencedStructureSetSequence[0].ReferencedSOPClassUID =  rs_fp.SOPClassUID
+    rp_fp.ReferencedStructureSetSequence[0].ReferencedSOPInstanceUID = rs_fp.SOPInstanceUID
+
+    directAttrSet = [
+        'PhysiciansOfRecord','PatientName', 'PatientID',
+        'PatientBirthDate', 'PatientBirthTime', 'PatientSex',
+        'DeviceSerialNumber', 'SoftwareVersions', 'StudyID',
+        'StudyDate', 'StudyTime', 'StudyInstanceUID']
+    for attr in directAttrSet:
+        val = getattr(rs_fp, attr)
+        setattr(rp_fp, attr, val)
+    rp_fp.InstanceCreationDate = rp_fp.RTPlanDate = rp_fp.StudyDate = rs_fp.StudyDate
+    rp_fp.RTPlanTime= str(float(rs_fp.StudyTime) + 0.001)
+    rp_fp.InstanceCreationTime = str(float(rs_fp.InstanceCreationTime) + 0.001)
+
+    # Start to prepare 5mm points and write data into rp_fp as points
+    #TODO
+
+    # In the finally, just write file back
+    pydicom.write_file(out_rp_filepath, rp_fp)
+
+
+run_and_make_rp(folder='RAL_plan_new_20190905/29059811-1', out_rp_filepath=r'out.brachy.rp.withpoints.dcm')
 
 #folder = 'RAL_plan_new_20190905/34698361-1'
 #print('folder = {}'.format(folder))
