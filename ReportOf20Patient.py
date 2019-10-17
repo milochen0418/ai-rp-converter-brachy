@@ -2641,6 +2641,115 @@ def process_new_drwang_output_csv_compare_output():
 #process_new_drwang_output_csv_compare_output()
 
 
+
+def travel_every_5mm_in_ai(f_list, dump_filepath):
+    import math
+    drwang_output_result = {}
+    for f_idx, folder in enumerate(f_list):
+        print(folder)
+        blockPrint()
+        line = get_CT_tandem_metric_line_by_folder(folder)
+        enablePrint()
+        print('len(line) = {}, line = {}'.format(len(line), line))
+        interpolated_line = line_interpolate(line, 20)
+        print('len() = {}, interpolated_line = {}'.format(len(interpolated_line), interpolated_line))
+        print(interpolated_line)
+
+        """
+        float_tuple_line = [(float(pt[0]), float(pt[1]), float(pt[2])) for pt in line]
+        print('float_tuple_line = {}'.format(float_tuple_line))
+        #Find the closed point in interpolated_line s.t. it most clost to first man point
+        tmp_man_line = get_CT_tandem_metric_rp_line_by_folder(folder)
+        float_tuple_man_line = [(float(pt[0]), float(pt[1]), float(pt[2])) for pt in tmp_man_line]
+        float_tuple_interpolated_line = [(float(pt[0]), float(pt[1]), float(pt[2])) for pt in interpolated_line]
+        print('man tips with idx=0->',float_tuple_man_line[0]) # it is with max z -> tips
+        print(float_tuple_man_line[-1]) # it is with min z
+        print(float_tuple_interpolated_line[0]) # it is with min z
+        print(float_tuple_interpolated_line[-1]) # it is with max_z -> tips
+        print(float_tuple_line[0]) # it is with min z
+        print('ai tips with idx=-1->',float_tuple_line[-1]) # it is with max_z -> tips
+
+        man_tips_pt = float_tuple_man_line[0]  # man_tips_pt is tips point in man line
+        ai_tips_pt = float_tuple_line[-1]
+        closed_pt = float_tuple_interpolated_line[-1]
+
+        def figure_dist(pt1, pt2):
+            return math.sqrt( (pt1[0]-pt2[0])**2 + (pt1[1]-pt2[1])**2 + (pt1[2]-pt2[2])**2 )
+
+        closed_dist = figure_dist(man_tips_pt, closed_pt)
+        for pt in float_tuple_interpolated_line:
+            dist = figure_dist(man_tips_pt, pt)
+            if dist < closed_dist:
+                closed_dist = dist
+                closed_pt = pt
+        # Now closed_pt is the pt in interpolated_line that most closed to man_tips_pt
+        # Process the case if closed_pt is never in man_line (maybe ai predict too much error)
+        if closed_pt == ai_tips_pt:
+            print('man_tips_pt = {}, closed_pt {} is equal to ai_tips_pt {}'.format(man_tips_pt, closed_pt, ai_tips_pt))
+        else:
+            print('man_tips_pt ={}, closed_pt {} is NOT equal to ai_tips_pt {}'.format(man_tips_pt, closed_pt, ai_tips_pt))
+        # we remove all float_tuple_line's pt that z > closed_pt'z
+        # And then add closed_pt into float_tuple_line if there is no closed_pt in float_tuple_line
+        new_float_tuple_line = float_tuple_line.copy()
+        print('new len{}, old len{} '.format(len(new_float_tuple_line), len(float_tuple_line)))
+        
+        
+        
+        
+        for pt in float_tuple_line:
+            if pt[2] >= closed_pt[2]:
+                if pt in new_float_tuple_line:
+                    new_float_tuple_line.remove(pt)
+        print('new len{}, old len{} '.format(len(new_float_tuple_line), len(float_tuple_line)))
+        new_float_tuple_line.append(closed_pt)
+        print('new len{}, old len{} '.format(len(new_float_tuple_line), len(float_tuple_line)))
+        print('new ai_tips_pt = {}'.format(new_float_tuple_line[-1]))
+
+        # Now we have new_Float_tuple_line, and then we can create interpolated_line again
+        # Because the following code is start to travel each node in 5mm
+        #line = get_CT_tandem_metric_line_by_folder(folder)
+        #enablePrint()
+        #interpolated_line = line_interpolate(line, 20)
+        """
+
+        new_float_tuple_line = [(float(pt[0]), float(pt[1]), float(pt[2])) for pt in line]
+        interpolated_line = line_interpolate(new_float_tuple_line, 20)
+        print('new_interpolated_line = {}'.format(interpolated_line))
+
+
+        out3_list = []  # interpolated_line, [man_pt, distance]
+        out3_dict = {}
+        for pt in interpolated_line:
+            float_ai_pt = [float(i) for i in pt]
+            tuple_pt = tuple(float_ai_pt)
+            item = [None, '', '']
+            item[0] = tuple_pt
+            out3_dict[tuple_pt] = item
+            out3_list.append(item)
+
+        man_line = get_CT_tandem_metric_rp_line_by_folder(folder)
+        print('number points of man_line = {}'.format(len(man_line)))
+        for pt in man_line:
+            # print(pt)
+            ai_pt, dist = get_closed_ai_pt(interpolated_line, pt)
+            print('man_pt = {},  most closed ai_pt = {} with dist={}'.format(pt, ai_pt, dist))
+
+            tuple_ai_pt = tuple(ai_pt)
+            item = out3_dict[tuple_ai_pt]
+            float_man_pt = [float(i) for i in pt]  # convert man_pt in list type into float man_pt
+            item[1] = tuple(float_man_pt)
+            item[2] = dist
+        # show data
+        drwang_output_result[folder] = out3_list
+    #python_object_dump(drwang_output_result, 'drwang_output_result.bytes')
+    python_object_dump(drwang_output_result, dump_filepath)
+
+travel_every_5mm_in_ai(f_list = f_list, dump_filepath='travel_every_5mm_in_ai.bytes')
+
+
+
+
+
 def run_and_make_rp(folder, out_rp_filepath):
     rp_template_filepath = r'RP_Template/Brachy_RP.1.2.246.352.71.5.417454940236.2063186.20191015164204.dcm'
     rs_filepath = ''
@@ -2678,11 +2787,69 @@ def run_and_make_rp(folder, out_rp_filepath):
     # Start to prepare 5mm points and write data into rp_fp as points
     #TODO
 
+
     # In the finally, just write file back
     pydicom.write_file(out_rp_filepath, rp_fp)
-
-
 run_and_make_rp(folder='RAL_plan_new_20190905/29059811-1', out_rp_filepath=r'out.brachy.rp.withpoints.dcm')
+
+
+
+
+
+def run_and_make_rp_v02(folder, out_rp_filepath):
+    print('folder = ', folder )
+    # the function will get all 3D pt of applicator
+    app_pts = algo_run_by_folder(folder)
+    # transform all 3D pt of applicator into each line for each applicator and the line have been sorted by z
+    lines = make_lines_process(app_pts)
+    # The CT data is the format with 512 x 512, but we want to tranfer it into real metric space
+    metric_lines = convert_lines_in_metrics(lines, folder)
+    # Show the lines information in metrics
+    show_lines(metric_lines)
+    metric_line = metric_lines[1].copy()
+    print('metric_line = ',metric_line)
+
+    def distance(pt1, pt2):
+        import math
+        #print(r"pt1 = {}, pt2 = {}".format(pt1, pt2))
+        ret_dist = math.sqrt( (pt1[0]-pt2[0])**2 +  (pt1[1]-pt2[1])**2 + (pt1[2]-pt2[2])**2 )
+        return ret_dist
+    pt_idx = 0
+    pt_idx_remainder = 0
+    purpose_distance_mm = 7
+    max_mm = purpose_distance_mm
+    orig_pt = metric_line[0]
+    print('metric_line = ', metric_line)
+
+    def distance(pt1, pt2):
+        import math
+        #print(r"pt1 = {}, pt2 = {}".format(pt1, pt2))
+        ret_dist = math.sqrt( (pt1[0]-pt2[0])**2 +  (pt1[1]-pt2[1])**2 + (pt1[2]-pt2[2])**2 )
+        return ret_dist
+    pt_idx = 0
+    pt_idx_remainder = 0
+    orig_pt = metric_line[0]
+    purpose_distance_mm = 7
+    travel_dist = purpose_distance_mm
+    (t_pt, t_pt_idx, t_pt_idx_remainder, t_dist) = get_metric_pt_info_by_travel_distance(metric_line, pt_idx, pt_idx_remainder, travel_dist)
+    print('{} -> {}'.format((t_pt, t_pt_idx, t_pt_idx_remainder), distance(orig_pt, t_pt)))
+
+    tandem_rp_line = get_and_show_tandem(metric_line, 4.5, 5)
+    #show_tandem(metric_line, 4.5, 5)
+    print('tandem_rp_line[-1] = ', tandem_rp_line[-1])
+
+    #max_mm = purpose_distance_mm
+    #orig_pt = metric_line[0]
+    #for mm in range(max_mm+1):
+    #    travel_dist = mm
+    #    (t_pt, t_pt_idx, t_pt_idx_remainder, t_dist) = get_metric_pt_info_by_travel_distance(metric_line, pt_idx, pt_idx_remainder, travel_dist)
+    #    print( '{} -> {}'.format((t_pt, t_pt_idx, t_pt_idx_remainder), distance(orig_pt,t_pt) )  )
+
+#run_and_make_rp_v02(folder='RAL_plan_new_20190905/29059811-1', out_rp_filepath=r'out.brachy.rp.withpoints.dcm')
+
+
+
+
 
 #folder = 'RAL_plan_new_20190905/34698361-1'
 #print('folder = {}'.format(folder))
