@@ -10,6 +10,7 @@ from numpy.random import randn
 import matplotlib as mpl
 from scipy import stats
 import csv, codecs
+import traceback
 
 def gen_ct_dicom_dict(ct_filelist):
     CtCache = {}
@@ -1382,7 +1383,19 @@ def algo_run_by_folder_v02(folder):
 def get_metric_pt(metric_line, pt_idx, pt_idx_remainder):
     # print('get_metric_pt(metric_line={}, pt_idx={}, pt_idx_remainder={})'.format(metric_line, pt_idx, pt_idx_remainder))
     pt = metric_line[pt_idx].copy()
-    end_pt = metric_line[pt_idx + 1]
+    try:
+        if(pt_idx+1 >= len(metric_line)):
+            end_pt = metric_line[pt_idx]
+        else:
+            end_pt = metric_line[pt_idx + 1]
+
+
+    except Exception as e:
+        print('EEEEEE')
+        print('pt_idx = {}'.format(pt_idx))
+        print('pt_idx_remainder = {}'.format(pt_idx_remainder))
+        print('metric_line[{}] = {}'.format(pt_idx, metric_line[pt_idx]))
+        raise
 
     for axis_idx in range(3):
         # diff = end_pt[axis_idx] - pt[axis_idx]
@@ -1585,15 +1598,25 @@ def get_and_show_tandem( metric_line, first_purpose_distance_mm, each_purpose_di
     print(t_pt)
     tandem_rp_line.append(t_pt)
 
-    for i in range(100):
+    for i in range(10000):
+        eeeStr = 'eee 0'
         try :
-            travel_dist = each_purpose_distance_mm
-            (pt_idx, pt_idx_remainder) = (t_pt_idx, t_pt_idx_remainder)
-            (t_pt, t_pt_idx, t_pt_idx_remainder, t_dist) = get_metric_pt_info_by_travel_distance(metric_line, pt_idx, pt_idx_remainder, travel_dist)
-            print(t_pt, t_pt_idx, t_pt_idx_remainder)
-            tandem_rp_line.append(t_pt)
-        except:
 
+            eeeStr = 'eee a'
+            travel_dist = each_purpose_distance_mm
+            eeeStr = 'eee b'
+            (pt_idx, pt_idx_remainder) = (t_pt_idx, t_pt_idx_remainder)
+            eeeStr = 'eee c'
+            (t_pt, t_pt_idx, t_pt_idx_remainder, t_dist) = get_metric_pt_info_by_travel_distance(metric_line, pt_idx, pt_idx_remainder, travel_dist)
+            eeeStr = 'eee d'
+            print(t_pt, t_pt_idx, t_pt_idx_remainder)
+            eeeStr = 'eee f'
+            tandem_rp_line.append(t_pt)
+            eeeStr = 'eee g'
+        except Exception as e:
+            print('Exception happen START : {} and eeeStr = {}'.format(e, eeeStr))
+            traceback.print_exc(file=sys.stdout)
+            print('Exception happen END: {} and eeeStr = {}'.format(e, eeeStr))
             break
     return tandem_rp_line
 
@@ -2627,8 +2650,8 @@ def travel_5mm_check_with_man_first_point(f_list, dump_filepath):
         drwang_output_result[folder] = out3_list
     #python_object_dump(drwang_output_result, 'drwang_output_result.bytes')
     python_object_dump(drwang_output_result, dump_filepath)
-
 #travel_5mm_check_with_man_first_point(f_list = f_list, dump_filepath='travel_5mm_with_manual_tip.bytes')
+
 #result = python_object_load('travel_5mm_with_manual_tip.bytes')
 
 def process_new_drwang_output_csv_compare_output():
@@ -2637,7 +2660,6 @@ def process_new_drwang_output_csv_compare_output():
     #drawang_output_show_avg_max_min(dump_filepath=bytes_filepath)
     drawang_output_show_avg_max_min(dump_filepath=bytes_filepath)
     drwang_output_result_to_csv(dump_filepath=bytes_filepath, csv_filepath='travel_5mm_with_manual_tip.csv')
-
 #process_new_drwang_output_csv_compare_output()
 
 
@@ -2743,11 +2765,7 @@ def travel_every_5mm_in_ai(f_list, dump_filepath):
         drwang_output_result[folder] = out3_list
     #python_object_dump(drwang_output_result, 'drwang_output_result.bytes')
     python_object_dump(drwang_output_result, dump_filepath)
-
-travel_every_5mm_in_ai(f_list = f_list, dump_filepath='travel_every_5mm_in_ai.bytes')
-
-
-
+#travel_every_5mm_in_ai(f_list = f_list, dump_filepath='travel_every_5mm_in_ai.bytes')
 
 
 def run_and_make_rp(folder, out_rp_filepath):
@@ -2790,7 +2808,7 @@ def run_and_make_rp(folder, out_rp_filepath):
 
     # In the finally, just write file back
     pydicom.write_file(out_rp_filepath, rp_fp)
-run_and_make_rp(folder='RAL_plan_new_20190905/29059811-1', out_rp_filepath=r'out.brachy.rp.withpoints.dcm')
+#run_and_make_rp(folder='RAL_plan_new_20190905/29059811-1', out_rp_filepath=r'out.brachy.rp.withpoints.dcm')
 
 
 
@@ -2816,27 +2834,30 @@ def run_and_make_rp_v02(folder, out_rp_filepath):
         return ret_dist
     pt_idx = 0
     pt_idx_remainder = 0
-    purpose_distance_mm = 7
+    purpose_distance_mm = 5
     max_mm = purpose_distance_mm
     orig_pt = metric_line[0]
     print('metric_line = ', metric_line)
 
-    def distance(pt1, pt2):
-        import math
-        #print(r"pt1 = {}, pt2 = {}".format(pt1, pt2))
-        ret_dist = math.sqrt( (pt1[0]-pt2[0])**2 +  (pt1[1]-pt2[1])**2 + (pt1[2]-pt2[2])**2 )
-        return ret_dist
     pt_idx = 0
     pt_idx_remainder = 0
     orig_pt = metric_line[0]
-    purpose_distance_mm = 7
+    #purpose_distance_mm = 7
+    purpose_distance_mm = 5
     travel_dist = purpose_distance_mm
     (t_pt, t_pt_idx, t_pt_idx_remainder, t_dist) = get_metric_pt_info_by_travel_distance(metric_line, pt_idx, pt_idx_remainder, travel_dist)
     print('{} -> {}'.format((t_pt, t_pt_idx, t_pt_idx_remainder), distance(orig_pt, t_pt)))
 
-    tandem_rp_line = get_and_show_tandem(metric_line, 4.5, 5)
+    #tandem_rp_line = get_and_show_tandem(metric_line, 4.5, 5) # 29059811-1 => z=58 tips to z=-48
+    metric_line.reverse()
+    tandem_rp_line = get_and_show_tandem(metric_line, 0, 5)
+    print('metric_line[-1] = ', metric_line[-1])
+    print('metric_line[0] = ', metric_line[0])
+
     #show_tandem(metric_line, 4.5, 5)
     print('tandem_rp_line[-1] = ', tandem_rp_line[-1])
+    print('tandem_rp_line[0] = ', tandem_rp_line[0])
+
 
     #max_mm = purpose_distance_mm
     #orig_pt = metric_line[0]
@@ -2845,7 +2866,7 @@ def run_and_make_rp_v02(folder, out_rp_filepath):
     #    (t_pt, t_pt_idx, t_pt_idx_remainder, t_dist) = get_metric_pt_info_by_travel_distance(metric_line, pt_idx, pt_idx_remainder, travel_dist)
     #    print( '{} -> {}'.format((t_pt, t_pt_idx, t_pt_idx_remainder), distance(orig_pt,t_pt) )  )
 
-#run_and_make_rp_v02(folder='RAL_plan_new_20190905/29059811-1', out_rp_filepath=r'out.brachy.rp.withpoints.dcm')
+run_and_make_rp_v02(folder='RAL_plan_new_20190905/29059811-1', out_rp_filepath=r'out.brachy.rp.withpoints.v04.dcm')
 
 
 
