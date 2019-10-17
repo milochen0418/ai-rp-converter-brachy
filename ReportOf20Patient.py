@@ -2869,7 +2869,8 @@ def run_and_make_rp_v02(folder, out_rp_filepath):
     #    (t_pt, t_pt_idx, t_pt_idx_remainder, t_dist) = get_metric_pt_info_by_travel_distance(metric_line, pt_idx, pt_idx_remainder, travel_dist)
     #    print( '{} -> {}'.format((t_pt, t_pt_idx, t_pt_idx_remainder), distance(orig_pt,t_pt) )  )
 
-run_and_make_rp_v02(folder='RAL_plan_new_20190905/29059811-1', out_rp_filepath=r'out.brachy.rp.withpoints.v04.dcm')
+#run_and_make_rp_v02(folder='RAL_plan_new_20190905/29059811-1', out_rp_filepath=r'out.brachy.rp.withpoints.v04.dcm')
+run_and_make_rp_v02(folder='RP_Template_TestData', out_rp_filepath=r'out.brachy.rp.withpoints.v04.dcm')
 
 
 
