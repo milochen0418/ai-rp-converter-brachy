@@ -1598,10 +1598,9 @@ def get_and_show_tandem( metric_line, first_purpose_distance_mm, each_purpose_di
     print(t_pt)
     tandem_rp_line.append(t_pt)
 
-    for i in range(10000):
+    for i in range(100):
         eeeStr = 'eee 0'
         try :
-
             eeeStr = 'eee a'
             travel_dist = each_purpose_distance_mm
             eeeStr = 'eee b'
@@ -1611,6 +1610,8 @@ def get_and_show_tandem( metric_line, first_purpose_distance_mm, each_purpose_di
             eeeStr = 'eee d'
             print(t_pt, t_pt_idx, t_pt_idx_remainder)
             eeeStr = 'eee f'
+            if (t_pt == tandem_rp_line[-1]):
+                break
             tandem_rp_line.append(t_pt)
             eeeStr = 'eee g'
         except Exception as e:
@@ -2850,13 +2851,15 @@ def run_and_make_rp_v02(folder, out_rp_filepath):
 
     #tandem_rp_line = get_and_show_tandem(metric_line, 4.5, 5) # 29059811-1 => z=58 tips to z=-48
     metric_line.reverse()
-    tandem_rp_line = get_and_show_tandem(metric_line, 0, 5)
+    tandem_rp_line = get_and_show_tandem(metric_line, 5, 5)
     print('metric_line[-1] = ', metric_line[-1])
     print('metric_line[0] = ', metric_line[0])
 
     #show_tandem(metric_line, 4.5, 5)
     print('tandem_rp_line[-1] = ', tandem_rp_line[-1])
     print('tandem_rp_line[0] = ', tandem_rp_line[0])
+    print('len(tandem_rp_line) = ', len(tandem_rp_line))
+    print('tandem_rp_line = {}',tandem_rp_line)
 
 
     #max_mm = purpose_distance_mm
