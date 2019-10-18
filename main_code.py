@@ -911,52 +911,6 @@ def enablePrint():
     sys.stdout = sys.__stdout__
 
 
-def get_tandem_from_man(man_dict, folder):
-    # Here show the different rules in different rp filepath to get tandem
-    dict = man_dict[folder]
-    if dict == None:
-        print('[get_tandem_from_man()] {} is not exist in man_dict'.format(folder))
-        return None
-    line = None
-    apps_list = dict['apps_list']
-    for line_dict in apps_list:
-        n = line_dict['name']
-        if n == 'Tandom' or n == 'Tandem' or 'Tandem_' in n or 'Tabdem_' in n:
-            # Some case is Tandom but some case is Tandem in rp filepath
-            line = line_dict['points'].copy()
-            break
-
-    # Another rules to query Tandem line are by the case of ['Applicator1', 'Applicator2_R', 'Applicator3_L',...]
-    if line == None:
-        names = []
-        for d in apps_list:
-            n = d['name']
-            names.append(n)
-
-        queryName = None
-        if 'Applicator1' in names and 'Applicator2_R' in names and 'Applicator3_L' in names:
-            queryName = 'Applicator1'
-        if queryName != None:
-            for line_dict in apps_list:
-                n = line_dict['name']
-                if n == queryName:
-                    # Some case is Tandom but some case is Tandem in rp filepath
-                    line = line_dict['points'].copy()
-                    break
-    if line == None:
-        names = []
-        for ld in apps_list:
-            names.append(ld['name'])
-        print('line == None, and names = {}'.format(names))
-
-    # To remove duplicated element and still keep sorting order
-    tuple_line = [tuple(pt) for pt in line]
-    tuple_new_line = sorted(set(tuple_line), key=tuple_line.index)
-    new_line = [list(t) for t in tuple_new_line]
-    return new_line
-    # return line
-
-
 # Un-useful
 def show_man_dict():
     man_dict = get_man_dict()
