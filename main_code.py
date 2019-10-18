@@ -911,16 +911,12 @@ def enablePrint():
     sys.stdout = sys.__stdout__
 
 
-# Un-useful
+# Un-useful ?
 import pickle
-
-
 def python_object_dump(obj, filename):
     file_w = open(filename, "wb")
     pickle.dump(obj, file_w)
     file_w.close()
-
-
 def python_object_load(filename):
     try:
         file_r = open(filename, "rb")
@@ -934,12 +930,6 @@ def python_object_load(filename):
             return None
     return obj2
 
-
-# Un-useful
-def get_man_dict():
-    ret_dict_filename = 'man_patient_rp_data.bytes'
-    ret_dict = python_object_load(ret_dict_filename)
-    return ret_dict
 
 
 def get_tandem_from_man(man_dict, folder):
