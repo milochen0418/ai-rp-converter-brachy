@@ -43,7 +43,6 @@ def gen_ct_dicom_dict(ct_filelist):
         CtCache["filepath"][ct_filepath] = ct_dict
     return CtCache
     pass
-
 def get_ct_filelist_by_folder(folder):
     ct_filelist = []
     for file in os.listdir(folder):
@@ -65,6 +64,16 @@ def get_ct_filelist_by_folder(folder):
 
     return ct_filelist
 
+
+def convert_to_gray_image(pixel_array):
+    img = np.copy(pixel_array)
+    # Convert to float to avoid overflow or underflow losses.
+    img_2d = img.astype(float)
+    # Rescaling grey scale between 0-255
+    img_2d_scaled = (np.maximum(img_2d, 0) / img_2d.max()) * 255.0
+    # Convert to uint
+    img_2d_scaled = np.uint8(img_2d_scaled)
+    return img_2d_scaled
 def get_max_contours_by_filter_img(A, filter_img, ContourRetrievalMode=cv2.RETR_EXTERNAL):
     # gray_image = cv2.cvtColor(filter_img, cv2.COLOR_RGB2GRAY)
     gray_image = filter_img
@@ -73,7 +82,6 @@ def get_max_contours_by_filter_img(A, filter_img, ContourRetrievalMode=cv2.RETR_
     # _, contours, _ = cv2.findContours(gray_image, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
     _, contours, _ = cv2.findContours(gray_image, ContourRetrievalMode, cv2.CHAIN_APPROX_NONE)
     return contours
-
 def get_max_contours(A, constant_value=None, ContourRetrievalMode=cv2.RETR_EXTERNAL):
     constant = None
     if constant_value == None:
@@ -97,8 +105,6 @@ def get_max_contours(A, constant_value=None, ContourRetrievalMode=cv2.RETR_EXTER
     _, contours, _ = cv2.findContours(gray_image, ContourRetrievalMode, cv2.CHAIN_APPROX_NONE)
     # return contours (list of np.array) and constant (you assume they are almsot highest)
     return (contours, constant)
-
-# Useful
 def get_rect_infos_and_center_pts(contours, h_min=13, w_min=13, h_max=19, w_max=19):
     app_center_pts = []
     rect_infos = []
@@ -129,17 +135,6 @@ def get_rect_infos_and_center_pts(contours, h_min=13, w_min=13, h_max=19, w_max=
         rect_infos.append(rect_info)
     sorted_app_center_pts = sorted(app_center_pts, key=lambda cen_pt: cen_pt[0], reverse=False)
     return (sorted_app_center_pts, rect_infos, app_center_pts)
-
-def convert_to_gray_image(pixel_array):
-    img = np.copy(pixel_array)
-    # Convert to float to avoid overflow or underflow losses.
-    img_2d = img.astype(float)
-    # Rescaling grey scale between 0-255
-    img_2d_scaled = (np.maximum(img_2d, 0) / img_2d.max()) * 255.0
-    # Convert to uint
-    img_2d_scaled = np.uint8(img_2d_scaled)
-    return img_2d_scaled
-
 # DISCUSS_LATTER
 def get_2level_max_contours(img, gray_img):
     def get_max_contours_by_filter_img(A, filter_img, ContourRetrievalMode=cv2.RETR_TREE):
@@ -289,8 +284,6 @@ def get_2level_max_contours(img, gray_img):
         return None
 
     return filtered_level2_contours
-
-
 # WHAT_IS_SPECIAL_CASE ?
 def get_contours_of_first_slice_in_special_case(first_slice_dict):
     def convert_to_gray_image(pixel_array):
@@ -314,7 +307,6 @@ def get_contours_of_first_slice_in_special_case(first_slice_dict):
     return contours
 
     pass
-
 def get_app_center_pts_of_first_slice(first_slice_dict):
     ps_x = first_slice_dict['PixelSpacing_x']
     ps_y = first_slice_dict['PixelSpacing_y']
@@ -349,7 +341,6 @@ def get_app_center_pts_of_first_slice(first_slice_dict):
     print('get_app_center_pts_of_first_slice() -> x_sorted_pts = ', x_sorted_pts)
     return x_sorted_pts
     pass
-
 def get_view_scope_by_slice(first_slice_dict, padding=30):
     (contours, constant) = get_max_contours(first_slice_dict['rescale_pixel_array'])
     print('PixelSpacing_(x,y)=({}, {})'.format(first_slice_dict['PixelSpacing_x'], first_slice_dict['PixelSpacing_y']))
@@ -420,7 +411,6 @@ def distance(pt1, pt2):
         sum = sum + (pt1[idx] - pt2[idx]) ** 2
     ans = math.sqrt(sum)
     return ans
-
 def get_most_closed_pt(src_pt, pts, allowed_distance=100):
     if pts == None:
         return None
@@ -439,7 +429,6 @@ def get_most_closed_pt(src_pt, pts, allowed_distance=100):
                 dst_pt = pt
         pass
     return dst_pt
-
 def make_lines_process(app_pts):
     lines = [[], [], []]
     sorted_app_pts_keys = sorted(app_pts.keys())
@@ -823,7 +812,6 @@ def convert_lines_in_metrics(lines, ct_folder):
             new_pt = [new_pt_x, new_pt_y, pt_z]
             new_line.append(new_pt)
     return new_lines
-
 def get_and_show_tandem(metric_line, first_purpose_distance_mm, each_purpose_distance_mm):
     tandem_rp_line = []
     pt_idx = 0
@@ -938,7 +926,6 @@ def wrap_to_rp_file(RP_OperatorsName, rs_filepath, tandem_rp_line, out_rp_filepa
     rp_fp.ApplicationSetupSequence[0].ChannelSequence[2].ReferencedROINumber = 23
     pydicom.write_file(out_rp_filepath, rp_fp)
     pass
-
 def run_and_make_rp_v02(RP_OperatorsName, folder, out_rp_filepath):
     print('folder = ', folder )
     rs_filepath = ''
