@@ -1,7 +1,7 @@
 # Try to seperate program into clear verion and useful functions
 
 import matplotlib.pyplot as plt
-import os
+import os,sys
 import pydicom
 import numpy as np
 import cv2
@@ -902,71 +902,9 @@ def get_and_show_tandem(metric_line, first_purpose_distance_mm, each_purpose_dis
     return tandem_rp_line
 
 
-# Un-Useful
-def show_report_by_folder(folder):
-    print('folder = ', folder)
-    # the function will get all 3D pt of applicator
-    app_pts = algo_run_by_folder(folder)
-    # transform all 3D pt of applicator into each line for each applicator and the line have been sorted by z
-    lines = make_lines_process(app_pts)
-    # The CT data is the format with 512 x 512, but we want to tranfer it into real metric space
-    metric_lines = convert_lines_in_metrics(lines, folder)
-    # Show the lines information in metrics
-    show_lines(metric_lines)
-    metric_line = metric_lines[1].copy()
-    print('metric_line = ', metric_line)
-
-    def distance(pt1, pt2):
-        import math
-        # print(r"pt1 = {}, pt2 = {}".format(pt1, pt2))
-        ret_dist = math.sqrt((pt1[0] - pt2[0]) ** 2 + (pt1[1] - pt2[1]) ** 2 + (pt1[2] - pt2[2]) ** 2)
-        return ret_dist
-
-    pt_idx = 0
-    pt_idx_remainder = 0
-    purpose_distance_mm = 7
-    max_mm = purpose_distance_mm
-    orig_pt = metric_line[0]
-    print('metric_line = ', metric_line)
-
-    def distance(pt1, pt2):
-        import math
-        # print(r"pt1 = {}, pt2 = {}".format(pt1, pt2))
-        ret_dist = math.sqrt((pt1[0] - pt2[0]) ** 2 + (pt1[1] - pt2[1]) ** 2 + (pt1[2] - pt2[2]) ** 2)
-        return ret_dist
-
-    pt_idx = 0
-    pt_idx_remainder = 0
-    orig_pt = metric_line[0]
-    purpose_distance_mm = 7
-    travel_dist = purpose_distance_mm
-    (t_pt, t_pt_idx, t_pt_idx_remainder, t_dist) = get_metric_pt_info_by_travel_distance(metric_line, pt_idx,
-                                                                                         pt_idx_remainder, travel_dist)
-    print('{} -> {}'.format((t_pt, t_pt_idx, t_pt_idx_remainder), distance(orig_pt, t_pt)))
-
-    tandem_rp_line = get_and_show_tandem(metric_line, 4.5, 5)
-    # show_tandem(metric_line, 4.5, 5)
-    print('tandem_rp_line[-1] = ', tandem_rp_line[-1])
-
-    # max_mm = purpose_distance_mm
-    # orig_pt = metric_line[0]
-    # for mm in range(max_mm+1):
-    #    travel_dist = mm
-    #    (t_pt, t_pt_idx, t_pt_idx_remainder, t_dist) = get_metric_pt_info_by_travel_distance(metric_line, pt_idx, pt_idx_remainder, travel_dist)
-    #    print( '{} -> {}'.format((t_pt, t_pt_idx, t_pt_idx_remainder), distance(orig_pt,t_pt) )  )
-
-
-# show_report_by_folder(folder)
-
-
-# enable disable for print
-import sys, os
-
-
 # Disable
 def blockPrint():
     sys.stdout = open(os.devnull, 'w')
-
 
 # Restore
 def enablePrint():
