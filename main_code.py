@@ -703,7 +703,6 @@ def get_metric_pt(metric_line, pt_idx, pt_idx_remainder):
         # pt[axis_idx] = pt[axis_idx] + diff_with_ratio
     return pt
 
-
 def reduce_distance_step(metric_line, pt_idx, pt_idx_remainder, dist):
     # reduce dist and move further more step for (pt_idx, pt_idx_remainder)
     # ret_dist = ??  reduce dist into ret_dist
@@ -763,7 +762,6 @@ def reduce_distance_step(metric_line, pt_idx, pt_idx_remainder, dist):
     pass
     # return (ret_dist, ret_pt_idx, ret_pt_idx_remainder)
 
-
 def get_metric_pt_info_by_travel_distance(metric_line, pt_idx, pt_idx_remainder, travel_dist):
     dist = travel_dist
     count_max = len(metric_line)
@@ -793,8 +791,7 @@ def get_metric_pt_info_by_travel_distance(metric_line, pt_idx, pt_idx_remainder,
         pt_idx_remainder = t_pt_idx_remainder
         dist = t_dist
 
-
-# CHECK AGAIN
+# Useful
 def get_maps_with_folder(folder):
     import pydicom
     import os
@@ -832,7 +829,7 @@ def get_maps_with_folder(folder):
     return z_map, ct_filepath_map
 
 
-# The CT data is the format with 512 x 512, but we want to tranfer it into real metric space
+# The CT data is the format with 512 x 512, but we want to transfer it into real metric space
 def convert_lines_in_metrics(lines, ct_folder):
     from decimal import Decimal
     z_map, ct_filepath_map = get_maps_with_folder(ct_folder)
@@ -859,37 +856,6 @@ def convert_lines_in_metrics(lines, ct_folder):
             new_pt = [new_pt_x, new_pt_y, pt_z]
             new_line.append(new_pt)
     return new_lines
-
-
-# Un-useful
-def show_tandem(metric_line, first_purpose_distance_mm, each_purpose_distance_mm):
-    def distance(pt1, pt2):
-        import math
-        # print(r"pt1 = {}, pt2 = {}".format(pt1, pt2))
-        ret_dist = math.sqrt((pt1[0] - pt2[0]) ** 2 + (pt1[1] - pt2[1]) ** 2 + (pt1[2] - pt2[2]) ** 2)
-        return ret_dist
-
-    pt_idx = 0
-    pt_idx_remainder = 0
-    # first_purpose_distance_mm = 7 # get first RD point by 7mm
-    # each_purpose_distance_mm = 5
-    travel_dist = first_purpose_distance_mm
-    (t_pt, t_pt_idx, t_pt_idx_remainder, t_dist) = get_metric_pt_info_by_travel_distance(metric_line, pt_idx,
-                                                                                         pt_idx_remainder, travel_dist)
-    print(t_pt)
-
-    for i in range(100):
-        try:
-            travel_dist = each_purpose_distance_mm
-            (pt_idx, pt_idx_remainder) = (t_pt_idx, t_pt_idx_remainder)
-            (t_pt, t_pt_idx, t_pt_idx_remainder, t_dist) = get_metric_pt_info_by_travel_distance(metric_line, pt_idx,
-                                                                                                 pt_idx_remainder,
-                                                                                                 travel_dist)
-            print(t_pt, t_pt_idx, t_pt_idx_remainder)
-        except:
-
-            break
-
 
 def get_and_show_tandem(metric_line, first_purpose_distance_mm, each_purpose_distance_mm):
     tandem_rp_line = []
