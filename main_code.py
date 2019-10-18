@@ -98,7 +98,6 @@ def get_max_contours(A, constant_value=None, ContourRetrievalMode=cv2.RETR_EXTER
     # return contours (list of np.array) and constant (you assume they are almsot highest)
     return (contours, constant)
 
-
 # Useful
 def get_rect_infos_and_center_pts(contours, h_min=13, w_min=13, h_max=19, w_max=19):
     app_center_pts = []
@@ -803,7 +802,6 @@ def get_maps_with_folder(folder):
         ct_filepath_map[ct_filepath] = z_dict
     return z_map, ct_filepath_map
 
-
 # The CT data is the format with 512 x 512, but we want to transfer it into real metric space
 def convert_lines_in_metrics(lines, ct_folder):
     from decimal import Decimal
@@ -876,8 +874,6 @@ def get_and_show_tandem(metric_line, first_purpose_distance_mm, each_purpose_dis
             break
     return tandem_rp_line
 
-
-
 def run_and_make_rp(folder, out_rp_filepath):
     print('folder = ', folder)
     # the function will get all 3D pt of applicator
@@ -930,7 +926,6 @@ def run_and_make_rp(folder, out_rp_filepath):
     #    travel_dist = mm
     #    (t_pt, t_pt_idx, t_pt_idx_remainder, t_dist) = get_metric_pt_info_by_travel_distance(metric_line, pt_idx, pt_idx_remainder, travel_dist)
     #    print( '{} -> {}'.format((t_pt, t_pt_idx, t_pt_idx_remainder), distance(orig_pt,t_pt) )  )
-
 
 run_and_make_rp(folder='RALmilo', out_rp_filepath=r'out.brachy.rp.withpoints.v04.dcm')
 
