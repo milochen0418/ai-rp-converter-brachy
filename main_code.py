@@ -478,19 +478,6 @@ def get_most_closed_pt(src_pt, pts, allowed_distance=100):
 
 
 
-# Un-Useful
-def example_get_batch_process_dict():
-    f_list = []
-    # process_dict = get_batch_process_dict(r"AI_RS_Compare_20190724")
-    process_dict = get_batch_process_dict(r"RAL_plan_shift")
-    for folder in sorted(process_dict.keys()):
-        if folder == r"AI_RS_Compare_20190724/35086187/0613":
-            continue
-        # algo_show_by_folder(folder)
-        print(folder)
-        f_list.append(folder)
-        continue
-
 
 def make_lines_process(app_pts):
     lines = [[], [], []]
