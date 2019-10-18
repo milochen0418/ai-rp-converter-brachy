@@ -249,7 +249,7 @@ def get_2level_max_contours(img, gray_img):
     # inner contour case of level1_contour is better one case of then level2_contour
 
     # When middle applicator cutting,
-    # inner tontour case of level2_contour is better one case of then level1_contour
+    # inner contour case of level2_contour is better one case of then level1_contour
 
     # So, how to decide which case is for use between these two cases both touching and middle cutting?
     # and then we can process it easily after decision.
@@ -889,7 +889,9 @@ def wrap_to_rp_file(RP_OperatorsName, rs_filepath, tandem_rp_line, out_rp_filepa
 
     BCPItemTemplate = copy.deepcopy(rp_fp.ApplicationSetupSequence[0].ChannelSequence[0].BrachyControlPointSequence[0])
     rp_lines = [tandem_rp_line, rt_ovoid_rp_line, lt_ovoid_rp_line]
-    rp_Ref_ROI_Numbers = [21, 22, 23]
+
+    #TODO rp_Ref_ROI_Numbers need to match to current RS's ROI number of three applicators
+    rp_Ref_ROI_Numbers = [16, 17, 18]
     rp_ControlPointRelativePositions = [3.5, 3.5, 3.5]
     for idx,rp_line in enumerate(rp_lines):
         # Change ROINumber of RP_Template_TestData RS into output RP output file
@@ -957,7 +959,9 @@ def generate_brachy_rp_file(RP_OperatorsName, folder, out_rp_filepath):
     wrap_to_rp_file(RP_OperatorsName, rs_filepath, tandem_rp_line, out_rp_filepath=out_rp_filepath, lt_ovoid_rp_line=lt_ovoid_rp_line, rt_ovoid_rp_line=rt_ovoid_rp_line)
     print('out_rp_filepath = {}'.format(out_rp_filepath))
 
-generate_brachy_rp_file(RP_OperatorsName='thoth', folder='RALmilo', out_rp_filepath=r'brachy.rp.dcm')
+#generate_brachy_rp_file(RP_OperatorsName='thoth', folder='RALmilo', out_rp_filepath=r'brachy.rp.dcm')
+#generate_brachy_rp_file(RP_OperatorsName='thoth', folder='16568131', out_rp_filepath=r'brachy.rp.dcm')
+generate_brachy_rp_file(RP_OperatorsName='thoth', folder='24460566', out_rp_filepath=r'brachy.rp.dcm')
 
 
 
