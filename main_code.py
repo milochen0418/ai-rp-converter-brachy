@@ -872,21 +872,14 @@ def run_and_make_rp(folder, out_rp_filepath):
     metric_line = metric_lines[1].copy()
     print('metric_line = ', metric_line)
 
-    pt_idx = 0
-    pt_idx_remainder = 0
-    purpose_distance_mm = 5
-    max_mm = purpose_distance_mm
-    orig_pt = metric_line[0]
     print('metric_line = ', metric_line)
 
     pt_idx = 0
     pt_idx_remainder = 0
     orig_pt = metric_line[0]
-    # purpose_distance_mm = 7
     purpose_distance_mm = 5
     travel_dist = purpose_distance_mm
-    (t_pt, t_pt_idx, t_pt_idx_remainder, t_dist) = get_metric_pt_info_by_travel_distance(metric_line, pt_idx,
-                                                                                         pt_idx_remainder, travel_dist)
+    (t_pt, t_pt_idx, t_pt_idx_remainder, t_dist) = get_metric_pt_info_by_travel_distance(metric_line, pt_idx, pt_idx_remainder, travel_dist)
     print('{} -> {}'.format((t_pt, t_pt_idx, t_pt_idx_remainder), distance(orig_pt, t_pt)))
 
     # tandem_rp_line = get_and_show_tandem(metric_line, 4.5, 5) # 29059811-1 => z=58 tips to z=-48
