@@ -900,6 +900,9 @@ def wrap_to_rp_file(RP_OperatorsName, rs_filepath, tandem_rp_line, out_rp_filepa
     rp_fp.ApplicationSetupSequence[0].ChannelSequence[2].ReferencedROINumber = 23
     pydicom.write_file(out_rp_filepath, rp_fp)
     pass
+
+
+
 def generate_brachy_rp_file(RP_OperatorsName, folder, out_rp_filepath):
     print('folder = ', folder )
     rs_filepath = ''
@@ -922,13 +925,6 @@ def generate_brachy_rp_file(RP_OperatorsName, folder, out_rp_filepath):
     metric_line = metric_lines[1].copy()
     print('metric_line = ',metric_line)
 
-    pt_idx = 0
-    pt_idx_remainder = 0
-    orig_pt = metric_line[0]
-    purpose_distance_mm = 5
-    travel_dist = purpose_distance_mm
-    (t_pt, t_pt_idx, t_pt_idx_remainder, t_dist) = get_metric_pt_info_by_travel_distance(metric_line, pt_idx, pt_idx_remainder, travel_dist)
-    print('{} -> {}'.format((t_pt, t_pt_idx, t_pt_idx_remainder), distance(orig_pt, t_pt)))
     metric_line.reverse()
     tandem_rp_line = get_and_show_tandem(metric_line, 4, 5)
 
