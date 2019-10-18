@@ -961,21 +961,6 @@ def run_and_make_rp_v02(folder, out_rp_filepath):
 # run_and_make_rp_v02(folder='RP_Template_TestData', out_rp_filepath=r'out.brachy.rp.withpoints.v04.dcm')
 run_and_make_rp_v02(folder='RALmilo', out_rp_filepath=r'out.brachy.rp.withpoints.v04.dcm')
 
-# folder = 'RAL_plan_new_20190905/34698361-1'
-# print('folder = {}'.format(folder))
-# app_pts = algo_run_by_folder(folder)
-# print('app_pts = \n {}', app_pts)
-# lines = make_lines_process(app_pts)
-# The CT data is the format with 512 x 512, but we want to tranfer it into real metric space
-# metric_lines = convert_lines_in_metrics(lines, folder)
-# print('lines[0] = {}\n'.format(lines[0]))
-# print('lines[1] = {}\n'.format(lines[1]))
-# print('lines[2] = {}\n'.format(lines[2]))
-
-# for folder in wang_f_list:
-#    get_ai_man_endpoints(folder)
-#    break
-
 
 exit(0)
 
