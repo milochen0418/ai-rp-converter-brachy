@@ -64,7 +64,6 @@ def get_ct_filelist_by_folder(folder):
 
     return ct_filelist
 
-
 def convert_to_gray_image(pixel_array):
     img = np.copy(pixel_array)
     # Convert to float to avoid overflow or underflow losses.
@@ -961,8 +960,6 @@ def run_and_make_rp_v02(RP_OperatorsName, folder, out_rp_filepath):
     print('tandem_rp_line = {}',tandem_rp_line)
     wrap_to_rp_file(RP_OperatorsName, rs_filepath, tandem_rp_line, out_rp_filepath=out_rp_filepath)
     print('out_rp_filepath = {}'.format(out_rp_filepath))
-
-
 
 run_and_make_rp_v02(RP_OperatorsName='cylin2', folder='RALmilo', out_rp_filepath=r'brachy.rp.dcm')
 
