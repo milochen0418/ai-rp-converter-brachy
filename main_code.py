@@ -911,17 +911,6 @@ def enablePrint():
     sys.stdout = sys.__stdout__
 
 
-broken_f_list = ['RAL_plan_new_20190905/29059811-2', 'RAL_plan_new_20190905/35252020-2']
-debug_idx = 0
-for folder in broken_f_list:
-    break
-    if debug_idx != -1:
-        print('debug for folder = ', folder)
-        algo_show_by_folder(folder, is_debug=True)
-    # ai_tandem_rp_line = predict_tandem_rp_line_by_folder(folder, start_mm=4.5, gap_mm=5, is_debug = True)
-    debug_idx = debug_idx + 1
-# exit(0)
-
 
 folder = 'RAL_plan_new_20190905/34698361-5'
 
