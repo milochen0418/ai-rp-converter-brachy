@@ -1,3 +1,4 @@
+# Try to seperate program into clear verion and useful functions
 
 import matplotlib.pyplot as plt
 import os
