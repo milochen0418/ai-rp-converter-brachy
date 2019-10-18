@@ -526,16 +526,6 @@ def make_lines_process(app_pts):
 
 
 # Un-Useful
-def show_lines(lines):
-    for line_idx in range(len(lines)):
-        line = lines[line_idx]
-        print('lines[{}] = '.format(line_idx))
-        for pt in line:
-            print('\t', pt)
-        print('')
-
-
-# Un-Useful
 def example_show_lines(folder):
     app_pts = algo_run_by_folder(folder)
     lines = make_lines_process(app_pts)
@@ -2353,8 +2343,7 @@ def run_and_make_rp_v02(folder, out_rp_filepath):
     lines = make_lines_process(app_pts)
     # The CT data is the format with 512 x 512, but we want to tranfer it into real metric space
     metric_lines = convert_lines_in_metrics(lines, folder)
-    # Show the lines information in metrics
-    show_lines(metric_lines)
+
     metric_line = metric_lines[1].copy()
     print('metric_line = ', metric_line)
 
