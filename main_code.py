@@ -910,17 +910,6 @@ def blockPrint():
 def enablePrint():
     sys.stdout = sys.__stdout__
 
-
-
-print('Hello ')
-
-f_list = []
-
-
-# process_dict = get_batch_process_dict(r"AI_RS_Compare_20190724")
-# process_dict = get_batch_process_dict(r"RAL_plan_shift")
-
-
 # Un-useful
 def get_batch_process_dict_v03(root_folder):
     process_dict = {}
@@ -1024,20 +1013,6 @@ def show_man_dict():
     for folder in sorted(man_dict.keys()):
         tandem = get_tandem_from_man(man_dict, folder)
         print('folder = {}, and tandem = {}'.format(folder, tandem))
-
-
-# Un-useful (the following is old test code. But we don't use it now
-process_dict = get_batch_process_dict_v03(r"RAL_plan_new_20190905")
-for folder in sorted(process_dict.keys()):
-    if folder == r"AI_RS_Compare_20190724/35086187/0613":
-        continue
-    # algo_show_by_folder(folder)
-    print(folder)
-    f_list.append(folder)
-    continue
-man_dict = get_man_dict()
-folder_idx = 0
-import math
 
 
 def dist_3d(pt1, pt2):
