@@ -100,6 +100,7 @@ def get_max_contours(A, constant_value=None, ContourRetrievalMode = cv2.RETR_EXT
     _, contours, _ = cv2.findContours(gray_image, ContourRetrievalMode, cv2.CHAIN_APPROX_NONE)
     # return contours (list of np.array) and constant (you assume they are almsot highest)
     return (contours, constant)
+# MAYUNUSEFUL
 def get_rect_infos_and_center_pts(contours,h_min=13, w_min=13, h_max=19, w_max=19):
     app_center_pts = []
     rect_infos = []
@@ -139,6 +140,8 @@ def convert_to_gray_image(pixel_array):
     # Convert to uint
     img_2d_scaled = np.uint8(img_2d_scaled)
     return img_2d_scaled
+
+# MAYUNUSEFUL
 def show_diagram(np_array):
     data = np_array.ravel()  # reshape to 1 dimesion array
     sorted_data = np.copy(data)
@@ -149,7 +152,7 @@ def show_diagram(np_array):
     plt.hist(data, bins=the_bins, color=sns.desaturate("indianred", .8), alpha=.4)
     plt.show()
 
-
+# DISCUSS_LATTER
 def get_2level_max_contours(img, gray_img):
     def get_max_contours_by_filter_img(A, filter_img, ContourRetrievalMode=cv2.RETR_TREE):
         # gray_image = cv2.cvtColor(filter_img, cv2.COLOR_RGB2GRAY)
@@ -293,6 +296,8 @@ def get_2level_max_contours(img, gray_img):
         return None
 
     return filtered_level2_contours
+
+# WHAT_IS_SPECIAL_CASE ?
 def get_contours_of_first_slice_in_special_case(first_slice_dict):
     def convert_to_gray_image(pixel_array):
         img = np.copy(pixel_array)
@@ -314,6 +319,9 @@ def get_contours_of_first_slice_in_special_case(first_slice_dict):
 
 
     pass
+
+
+
 def get_app_center_pts_of_first_slice(first_slice_dict):
     ps_x = first_slice_dict['PixelSpacing_x']
     ps_y = first_slice_dict['PixelSpacing_y']
@@ -344,6 +352,7 @@ def get_app_center_pts_of_first_slice(first_slice_dict):
     print('get_app_center_pts_of_first_slice() -> x_sorted_pts = ', x_sorted_pts)
     return x_sorted_pts
     pass
+# UN-Useful. don't need to show
 def get_view_scope_by_slice(first_slice_dict, padding=30):
     (contours, constant) = get_max_contours(first_slice_dict['rescale_pixel_array'])
     print('PixelSpacing_(x,y)=({}, {})'.format(first_slice_dict['PixelSpacing_x'], first_slice_dict['PixelSpacing_y']))
@@ -402,6 +411,8 @@ def get_view_scope_by_slice(first_slice_dict, padding=30):
     return (view_min_y, view_max_y, view_min_x, view_max_x)
     # The way to use return value is
     # gray_img = gray_img[ view_min_y: view_max_y, view_min_x:view_max_x]
+
+# Un-Useful
 def get_batch_process_dict_v01(root_folder):
     process_dict = {}
     if not os.path.isdir(root_folder):
@@ -422,6 +433,7 @@ def get_batch_process_dict_v01(root_folder):
         # TODO in future if you need
         process_dict[folder] = input_dict
     return process_dict
+# Un-Useful
 def process_first_slice_with_folder(folder):
     print("\n\n\n")
     print("process_with_folder: ", folder)
@@ -512,6 +524,8 @@ def process_first_slice_with_folder(folder):
     plt.show()
 
     pass
+
+# Use-Useful
 def process_with_folder(folder):
     print("\n\n\n")
     print("process_with_folder: ", folder)
@@ -631,6 +645,7 @@ def process_with_folder(folder):
         plt.show()
 
     pass
+# Un-Useful
 def example_show_all_slice():
     process_dict = get_batch_process_dict(r"AI_RS_Compare_20190724")
     for i in sorted(process_dict.keys()):
@@ -638,6 +653,7 @@ def example_show_all_slice():
             continue
         process_with_folder(i)
     pass
+# Un-Useful
 def example_first_slice():
     process_dict = get_batch_process_dict(r"AI_RS_Compare_20190724")
     for i in sorted(process_dict.keys()):
@@ -649,7 +665,7 @@ def example_first_slice():
         process_first_slice_with_folder(i)
     pass
 
-
+# Un-Useful
 def distance(pt1, pt2):
     # return ( (pt1[0]-pt2[0])**2 + (pt1[1]-pt2[1])**2 )
     import math
@@ -680,6 +696,7 @@ def get_most_closed_pt(src_pt, pts, allowed_distance=100):
         pass
     return dst_pt
 
+# Un-Useful
 def pure_show_slice_dict(slice_dict, view_rect):
     (view_min_y, view_max_y, view_min_x, view_max_x) = view_rect
     # This will be first slice
@@ -718,7 +735,7 @@ def pure_show_slice_dict(slice_dict, view_rect):
     plt.show()
     pass
 
-
+# Un-Useful
 def algo_show_by_folder(folder, is_debug = False):
     ct_filelist = get_ct_filelist_by_folder(folder)
     ct_dicom_dict = gen_ct_dicom_dict(ct_filelist)
@@ -832,6 +849,8 @@ def algo_show_by_folder(folder, is_debug = False):
 
         #
         prev_slice_dict = slice_dict
+
+# Un-Useful
 def algo_show_by_folder_v03(folder, is_debug=True):
     # app_pts_dict[z] = [[x,y,z], [x,y,z], [x,y,z] ]
     app_pts_dict = {}
@@ -1002,7 +1021,7 @@ def algo_show_by_folder_v03(folder, is_debug=True):
     print(app_pts_dict)
     return app_pts_dict
 
-
+# Un-Useful
 def get_batch_process_dict_v02(root_folder):
     process_dict = {}
     if not os.path.isdir(root_folder):
@@ -1023,6 +1042,8 @@ def get_batch_process_dict_v02(root_folder):
         # TODO in future if you need
         process_dict[folder] = input_dict
     return process_dict
+
+# Un-Useful
 def example_get_batch_process_dict():
     f_list = []
     # process_dict = get_batch_process_dict(r"AI_RS_Compare_20190724")
@@ -1034,6 +1055,8 @@ def example_get_batch_process_dict():
         print(folder)
         f_list.append(folder)
         continue
+
+
 def make_lines_process(app_pts):
     lines = [[], [], []]
     sorted_app_pts_keys = sorted(app_pts.keys())
@@ -1078,6 +1101,8 @@ def make_lines_process(app_pts):
         line = line[:-1]
         lines[idx] = line
     return lines
+
+# Un-Useful
 def show_lines(lines):
     for line_idx in range(len(lines)):
         line = lines[line_idx]
@@ -1085,11 +1110,13 @@ def show_lines(lines):
         for pt in line:
             print('\t', pt)
         print('')
+# Un-Useful
 def example_show_lines(folder):
     app_pts = algo_run_by_folder(folder)
     lines = make_lines_process(app_pts)
     show_lines(lines)
 
+# Unuseful
 folder = r"RAL_plan_shift/35086187/0101"
 print('Usage of make_lines_process() with folder = ', folder)
 
@@ -1258,7 +1285,7 @@ def algo_run_by_folder(folder):
         prev_slice_dict = slice_dict
     print(app_pts_dict)
     return app_pts_dict
-
+# Un-Useful
 def algo_run_by_folder_v02(folder):
     # app_pts_dict[z] = [[x,y,z], [x,y,z], [x,y,z] ]
     app_pts_dict = {}
@@ -1379,7 +1406,10 @@ def algo_run_by_folder_v02(folder):
     print(app_pts_dict)
     return app_pts_dict
 
+
 # Implementation of get_metric_pt_info_by_travel_distance(metric_line, pt_idx, pt_idx_remainder, travel_dist)
+
+# REWRITE get_metric_pt_info_by_travel_distance, so the get_metric_pt, reduct_distance_step and get_metric_pt_info_travel_distance will not be USED
 def get_metric_pt(metric_line, pt_idx, pt_idx_remainder):
     # print('get_metric_pt(metric_line={}, pt_idx={}, pt_idx_remainder={})'.format(metric_line, pt_idx, pt_idx_remainder))
     pt = metric_line[pt_idx].copy()
@@ -1491,9 +1521,8 @@ def get_metric_pt_info_by_travel_distance(metric_line, pt_idx, pt_idx_remainder,
         pt_idx_remainder = t_pt_idx_remainder
         dist = t_dist
 
-
+# CHECK AGAIN
 def get_maps_with_folder(folder):
-
     import pydicom
     import os
     z_map = {}
@@ -1528,6 +1557,8 @@ def get_maps_with_folder(folder):
         z_map[origin_z] = z_dict
         ct_filepath_map[ct_filepath] = z_dict
     return z_map, ct_filepath_map
+
+
 # The CT data is the format with 512 x 512, but we want to tranfer it into real metric space
 def convert_lines_in_metrics(lines, ct_folder):
     from decimal import Decimal
@@ -1556,7 +1587,7 @@ def convert_lines_in_metrics(lines, ct_folder):
             new_line.append(new_pt)
     return new_lines
 
-
+# Un-useful
 def show_tandem(metric_line, first_purpose_distance_mm, each_purpose_distance_mm):
     def distance(pt1, pt2):
         import math
@@ -1622,7 +1653,7 @@ def get_and_show_tandem( metric_line, first_purpose_distance_mm, each_purpose_di
     return tandem_rp_line
 
 
-
+# Un-Useful
 def show_report_by_folder(folder):
     print('folder = ', folder )
     # the function will get all 3D pt of applicator
@@ -1685,7 +1716,7 @@ def blockPrint():
 # Restore
 def enablePrint():
     sys.stdout = sys.__stdout__
-
+# Un-useful
 def predict_tandem_rp_line_by_folder(folder, start_mm, gap_mm, is_debug = False):
     tandem_rp_line = []
     print('folder = ', folder )
@@ -1749,7 +1780,7 @@ f_list = []
 
 
 
-
+# Un-useful
 def get_batch_process_dict_v03(root_folder):
     process_dict = {}
     if not os.path.isdir(root_folder):
@@ -1768,7 +1799,7 @@ def get_batch_process_dict_v03(root_folder):
         process_dict[folder] = input_dict
     return process_dict
 
-
+# Un-useful
 import pickle
 def python_object_dump(obj, filename):
     file_w = open(filename, "wb")
@@ -1787,7 +1818,7 @@ def python_object_load(filename):
             return None
     return obj2
 
-
+# Un-useful
 def get_man_dict():
     ret_dict_filename = 'man_patient_rp_data.bytes'
     ret_dict = python_object_load(ret_dict_filename)
@@ -1839,14 +1870,15 @@ def get_tandem_from_man(man_dict, folder):
     return new_line
     #return line
 
+# Un-useful
 def show_man_dict():
     man_dict = get_man_dict()
     for folder in sorted(man_dict.keys()):
         tandem = get_tandem_from_man(man_dict, folder)
         print('folder = {}, and tandem = {}'.format(folder,tandem))
 
+# Un-useful (the following is old test code. But we don't use it now
 process_dict = get_batch_process_dict_v03(r"RAL_plan_new_20190905")
-
 for folder in sorted(process_dict.keys()):
     if folder == r"AI_RS_Compare_20190724/35086187/0613":
         continue
@@ -1854,7 +1886,6 @@ for folder in sorted(process_dict.keys()):
     print(folder)
     f_list.append(folder)
     continue
-
 man_dict = get_man_dict()
 folder_idx = 0
 import math
@@ -1882,6 +1913,7 @@ folder = 'RAL_plan_new_20190905/34698361-5'
 #folder = 'RAL_plan_new_20190905/35413048-3'
 #folder = RAL_plan_new_20190905/35413048-3, diff_distance = 9.305148954892925
 
+# Un-Useful
 def app_pts_show3D(app_pts):
     def distance(pt1, pt2):
         return ((pt1[0] - pt2[0]) ** 2 + (pt1[1] - pt2[1]) ** 2)
@@ -2063,7 +2095,7 @@ def get_CT_tandem_line_by_folder(folder):
     # The CT data is the format with 512 x 512, but we want to tranfer it into real metric space
     line = lines[1].copy()
     return line
-
+# Need to combine to above function.
 def get_CT_tandem_metric_line_by_folder(folder):
     app_pts = algo_run_by_folder(folder)
     lines = make_lines_process(app_pts)
@@ -2077,6 +2109,7 @@ def get_CT_tandem_metric_rp_line_by_folder(folder):
 
 print('\n\n\n\n\n interpolate \n')
 
+# Un-useful
 def line_interpolate( line, point_num=20):
     # GET linspace between two points [pt1, pt2)
     def get_linspace_list(pt1, pt2, point_num):
@@ -2106,6 +2139,7 @@ def line_interpolate( line, point_num=20):
     new_line.append(line[-1])
     return new_line
 
+# Un-useful
 def get_closed_ai_pt(ai_interpolated_line, pt):
     def distance(pt1, pt2):
         # return ( (pt1[0]-pt2[0])**2 + (pt1[1]-pt2[1])**2 )
@@ -2133,6 +2167,7 @@ def get_closed_ai_pt(ai_interpolated_line, pt):
         return (dst_pt, distance(src_pt, dst_pt))
     return get_most_closed_pt(pt, ai_interpolated_line)
 
+# Un-useful
 def drwang_output_result_dump(f_list, dump_filepath):
     idx = 0
     drwang_output_result = {}
@@ -2174,6 +2209,7 @@ def drwang_output_result_dump(f_list, dump_filepath):
     #python_object_dump(drwang_output_result, 'drwang_output_result.bytes')
     python_object_dump(drwang_output_result, dump_filepath)
 
+# Un-useful
 def drwang_output_result_to_csv(dump_filepath, csv_filepath):
     drwang_output_result = python_object_load(dump_filepath)
     print('aaa')
@@ -2226,14 +2262,14 @@ def drwang_output_result_to_csv(dump_filepath, csv_filepath):
     pass
 
 
-
+# Un-useful
 wang_f_list = [
     'RAL_plan_new_20190905/29059811-3', #(max = 1.38, avg = 1.02)
     'RAL_plan_new_20190905/34698361-1', #(max = 4.103, avg = 0.906 )
     'RAL_plan_new_20190905/34698361-5',#(max = 2.47, avg = 0.545 )
     'RAL_plan_new_20190905/35413048-3' #(max = 2.936, avg = 0.598 )
 ]
-
+# Un-Useful
 def drwang_output_show_3D(dump_filepath, show_folder = 'RAL_plan_new_20190905/29059811-3'):
     from mpl_toolkits import mplot3d
     import numpy as np
@@ -2292,14 +2328,14 @@ def drwang_output_show_3D(dump_filepath, show_folder = 'RAL_plan_new_20190905/29
 
 #drwang_output_show_3D(dump_filepath = 'drwang_output_result.bytes')
 
-
+# Un-useful
 for f in wang_f_list :
     if (True == False):
         show_folder = f
         print('3D data for show_folder = ', show_folder)
         drwang_output_show_3D(dump_filepath = 'drwang_output_result.bytes', show_folder = show_folder)
 
-
+# Un-useful
 def drawang_output_show_avg_max_min(dump_filepath):
     drwang_output_result = python_object_load(dump_filepath)
     sorted_folder = sorted(drwang_output_result.keys())
@@ -2336,6 +2372,7 @@ def drawang_output_show_avg_max_min(dump_filepath):
         d['avg_dist'] = dist_avg
         print('folder={}\n dist_max={}\n dist_avg={}\n\n'.format(folder, d['max_dist'], d['avg_dist']))
 
+# Un-useful
 def process_drwang_output_csv_compare_output():
     bytes_filepath = 'drwang_output_result.bytes'
     #drwang_output_result_dump(f_list, dump_filepath=bytes_filepath)
@@ -2345,7 +2382,7 @@ def process_drwang_output_csv_compare_output():
 
 #process_drwang_output_csv_compare_output()
 
-
+# Un-useful
 def test_draw_3d():
     from mpl_toolkits import mplot3d
     import numpy as np
@@ -2365,6 +2402,8 @@ def test_draw_3d():
     plt.show()
 #test_draw_3d()
 
+
+# Un-useful
 def process_manual_point_5mm_check(f_list, csv_filepath):
     # Step 1. Set out_dict
     from statistics import mean
@@ -2466,12 +2505,13 @@ def process_manual_point_5mm_check(f_list, csv_filepath):
 
 #process_manual_point_5mm_check(f_list, 'manual_point_5mm_check.csv')
 
+# Un-useful
 def get_man_points(folder):
     print('folder = ', folder)
     man_line = get_CT_tandem_metric_rp_line_by_folder(folder)
     float_man_metric_line = [(float(pt[0]), float(pt[1]), float(pt[2])) for pt in man_line]
     return float_man_metric_line
-
+# Un-useful
 def get_ai_points(folder):
     print('folder = ', folder )
     # STEP 1. get endpoint from AI predict points
@@ -2487,7 +2527,7 @@ def get_ai_points(folder):
     float_ai_metric_line = [(float(pt[0]), float(pt[1]), float(pt[2])) for pt in metric_line]
     return float_ai_metric_line
 
-
+# Un-useful
 def get_ai_man_endpoints(folder):
     print('folder = ', folder )
     # STEP 1. get endpoint from AI predict points
@@ -2523,6 +2563,7 @@ def get_ai_man_endpoints(folder):
     print('man_endpoint_pt = {}'.format(man_endpoint_pt))
     return ( ai_endpoint_pt, man_endpoint_pt )
 
+# Un-useful
 def pickle_dump_ai_man_endpoints_dict(f_list, dump_filepath='ai_man_endpoints.bytes'):
     out_dict = {}
     for folder in f_list:
@@ -2536,6 +2577,7 @@ def pickle_dump_ai_man_endpoints_dict(f_list, dump_filepath='ai_man_endpoints.by
 
 #pickle_dump_ai_man_endpoints_dict(f_list, dump_filepath='ai_man_endpoints.bytes')
 
+# Un-useful
 def pickle_dump_ai_man_points_dict(f_list, dump_filepath='ai_man_points.bytes'):
     out_dict = {}
     for folder in f_list:
@@ -2553,7 +2595,7 @@ def pickle_dump_ai_man_points_dict(f_list, dump_filepath='ai_man_points.bytes'):
 
 
 
-
+# Un-useful
 def travel_5mm_check_with_man_first_point(f_list, dump_filepath):
     import math
     drwang_output_result = {}
@@ -2654,7 +2696,7 @@ def travel_5mm_check_with_man_first_point(f_list, dump_filepath):
 #travel_5mm_check_with_man_first_point(f_list = f_list, dump_filepath='travel_5mm_with_manual_tip.bytes')
 
 #result = python_object_load('travel_5mm_with_manual_tip.bytes')
-
+# Un-useful
 def process_new_drwang_output_csv_compare_output():
     bytes_filepath = 'travel_5mm_with_manual_tip.bytes'
     #drwang_output_result_dump(f_list, dump_filepath=bytes_filepath)
@@ -2664,7 +2706,7 @@ def process_new_drwang_output_csv_compare_output():
 #process_new_drwang_output_csv_compare_output()
 
 
-
+# Un-useful
 def travel_every_5mm_in_ai(f_list, dump_filepath):
     import math
     drwang_output_result = {}
@@ -2768,7 +2810,7 @@ def travel_every_5mm_in_ai(f_list, dump_filepath):
     python_object_dump(drwang_output_result, dump_filepath)
 #travel_every_5mm_in_ai(f_list = f_list, dump_filepath='travel_every_5mm_in_ai.bytes')
 
-
+# Un-useful
 def run_and_make_rp(folder, out_rp_filepath):
     rp_template_filepath = r'RP_Template/Brachy_RP.1.2.246.352.71.5.417454940236.2063186.20191015164204.dcm'
     rs_filepath = ''
@@ -2810,9 +2852,6 @@ def run_and_make_rp(folder, out_rp_filepath):
     # In the finally, just write file back
     pydicom.write_file(out_rp_filepath, rp_fp)
 #run_and_make_rp(folder='RAL_plan_new_20190905/29059811-1', out_rp_filepath=r'out.brachy.rp.withpoints.dcm')
-
-
-
 
 
 def run_and_make_rp_v02(folder, out_rp_filepath):
@@ -2896,7 +2935,7 @@ run_and_make_rp_v02(folder='RALmilo', out_rp_filepath=r'out.brachy.rp.withpoints
 
 exit(0)
 
-
+# Un-useful
 if True:
     broken_f_list = []
     for folder in f_list:
