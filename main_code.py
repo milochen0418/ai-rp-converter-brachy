@@ -4,7 +4,6 @@ import pydicom
 import numpy as np
 import cv2
 import copy
-import traceback
 
 def gen_ct_dicom_dict(ct_filelist):
     CtCache = {}
@@ -134,7 +133,6 @@ def get_rect_infos_and_center_pts(contours, h_min=13, w_min=13, h_max=19, w_max=
         rect_infos.append(rect_info)
     sorted_app_center_pts = sorted(app_center_pts, key=lambda cen_pt: cen_pt[0], reverse=False)
     return (sorted_app_center_pts, rect_infos, app_center_pts)
-# DISCUSS_LATTER
 def get_2level_max_contours(img, gray_img):
     def get_max_contours_by_filter_img(A, filter_img, ContourRetrievalMode=cv2.RETR_TREE):
         # gray_image = cv2.cvtColor(filter_img, cv2.COLOR_RGB2GRAY)
@@ -283,7 +281,6 @@ def get_2level_max_contours(img, gray_img):
         return None
 
     return filtered_level2_contours
-# WHAT_IS_SPECIAL_CASE ?
 def get_contours_of_first_slice_in_special_case(first_slice_dict):
     def convert_to_gray_image(pixel_array):
         img = np.copy(pixel_array)
