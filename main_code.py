@@ -910,29 +910,6 @@ def blockPrint():
 def enablePrint():
     sys.stdout = sys.__stdout__
 
-# Un-useful
-def get_man_points(folder):
-    print('folder = ', folder)
-    man_line = get_CT_tandem_metric_rp_line_by_folder(folder)
-    float_man_metric_line = [(float(pt[0]), float(pt[1]), float(pt[2])) for pt in man_line]
-    return float_man_metric_line
-
-
-# Un-useful
-def get_ai_points(folder):
-    print('folder = ', folder)
-    # STEP 1. get endpoint from AI predict points
-    # the function will get all 3D pt of applicator
-    app_pts = algo_run_by_folder(folder)
-    # transform all 3D pt of applicator into each line for each applicator and the line have been sorted by z
-    lines = make_lines_process(app_pts)
-    # The CT data is the format with 512 x 512, but we want to tranfer it into real metric space
-    metric_lines = convert_lines_in_metrics(lines, folder)
-    # Show the lines information in metrics
-    show_lines(metric_lines)
-    metric_line = metric_lines[1].copy()
-    float_ai_metric_line = [(float(pt[0]), float(pt[1]), float(pt[2])) for pt in metric_line]
-    return float_ai_metric_line
 
 
 # Un-useful
