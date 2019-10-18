@@ -910,25 +910,6 @@ def blockPrint():
 def enablePrint():
     sys.stdout = sys.__stdout__
 
-# Un-useful
-def get_batch_process_dict_v03(root_folder):
-    process_dict = {}
-    if not os.path.isdir(root_folder):
-        return process_dict
-
-    dataset_folder_list = []
-    for patient_id_file in os.listdir(root_folder):
-        patient_id_filepath = r"{}/{}".format(root_folder, patient_id_file)
-        if not os.path.isdir(patient_id_filepath):
-            continue
-        dataset_folder_list.append(patient_id_filepath)
-
-    for folder in dataset_folder_list:
-        input_dict = {}
-        # TODO in future if you need
-        process_dict[folder] = input_dict
-    return process_dict
-
 
 # Un-useful
 import pickle
