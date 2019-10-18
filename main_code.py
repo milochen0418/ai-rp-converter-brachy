@@ -445,9 +445,8 @@ def get_view_scope_by_slice(first_slice_dict, padding=30):
 
 
 
-# Un-Useful
+# Useful
 def distance(pt1, pt2):
-    # return ( (pt1[0]-pt2[0])**2 + (pt1[1]-pt2[1])**2 )
     import math
     axis_num = len(pt1)
     sum = 0.0
@@ -455,7 +454,7 @@ def distance(pt1, pt2):
         sum = sum + (pt1[idx] - pt2[idx]) ** 2
     ans = math.sqrt(sum)
     return ans
-    # return math.sqrt((pt1[0] - pt2[0]) ** 2 + (pt1[1] - pt2[1]) ** 2)
+
 
 
 def get_most_closed_pt(src_pt, pts, allowed_distance=100):
