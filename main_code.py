@@ -970,14 +970,6 @@ def drwang_output_show_3D(dump_filepath, show_folder='RAL_plan_new_20190905/2905
 
 
 
-# Un-useful
-def process_drwang_output_csv_compare_output():
-    bytes_filepath = 'drwang_output_result.bytes'
-    # drwang_output_result_dump(f_list, dump_filepath=bytes_filepath)
-    # drawang_output_show_avg_max_min(dump_filepath=bytes_filepath)
-    drawang_output_show_avg_max_min(dump_filepath=bytes_filepath)
-    # drwang_output_result_to_csv(dump_filepath=bytes_filepath, csv_filepath='drwang_output_result.csv')
-
 
 # process_drwang_output_csv_compare_output()
 
