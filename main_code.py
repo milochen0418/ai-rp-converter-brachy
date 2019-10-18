@@ -825,7 +825,8 @@ def get_applicator_rp_line(metric_line, first_purpose_distance_mm, each_purpose_
 
     return tandem_rp_line
 
-def wrap_to_rp_file(RP_OperatorsName, rs_filepath, tandem_rp_line, out_rp_filepath):
+
+def wrap_to_rp_file(RP_OperatorsName, rs_filepath, tandem_rp_line, out_rp_filepath, lt_ovoid_rp_line, rt_ovoid_rp_line):
     rp_template_filepath = r'RP_Template/Brachy_RP.1.2.246.352.71.5.417454940236.2063186.20191015164204.dcm'
     def get_new_uid(old_uid='1.2.246.352.71.5.417454940236.2063186.20191015164204', study_date='20190923'):
         uid = old_uid
@@ -874,6 +875,13 @@ def wrap_to_rp_file(RP_OperatorsName, rs_filepath, tandem_rp_line, out_rp_filepa
     rp_fp.RTPlanTime = str(float(rs_fp.StudyTime) + 0.001)
     rp_fp.InstanceCreationTime = str(float(rs_fp.InstanceCreationTime) + 0.001)
 
+    # The template structure for applicator
+    # Tandem -> rp_fp.ApplicationSetupSequence[0].ChannelSequence[0]
+    # Rt Ovoid -> rp_fp.ApplicationSetupSequence[0].ChannelSequence[1]
+    # Lt OVoid -> rp_fp.ApplicationSetupSequence[0].ChannelSequence[2]
+    # For each applicator .NumberOfControlPoints is mean number of point
+    # For each applicator .BrachyControlPointSequence is mean the array of points
+
     rp_fp.ApplicationSetupSequence[0].ChannelSequence[0].NumberOfControlPoints = len(tandem_rp_line)
     BCPItemTemplate = copy.deepcopy(rp_fp.ApplicationSetupSequence[0].ChannelSequence[0].BrachyControlPointSequence[0])
     rp_fp.ApplicationSetupSequence[0].ChannelSequence[0].BrachyControlPointSequence.clear()
@@ -895,10 +903,12 @@ def wrap_to_rp_file(RP_OperatorsName, rs_filepath, tandem_rp_line, out_rp_filepa
         rp_fp.ApplicationSetupSequence[0].ChannelSequence[0].BrachyControlPointSequence.append(BCPEndPt)
 
     # Change ROINumber of RP_Template_TestData RS into output RP output file
+    # Do  I need to fit ROINumber in RS or not? I still have no answer
     rp_fp.ApplicationSetupSequence[0].ChannelSequence[0].ReferencedROINumber = 21
     rp_fp.ApplicationSetupSequence[0].ChannelSequence[1].ReferencedROINumber = 22
     rp_fp.ApplicationSetupSequence[0].ChannelSequence[2].ReferencedROINumber = 23
     pydicom.write_file(out_rp_filepath, rp_fp)
+
     pass
 
 
@@ -923,23 +933,25 @@ def generate_brachy_rp_file(RP_OperatorsName, folder, out_rp_filepath):
     metric_lines = convert_lines_in_metrics(lines, folder)
     # Show the lines information in metrics
     metric_tandem_line = metric_lines[1].copy()
-    metric_l_ovoid_line = metric_lines[0].copy()
-    metric_r_ovoid_line = metric_lines[2].copy()
+    metric_lt_ovoid_line = metric_lines[0].copy()
+    metric_rt_ovoid_line = metric_lines[2].copy()
 
     print('metric_tandem_line = ', metric_tandem_line)
-    print('metric_l_ovoid_line = ', metric_l_ovoid_line)
-    print('metric_r_ovoid_line = ', metric_r_ovoid_line)
+    print('metric_lt_ovoid_line = ', metric_lt_ovoid_line)
+    print('metric_rt_ovoid_line = ', metric_rt_ovoid_line)
 
     metric_tandem_line.reverse()
-    metric_l_ovoid_line.reverse()
-    metric_r_ovoid_line.reverse()
+    metric_lt_ovoid_line.reverse()
+    metric_rt_ovoid_line.reverse()
 
     tandem_rp_line = get_applicator_rp_line(metric_tandem_line, 4, 5)
-    l_ovoid_rp_line = get_applicator_rp_line(metric_l_ovoid_line, 0, 5)
-    r_ovoid_rp_line = get_applicator_rp_line(metric_r_ovoid_line, 0 ,5)
+    lt_ovoid_rp_line = get_applicator_rp_line(metric_lt_ovoid_line, 0, 5)
+    rt_ovoid_rp_line = get_applicator_rp_line(metric_rt_ovoid_line, 0 ,5)
 
-    print('tandem_rp_line = {}',tandem_rp_line)
-    wrap_to_rp_file(RP_OperatorsName, rs_filepath, tandem_rp_line, out_rp_filepath=out_rp_filepath)
+    print('tandem_rp_line = {}'.format(tandem_rp_line) )
+    print('lt_ovoid_rp_line = {}'.format(lt_ovoid_rp_line) )
+    print('rt_ovoid_rp_line = {}'.format(rt_ovoid_rp_line) )
+    wrap_to_rp_file(RP_OperatorsName, rs_filepath, tandem_rp_line, out_rp_filepath=out_rp_filepath, lt_ovoid_rp_line=lt_ovoid_rp_line, rt_ovoid_rp_line=rt_ovoid_rp_line)
     print('out_rp_filepath = {}'.format(out_rp_filepath))
 
 generate_brachy_rp_file(RP_OperatorsName='thoth', folder='RALmilo', out_rp_filepath=r'brachy.rp.dcm')
