@@ -912,36 +912,6 @@ def enablePrint():
 
 
 
-# Un-useful
-def get_closed_ai_pt(ai_interpolated_line, pt):
-    def distance(pt1, pt2):
-        # return ( (pt1[0]-pt2[0])**2 + (pt1[1]-pt2[1])**2 )
-        import math
-        axis_num = len(pt1)
-        sum = 0.0
-        for idx in range(axis_num):
-            sum = sum + (pt1[idx] - pt2[idx]) ** 2
-        ans = math.sqrt(sum)
-        return ans
-        # return math.sqrt((pt1[0] - pt2[0]) ** 2 + (pt1[1] - pt2[1]) ** 2)
-
-    def get_most_closed_pt(src_pt, pts):
-        if pts == None:
-            return None
-        if pts == []:
-            return None
-        dst_pt = None
-        for pt in pts:
-            if dst_pt == None:
-                dst_pt = pt
-            else:
-                if distance(src_pt, pt) < distance(src_pt, dst_pt):
-                    dst_pt = pt
-            pass
-        return (dst_pt, distance(src_pt, dst_pt))
-
-    return get_most_closed_pt(pt, ai_interpolated_line)
-
 
 # Un-useful
 def drwang_output_result_dump(f_list, dump_filepath):
