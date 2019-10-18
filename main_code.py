@@ -911,14 +911,6 @@ def enablePrint():
     sys.stdout = sys.__stdout__
 
 
-# Un-useful
-def show_man_dict():
-    man_dict = get_man_dict()
-    for folder in sorted(man_dict.keys()):
-        tandem = get_tandem_from_man(man_dict, folder)
-        print('folder = {}, and tandem = {}'.format(folder, tandem))
-
-
 def dist_3d(pt1, pt2):
     return math.sqrt((pt1[0] - pt2[0]) ** 2 + (pt1[1] - pt2[1]) ** 2 + (pt1[2] - pt2[2]) ** 2)
 
