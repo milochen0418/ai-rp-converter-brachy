@@ -903,7 +903,7 @@ def get_and_show_tandem(metric_line, first_purpose_distance_mm, each_purpose_dis
 
 
 
-def run_and_make_rp_v02(folder, out_rp_filepath):
+def run_and_make_rp(folder, out_rp_filepath):
     print('folder = ', folder)
     # the function will get all 3D pt of applicator
     app_pts = algo_run_by_folder(folder)
@@ -957,9 +957,7 @@ def run_and_make_rp_v02(folder, out_rp_filepath):
     #    print( '{} -> {}'.format((t_pt, t_pt_idx, t_pt_idx_remainder), distance(orig_pt,t_pt) )  )
 
 
-# run_and_make_rp_v02(folder='RAL_plan_new_20190905/29059811-1', out_rp_filepath=r'out.brachy.rp.withpoints.v04.dcm')
-# run_and_make_rp_v02(folder='RP_Template_TestData', out_rp_filepath=r'out.brachy.rp.withpoints.v04.dcm')
-run_and_make_rp_v02(folder='RALmilo', out_rp_filepath=r'out.brachy.rp.withpoints.v04.dcm')
+run_and_make_rp(folder='RALmilo', out_rp_filepath=r'out.brachy.rp.withpoints.v04.dcm')
 
 
 
