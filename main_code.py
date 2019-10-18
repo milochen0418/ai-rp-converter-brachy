@@ -911,27 +911,6 @@ def enablePrint():
     sys.stdout = sys.__stdout__
 
 
-# Un-useful ?
-import pickle
-def python_object_dump(obj, filename):
-    file_w = open(filename, "wb")
-    pickle.dump(obj, file_w)
-    file_w.close()
-def python_object_load(filename):
-    try:
-        file_r = open(filename, "rb")
-        obj2 = pickle.load(file_r)
-        file_r.close()
-    except:
-        try:
-            file_r.close()
-            return None
-        except:
-            return None
-    return obj2
-
-
-
 def get_tandem_from_man(man_dict, folder):
     # Here show the different rules in different rp filepath to get tandem
     dict = man_dict[folder]
