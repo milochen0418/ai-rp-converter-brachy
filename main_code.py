@@ -513,12 +513,6 @@ def make_lines_process(app_pts):
     return lines
 
 
-# Un-Useful
-def example_show_lines(folder):
-    app_pts = algo_run_by_folder(folder)
-    lines = make_lines_process(app_pts)
-    show_lines(lines)
-
 
 # Unuseful
 folder = r"RAL_plan_shift/35086187/0101"
