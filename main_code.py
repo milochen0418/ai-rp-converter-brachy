@@ -911,13 +911,6 @@ def enablePrint():
     sys.stdout = sys.__stdout__
 
 
-def get_CT_tandem_metric_rp_line_by_folder(folder):
-    man_dict = get_man_dict()
-    return get_tandem_from_man(man_dict, folder)
-
-
-print('\n\n\n\n\n interpolate \n')
-
 
 # Un-useful
 def line_interpolate(line, point_num=20):
