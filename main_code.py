@@ -650,7 +650,6 @@ def algo_run_by_folder(folder):
     return app_pts_dict
 
 
-
 # Implementation of get_metric_pt_info_by_travel_distance(metric_line, pt_idx, pt_idx_remainder, travel_dist)
 
 # REWRITE get_metric_pt_info_by_travel_distance, so the get_metric_pt, reduct_distance_step and get_metric_pt_info_travel_distance will not be USED
@@ -872,12 +871,6 @@ def run_and_make_rp(folder, out_rp_filepath):
     metric_lines = convert_lines_in_metrics(lines, folder)
     metric_line = metric_lines[1].copy()
     print('metric_line = ', metric_line)
-
-    def distance(pt1, pt2):
-        import math
-        # print(r"pt1 = {}, pt2 = {}".format(pt1, pt2))
-        ret_dist = math.sqrt((pt1[0] - pt2[0]) ** 2 + (pt1[1] - pt2[1]) ** 2 + (pt1[2] - pt2[2]) ** 2)
-        return ret_dist
 
     pt_idx = 0
     pt_idx_remainder = 0
