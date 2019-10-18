@@ -863,6 +863,36 @@ def get_and_show_tandem(metric_line, first_purpose_distance_mm, each_purpose_dis
 
 
 
+def run_and_make_rp_v02(folder, out_rp_filepath):
+    print('folder = ', folder )
+    # the function will get all 3D pt of applicator
+    app_pts = algo_run_by_folder(folder)
+    # transform all 3D pt of applicator into each line for each applicator and the line have been sorted by z
+    lines = make_lines_process(app_pts)
+    # The CT data is the format with 512 x 512, but we want to tranfer it into real metric space
+    metric_lines = convert_lines_in_metrics(lines, folder)
+    # Show the lines information in metrics
+    metric_line = metric_lines[1].copy()
+    print('metric_line = ',metric_line)
+
+    pt_idx = 0
+    pt_idx_remainder = 0
+    orig_pt = metric_line[0]
+    purpose_distance_mm = 5
+    travel_dist = purpose_distance_mm
+    (t_pt, t_pt_idx, t_pt_idx_remainder, t_dist) = get_metric_pt_info_by_travel_distance(metric_line, pt_idx, pt_idx_remainder, travel_dist)
+    print('{} -> {}'.format((t_pt, t_pt_idx, t_pt_idx_remainder), distance(orig_pt, t_pt)))
+
+    metric_line.reverse()
+    tandem_rp_line = get_and_show_tandem(metric_line, 4, 5)
+    print('tandem_rp_line = {}',tandem_rp_line)
+
+#run_and_make_rp_v02(folder='RAL_plan_new_20190905/29059811-1', out_rp_filepath=r'out.brachy.rp.withpoints.v04.dcm')
+#run_and_make_rp_v02(folder='RP_Template_TestData', out_rp_filepath=r'out.brachy.rp.withpoints.v04.dcm')
+run_and_make_rp_v02(folder='RALmilo', out_rp_filepath=r'out.brachy.rp.withpoints.v04.dcm')
+
+
+
 
 
 
