@@ -911,10 +911,6 @@ def enablePrint():
     sys.stdout = sys.__stdout__
 
 
-def dist_3d(pt1, pt2):
-    return math.sqrt((pt1[0] - pt2[0]) ** 2 + (pt1[1] - pt2[1]) ** 2 + (pt1[2] - pt2[2]) ** 2)
-
-
 broken_f_list = ['RAL_plan_new_20190905/29059811-2', 'RAL_plan_new_20190905/35252020-2']
 debug_idx = 0
 for folder in broken_f_list:
