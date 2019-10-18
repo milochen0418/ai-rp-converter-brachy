@@ -911,25 +911,6 @@ def enablePrint():
     sys.stdout = sys.__stdout__
 
 
-def get_CT_tandem_line_by_folder(folder):
-    # the function will get all 3D pt of applicator
-    app_pts = algo_run_by_folder(folder)
-    # transform all 3D pt of applicator into each line for each applicator and the line have been sorted by z
-    lines = make_lines_process(app_pts)
-    # The CT data is the format with 512 x 512, but we want to tranfer it into real metric space
-    line = lines[1].copy()
-    return line
-
-
-# Need to combine to above function.
-def get_CT_tandem_metric_line_by_folder(folder):
-    app_pts = algo_run_by_folder(folder)
-    lines = make_lines_process(app_pts)
-    metric_lines = convert_lines_in_metrics(lines, folder)
-    tandem_metric_line = metric_lines[1].copy()
-    return tandem_metric_line
-
-
 def get_CT_tandem_metric_rp_line_by_folder(folder):
     man_dict = get_man_dict()
     return get_tandem_from_man(man_dict, folder)
