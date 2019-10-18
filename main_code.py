@@ -446,29 +446,6 @@ def get_view_scope_by_slice(first_slice_dict, padding=30):
 
 
 # Un-Useful
-def example_show_all_slice():
-    process_dict = get_batch_process_dict(r"AI_RS_Compare_20190724")
-    for i in sorted(process_dict.keys()):
-        if i == r"AI_RS_Compare_20190724/35086187/0613":
-            continue
-        process_with_folder(i)
-    pass
-
-
-# Un-Useful
-def example_first_slice():
-    process_dict = get_batch_process_dict(r"AI_RS_Compare_20190724")
-    for i in sorted(process_dict.keys()):
-        if i == r"AI_RS_Compare_20190724/35086187/0613":
-            continue
-        # if i == r"AI_RS_Compare_20190724/30640451/0711":
-        #    print('ignore the wrong case of process_first_slice_with_folder with i = ', i)
-        #    continue
-        process_first_slice_with_folder(i)
-    pass
-
-
-# Un-Useful
 def distance(pt1, pt2):
     # return ( (pt1[0]-pt2[0])**2 + (pt1[1]-pt2[1])**2 )
     import math
