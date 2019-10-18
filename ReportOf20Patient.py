@@ -2851,7 +2851,7 @@ def run_and_make_rp_v02(folder, out_rp_filepath):
 
     #tandem_rp_line = get_and_show_tandem(metric_line, 4.5, 5) # 29059811-1 => z=58 tips to z=-48
     metric_line.reverse()
-    tandem_rp_line = get_and_show_tandem(metric_line, 5, 5)
+    tandem_rp_line = get_and_show_tandem(metric_line, 4, 5)
     print('metric_line[-1] = ', metric_line[-1])
     print('metric_line[0] = ', metric_line[0])
 
@@ -2870,7 +2870,8 @@ def run_and_make_rp_v02(folder, out_rp_filepath):
     #    print( '{} -> {}'.format((t_pt, t_pt_idx, t_pt_idx_remainder), distance(orig_pt,t_pt) )  )
 
 #run_and_make_rp_v02(folder='RAL_plan_new_20190905/29059811-1', out_rp_filepath=r'out.brachy.rp.withpoints.v04.dcm')
-run_and_make_rp_v02(folder='RP_Template_TestData', out_rp_filepath=r'out.brachy.rp.withpoints.v04.dcm')
+#run_and_make_rp_v02(folder='RP_Template_TestData', out_rp_filepath=r'out.brachy.rp.withpoints.v04.dcm')
+run_and_make_rp_v02(folder='RALmilo', out_rp_filepath=r'out.brachy.rp.withpoints.v04.dcm')
 
 
 
