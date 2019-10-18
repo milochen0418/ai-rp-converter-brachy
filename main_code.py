@@ -8,6 +8,26 @@ import math
 from decimal import Decimal
 import random
 
+
+import pickle
+def python_object_dump(obj, filename):
+    file_w = open(filename, "wb")
+    pickle.dump(obj, file_w)
+    file_w.close()
+def python_object_load(filename):
+    try:
+        file_r = open(filename, "rb")
+        obj2 = pickle.load(file_r)
+        file_r.close()
+    except:
+        try:
+            file_r.close()
+            return None
+        except:
+            return None
+    return obj2
+
+
 def gen_ct_dicom_dict(ct_filelist):
     CtCache = {}
     CtCache["SOPInstanceUID"] = {}  # Query ct data by the key SOPInstanceUID
