@@ -682,11 +682,6 @@ def reduce_distance_step(metric_line, pt_idx, pt_idx_remainder, dist):
     # reduce dist and move further more step for (pt_idx, pt_idx_remainder)
     # ret_dist = ??  reduce dist into ret_dist
     # Just implement code here , so that the data move a little distance. (mean reduce dist and move more)
-    def distance(pt1, pt2):
-        import math
-        # print(r"pt1 = {}, pt2 = {}".format(pt1, pt2))
-        ret_dist = math.sqrt((pt1[0] - pt2[0]) ** 2 + (pt1[1] - pt2[1]) ** 2 + (pt1[2] - pt2[2]) ** 2)
-        return ret_dist
 
     start_pt_idx = pt_idx
     start_pt_idx_remainder = pt_idx_remainder
