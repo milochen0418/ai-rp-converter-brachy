@@ -815,37 +815,17 @@ def get_and_show_tandem(metric_line, first_purpose_distance_mm, each_purpose_dis
     tandem_rp_line = []
     pt_idx = 0
     pt_idx_remainder = 0
-    # first_purpose_distance_mm = 7 # get first RD point by 7mm
-    # each_purpose_distance_mm = 5
     travel_dist = first_purpose_distance_mm
-    (t_pt, t_pt_idx, t_pt_idx_remainder, t_dist) = get_metric_pt_info_by_travel_distance(metric_line, pt_idx,
-                                                                                         pt_idx_remainder, travel_dist)
-    print(t_pt)
+    (t_pt, t_pt_idx, t_pt_idx_remainder, t_dist) = get_metric_pt_info_by_travel_distance(metric_line, pt_idx,pt_idx_remainder, travel_dist)
     tandem_rp_line.append(t_pt)
-
     for i in range(100):
-        eeeStr = 'eee 0'
-        try:
-            eeeStr = 'eee a'
-            travel_dist = each_purpose_distance_mm
-            eeeStr = 'eee b'
-            (pt_idx, pt_idx_remainder) = (t_pt_idx, t_pt_idx_remainder)
-            eeeStr = 'eee c'
-            (t_pt, t_pt_idx, t_pt_idx_remainder, t_dist) = get_metric_pt_info_by_travel_distance(metric_line, pt_idx,
-                                                                                                 pt_idx_remainder,
-                                                                                                 travel_dist)
-            eeeStr = 'eee d'
-            print(t_pt, t_pt_idx, t_pt_idx_remainder)
-            eeeStr = 'eee f'
-            if (t_pt == tandem_rp_line[-1]):
-                break
-            tandem_rp_line.append(t_pt)
-            eeeStr = 'eee g'
-        except Exception as e:
-            print('Exception happen START : {} and eeeStr = {}'.format(e, eeeStr))
-            traceback.print_exc(file=sys.stdout)
-            print('Exception happen END: {} and eeeStr = {}'.format(e, eeeStr))
+        travel_dist = each_purpose_distance_mm
+        (pt_idx, pt_idx_remainder) = (t_pt_idx, t_pt_idx_remainder)
+        (t_pt, t_pt_idx, t_pt_idx_remainder, t_dist) = get_metric_pt_info_by_travel_distance(metric_line, pt_idx,pt_idx_remainder,travel_dist)
+        if (t_pt == tandem_rp_line[-1]):
             break
+        tandem_rp_line.append(t_pt)
+
     return tandem_rp_line
 
 def wrap_to_rp_file(RP_OperatorsName, rs_filepath, tandem_rp_line, out_rp_filepath):
@@ -961,7 +941,7 @@ def run_and_make_rp_v02(RP_OperatorsName, folder, out_rp_filepath):
     wrap_to_rp_file(RP_OperatorsName, rs_filepath, tandem_rp_line, out_rp_filepath=out_rp_filepath)
     print('out_rp_filepath = {}'.format(out_rp_filepath))
 
-run_and_make_rp_v02(RP_OperatorsName='cylin2', folder='RALmilo', out_rp_filepath=r'brachy.rp.dcm')
+run_and_make_rp_v02(RP_OperatorsName='thoth', folder='RALmilo', out_rp_filepath=r'brachy.rp.dcm')
 
 
 
