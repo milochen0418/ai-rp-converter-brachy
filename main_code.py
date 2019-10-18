@@ -902,7 +902,7 @@ def wrap_to_rp_file(RP_OperatorsName, rs_filepath, tandem_rp_line, out_rp_filepa
     rp_fp.ApplicationSetupSequence[0].ChannelSequence[2].ReferencedROINumber = 23
     pydicom.write_file(out_rp_filepath, rp_fp)
     pass
-def run_and_make_rp_v02(RP_OperatorsName, folder, out_rp_filepath):
+def generate_brachy_rp_file(RP_OperatorsName, folder, out_rp_filepath):
     print('folder = ', folder )
     rs_filepath = ''
     ct_filelist = []
@@ -938,7 +938,7 @@ def run_and_make_rp_v02(RP_OperatorsName, folder, out_rp_filepath):
     wrap_to_rp_file(RP_OperatorsName, rs_filepath, tandem_rp_line, out_rp_filepath=out_rp_filepath)
     print('out_rp_filepath = {}'.format(out_rp_filepath))
 
-run_and_make_rp_v02(RP_OperatorsName='thoth', folder='RALmilo', out_rp_filepath=r'brachy.rp.dcm')
+generate_brachy_rp_file(RP_OperatorsName='thoth', folder='RALmilo', out_rp_filepath=r'brachy.rp.dcm')
 
 
 
