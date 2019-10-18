@@ -922,11 +922,21 @@ def generate_brachy_rp_file(RP_OperatorsName, folder, out_rp_filepath):
     # The CT data is the format with 512 x 512, but we want to tranfer it into real metric space
     metric_lines = convert_lines_in_metrics(lines, folder)
     # Show the lines information in metrics
-    metric_line = metric_lines[1].copy()
-    print('metric_line = ',metric_line)
+    metric_tandem_line = metric_lines[1].copy()
+    metric_l_ovoid_line = metric_lines[0].copy()
+    metric_r_ovoid_line = metric_lines[2].copy()
 
-    metric_line.reverse()
-    tandem_rp_line = get_applicator_rp_line(metric_line, 4, 5)
+    print('metric_tandem_line = ', metric_tandem_line)
+    print('metric_l_ovoid_line = ', metric_l_ovoid_line)
+    print('metric_r_ovoid_line = ', metric_r_ovoid_line)
+
+    metric_tandem_line.reverse()
+    metric_l_ovoid_line.reverse()
+    metric_r_ovoid_line.reverse()
+
+    tandem_rp_line = get_applicator_rp_line(metric_tandem_line, 4, 5)
+    l_ovoid_rp_line = get_applicator_rp_line(metric_l_ovoid_line, 0, 5)
+    r_ovoid_rp_line = get_applicator_rp_line(metric_r_ovoid_line, 0 ,5)
 
     print('tandem_rp_line = {}',tandem_rp_line)
     wrap_to_rp_file(RP_OperatorsName, rs_filepath, tandem_rp_line, out_rp_filepath=out_rp_filepath)
