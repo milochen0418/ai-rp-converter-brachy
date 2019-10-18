@@ -911,62 +911,6 @@ def enablePrint():
     sys.stdout = sys.__stdout__
 
 
-# Un-useful
-def predict_tandem_rp_line_by_folder(folder, start_mm, gap_mm, is_debug=False):
-    tandem_rp_line = []
-    print('folder = ', folder)
-    if is_debug == False:
-        blockPrint()
-
-    # the function will get all 3D pt of applicator
-    app_pts = algo_run_by_folder(folder)
-    print('app_pts = {}'.format(app_pts))
-    # transform all 3D pt of applicator into each line for each applicator and the line have been sorted by z
-    lines = make_lines_process(app_pts)
-    # The CT data is the format with 512 x 512, but we want to tranfer it into real metric space
-    metric_lines = convert_lines_in_metrics(lines, folder)
-    # Show the lines information in metrics
-    show_lines(metric_lines)
-    metric_line = metric_lines[1].copy()
-    print('metric_line = ', metric_line)
-
-    def distance(pt1, pt2):
-        import math
-        # print(r"pt1 = {}, pt2 = {}".format(pt1, pt2))
-        ret_dist = math.sqrt((pt1[0] - pt2[0]) ** 2 + (pt1[1] - pt2[1]) ** 2 + (pt1[2] - pt2[2]) ** 2)
-        return ret_dist
-
-    pt_idx = 0
-    pt_idx_remainder = 0
-    # purpose_distance_mm = 7
-    # max_mm = purpose_distance_mm
-    orig_pt = metric_line[0]
-    print('metric_line = ', metric_line)
-
-    def distance(pt1, pt2):
-        import math
-        # print(r"pt1 = {}, pt2 = {}".format(pt1, pt2))
-        ret_dist = math.sqrt((pt1[0] - pt2[0]) ** 2 + (pt1[1] - pt2[1]) ** 2 + (pt1[2] - pt2[2]) ** 2)
-        return ret_dist
-
-    pt_idx = 0
-    pt_idx_remainder = 0
-    orig_pt = metric_line[0]
-    # purpose_distance_mm = 7
-    # travel_dist = purpose_distance_mm
-    # travel_dist = start_mm
-    # (t_pt, t_pt_idx, t_pt_idx_remainder, t_dist) = get_metric_pt_info_by_travel_distance(metric_line, pt_idx, pt_idx_remainder, travel_dist)
-    # print('{} -> {}'.format((t_pt, t_pt_idx, t_pt_idx_remainder), distance(orig_pt, t_pt)))
-
-    # tandem_rp_line = get_and_show_tandem(metric_line, 4.5, 5)
-    tandem_rp_line = get_and_show_tandem(metric_line, start_mm, gap_mm)
-    # show_tandem(metric_line, 4.5, 5)
-    print('tandem_rp_line[-1] = ', tandem_rp_line[-1])
-    if is_debug == False:
-        enablePrint()
-
-    return tandem_rp_line
-
 
 print('Hello ')
 
