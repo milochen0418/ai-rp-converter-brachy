@@ -971,44 +971,6 @@ def drwang_output_show_3D(dump_filepath, show_folder='RAL_plan_new_20190905/2905
 
 
 # Un-useful
-def drawang_output_show_avg_max_min(dump_filepath):
-    drwang_output_result = python_object_load(dump_filepath)
-    sorted_folder = sorted(drwang_output_result.keys())
-    summary_result = {}
-    for folder in sorted_folder:
-        data_list = drwang_output_result[folder]
-        folder_summary = {}
-        summary_result[folder] = folder_summary
-        summary_list = []
-        folder_summary['list'] = summary_list
-        for data_item in data_list:
-            d = data_item
-            # data_item is in format of
-            # [(ai_x,ai_y,ai_z), '', ''] or
-            # [(ai_x,ai_y,ai_z), (man_x,man_y,man_z), dist]
-            # if dist != '', it mean manual pt(man_x,man_y,man_z) is matching to closed ai differential point in (ai_x,ai_y,ai_z)
-            if (type(d[2]) != str):
-                ai_pt = d[0]
-                man_pt = d[1]
-                dist = d[2]
-                # print(dist)
-                summary_list.append([ai_pt, man_pt, dist])
-    for folder in sorted_folder:
-        d = summary_result[folder]
-        dist_max = 0.0
-        dist_sum = 0.0
-        for item in d['list']:
-            dist = item[2]
-            if dist > dist_max:
-                dist_max = dist
-            dist_sum = dist_sum + dist
-        dist_avg = dist_sum / len(d['list'])
-        d['max_dist'] = dist_max
-        d['avg_dist'] = dist_avg
-        print('folder={}\n dist_max={}\n dist_avg={}\n\n'.format(folder, d['max_dist'], d['avg_dist']))
-
-
-# Un-useful
 def process_drwang_output_csv_compare_output():
     bytes_filepath = 'drwang_output_result.bytes'
     # drwang_output_result_dump(f_list, dump_filepath=bytes_filepath)
