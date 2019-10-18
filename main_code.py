@@ -861,10 +861,96 @@ def get_and_show_tandem(metric_line, first_purpose_distance_mm, each_purpose_dis
             break
     return tandem_rp_line
 
+def wrap_to_rp_file(RP_OperatorsName, rs_filepath, tandem_rp_line, out_rp_filepath):
+    import pydicom
+    rp_template_filepath = r'RP_Template/Brachy_RP.1.2.246.352.71.5.417454940236.2063186.20191015164204.dcm'
+    def get_new_uid(old_uid='1.2.246.352.71.5.417454940236.2063186.20191015164204', study_date='20190923'):
+        uid = old_uid
+        def gen_6_random_digits():
+            import random
+            ret_str = ""
+            for i in range(6):
+                ch = chr(random.randrange(ord('0'), ord('9') + 1))
+                ret_str += ch
+            return ret_str
+        theStudyDate = study_date
+        uid_list = uid.split('.')
+        uid_list[-1] = theStudyDate + gen_6_random_digits()
+        new_uid = '.'.join(uid_list)
+        return new_uid
 
+    # Read RS file as input
+    rs_fp = pydicom.read_file(rs_filepath)
+    # read RP tempalte into rp_fp
+    rp_fp = pydicom.read_file(rp_template_filepath)
 
-def run_and_make_rp_v02(folder, out_rp_filepath):
+    rp_fp.OperatorsName = RP_OperatorsName
+    rp_fp.PhysiciansOfRecord = rs_fp.PhysiciansOfRecord
+    rp_fp.FrameOfReferenceUID = rs_fp.ReferencedFrameOfReferenceSequence[0].FrameOfReferenceUID
+    rp_fp.ReferencedStructureSetSequence[0].ReferencedSOPClassUID = rs_fp.SOPClassUID
+    rp_fp.ReferencedStructureSetSequence[0].ReferencedSOPInstanceUID = rs_fp.SOPInstanceUID
+
+    directAttrSet = [
+        'PhysiciansOfRecord', 'PatientName', 'PatientID',
+        'PatientBirthDate', 'PatientBirthTime', 'PatientSex',
+        'DeviceSerialNumber', 'SoftwareVersions', 'StudyID',
+        'StudyDate', 'StudyTime', 'StudyInstanceUID']
+    for attr in directAttrSet:
+        #rs_val = getattr(rs_fp, attr)
+        #rp_val = getattr(rp_fp, attr)
+        #print('attr={}, \n In RS->{} \n In RP->{}'.format(attr, rs_val, rp_val))
+        val = getattr(rs_fp, attr)
+        setattr(rp_fp, attr, val)
+        #new_rp_val = getattr(rp_fp, attr)
+        #print('after update, RP->{}\n'.format(new_rp_val))
+
+    newSeriesInstanceUID = get_new_uid(old_uid=rp_fp.SeriesInstanceUID, study_date=rp_fp.StudyDate)
+    newSOPInstanceUID = get_new_uid(old_uid=rp_fp.SOPInstanceUID, study_date=rp_fp.StudyDate)
+    rp_fp.SeriesInstanceUID = newSeriesInstanceUID
+    rp_fp.SOPInstanceUID = newSOPInstanceUID
+    rp_fp.InstanceCreationDate = rp_fp.RTPlanDate = rp_fp.StudyDate = rs_fp.StudyDate
+    rp_fp.RTPlanTime = str(float(rs_fp.StudyTime) + 0.001)
+    rp_fp.InstanceCreationTime = str(float(rs_fp.InstanceCreationTime) + 0.001)
+
+    rp_fp.ApplicationSetupSequence[0].ChannelSequence[0].NumberOfControlPoints = len(tandem_rp_line)
+    BCPItemTemplate = copy.deepcopy(rp_fp.ApplicationSetupSequence[0].ChannelSequence[0].BrachyControlPointSequence[0])
+    rp_fp.ApplicationSetupSequence[0].ChannelSequence[0].BrachyControlPointSequence.clear()
+
+    # Clean Dose Reference
+    rp_fp.DoseReferenceSequence.clear()
+
+    for idx, pt in enumerate(tandem_rp_line):
+        BCPPt = copy.deepcopy(BCPItemTemplate)
+        BCPPt.ControlPointRelativePosition = 3.5 + idx * 5
+        BCPPt.ControlPoint3DPosition[0] = pt[0]
+        BCPPt.ControlPoint3DPosition[1] = pt[1]
+        BCPPt.ControlPoint3DPosition[2] = pt[2]
+        BCPStartPt = copy.deepcopy(BCPPt)
+        BCPEndPt = copy.deepcopy(BCPPt)
+        BCPStartPt.ControlPointIndex = 2 * idx
+        BCPEndPt.ControlPointIndex = 2 * idx + 1
+        rp_fp.ApplicationSetupSequence[0].ChannelSequence[0].BrachyControlPointSequence.append(BCPStartPt)
+        rp_fp.ApplicationSetupSequence[0].ChannelSequence[0].BrachyControlPointSequence.append(BCPEndPt)
+
+    # Change ROINumber of RP_Template_TestData RS into output RP output file
+    rp_fp.ApplicationSetupSequence[0].ChannelSequence[0].ReferencedROINumber = 21
+    rp_fp.ApplicationSetupSequence[0].ChannelSequence[1].ReferencedROINumber = 22
+    rp_fp.ApplicationSetupSequence[0].ChannelSequence[2].ReferencedROINumber = 23
+    pydicom.write_file(out_rp_filepath, rp_fp)
+    pass
+
+def run_and_make_rp_v02(RP_OperatorsName, folder, out_rp_filepath):
     print('folder = ', folder )
+    rs_filepath = ''
+    ct_filelist = []
+    for file in os.listdir(folder):
+        filepath = os.path.join(folder, file)
+        fp = pydicom.read_file(filepath)
+        if (fp.Modality == 'CT'):
+            ct_filelist.append(filepath)
+        elif (fp.Modality == 'RTSTRUCT'):
+            rs_filepath = filepath
+
     # the function will get all 3D pt of applicator
     app_pts = algo_run_by_folder(folder)
     # transform all 3D pt of applicator into each line for each applicator and the line have been sorted by z
@@ -882,14 +968,16 @@ def run_and_make_rp_v02(folder, out_rp_filepath):
     travel_dist = purpose_distance_mm
     (t_pt, t_pt_idx, t_pt_idx_remainder, t_dist) = get_metric_pt_info_by_travel_distance(metric_line, pt_idx, pt_idx_remainder, travel_dist)
     print('{} -> {}'.format((t_pt, t_pt_idx, t_pt_idx_remainder), distance(orig_pt, t_pt)))
-
     metric_line.reverse()
     tandem_rp_line = get_and_show_tandem(metric_line, 4, 5)
-    print('tandem_rp_line = {}',tandem_rp_line)
 
-#run_and_make_rp_v02(folder='RAL_plan_new_20190905/29059811-1', out_rp_filepath=r'out.brachy.rp.withpoints.v04.dcm')
-#run_and_make_rp_v02(folder='RP_Template_TestData', out_rp_filepath=r'out.brachy.rp.withpoints.v04.dcm')
-run_and_make_rp_v02(folder='RALmilo', out_rp_filepath=r'out.brachy.rp.withpoints.v04.dcm')
+    print('tandem_rp_line = {}',tandem_rp_line)
+    wrap_to_rp_file(RP_OperatorsName, rs_filepath, tandem_rp_line, out_rp_filepath=out_rp_filepath)
+    print('out_rp_filepath = {}'.format(out_rp_filepath))
+
+
+
+run_and_make_rp_v02(RP_OperatorsName='cylin2', folder='RALmilo', out_rp_filepath=r'brachy.rp.dcm')
 
 
 
