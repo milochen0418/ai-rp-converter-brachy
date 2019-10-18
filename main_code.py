@@ -456,7 +456,7 @@ def distance(pt1, pt2):
     return ans
 
 
-
+# Useful
 def get_most_closed_pt(src_pt, pts, allowed_distance=100):
     if pts == None:
         return None
@@ -475,46 +475,6 @@ def get_most_closed_pt(src_pt, pts, allowed_distance=100):
                 dst_pt = pt
         pass
     return dst_pt
-
-
-# Un-Useful
-def pure_show_slice_dict(slice_dict, view_rect):
-    (view_min_y, view_max_y, view_min_x, view_max_x) = view_rect
-    # This will be first slice
-    # So we just show image here
-    img = slice_dict['rescale_pixel_array']
-    gray_img = convert_to_gray_image(img)
-    fig = plt.figure(figsize=(20, 5), dpi=80, facecolor='w', edgecolor='k')
-    threshed_im = cv2.adaptiveThreshold(gray_img, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 15, -22)
-    gray_img = gray_img[view_min_y: view_max_y, view_min_x:view_max_x]
-    img = img[view_min_y: view_max_y, view_min_x:view_max_x]
-    # Show threshed_im image , original img image and gray_img
-    plt.subplot(1, 4, 1)
-    plt.imshow(threshed_im, cmap=plt.cm.bone)
-    plt.subplot(1, 4, 2)
-    plt.imshow(img, cmap=plt.cm.bone)
-    plt.subplot(1, 4, 3)
-    plt.imshow(gray_img, cmap='gray', vmin=0, vmax=255)
-
-    # The process to show proc_img
-    filter_img = threshed_im
-    contours = get_max_contours_by_filter_img(img, filter_img)
-    (sorted_app_center_pts, rect_infos, app_center_pts) = get_rect_infos_and_center_pts(contours)
-    proc_img = np.copy(img)
-    for contour in contours:
-        if len(contour) < 5:
-            continue
-        ellipse = cv2.fitEllipse(contour)  # auto-figure the ellipse to fit contour
-        ellipse_poly = cv2.ellipse2Poly((int(ellipse[0][0]), int(ellipse[0][1])),
-                                        (int(ellipse[1][0] / 2), int(ellipse[1][1] / 2)), int(ellipse[2]), 0, 360, 5)
-        reshape_poly = ellipse_poly.reshape(ellipse_poly.shape[0], 1, ellipse_poly.shape[1])
-        # cv2.drawContours(proc_img, reshape_poly, -1, (255,0,0),1)
-        cv2.drawContours(proc_img, contour, -1, (255, 0, 0), 1)
-    plt.subplot(1, 4, 4)
-    plt.imshow(proc_img, cmap=plt.cm.bone)
-    # print out all image in the same row
-    plt.show()
-    pass
 
 
 # Un-Useful
