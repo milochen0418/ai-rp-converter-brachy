@@ -1,9 +1,12 @@
 # Try to seperate program into clear verion and useful functions
-import os,sys
+import os
 import pydicom
 import numpy as np
 import cv2
 import copy
+import math
+from decimal import Decimal
+import random
 
 def gen_ct_dicom_dict(ct_filelist):
     CtCache = {}
@@ -400,7 +403,6 @@ def get_view_scope_by_slice(first_slice_dict, padding=30):
     # gray_img = gray_img[ view_min_y: view_max_y, view_min_x:view_max_x]
 
 def distance(pt1, pt2):
-    import math
     axis_num = len(pt1)
     sum = 0.0
     for idx in range(axis_num):
@@ -746,8 +748,6 @@ def get_metric_pt_info_by_travel_distance(metric_line, pt_idx, pt_idx_remainder,
 
 # Useful
 def get_maps_with_folder(folder):
-    import pydicom
-    import os
     z_map = {}
     ct_filepath_map = {}
     ct_filelist = []
@@ -783,7 +783,7 @@ def get_maps_with_folder(folder):
 
 # The CT data is the format with 512 x 512, but we want to transfer it into real metric space
 def convert_lines_in_metrics(lines, ct_folder):
-    from decimal import Decimal
+
     z_map, ct_filepath_map = get_maps_with_folder(ct_folder)
     new_lines = []
     for i in range(len(lines)):
@@ -826,12 +826,10 @@ def get_and_show_tandem(metric_line, first_purpose_distance_mm, each_purpose_dis
     return tandem_rp_line
 
 def wrap_to_rp_file(RP_OperatorsName, rs_filepath, tandem_rp_line, out_rp_filepath):
-    import pydicom
     rp_template_filepath = r'RP_Template/Brachy_RP.1.2.246.352.71.5.417454940236.2063186.20191015164204.dcm'
     def get_new_uid(old_uid='1.2.246.352.71.5.417454940236.2063186.20191015164204', study_date='20190923'):
         uid = old_uid
         def gen_6_random_digits():
-            import random
             ret_str = ""
             for i in range(6):
                 ch = chr(random.randrange(ord('0'), ord('9') + 1))
