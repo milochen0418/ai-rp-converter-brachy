@@ -1,18 +1,10 @@
 # Try to seperate program into clear verion and useful functions
-
-import matplotlib.pyplot as plt
 import os,sys
 import pydicom
 import numpy as np
 import cv2
 import copy
-import seaborn as sns
-from numpy.random import randn
-import matplotlib as mpl
-from scipy import stats
-import csv, codecs
 import traceback
-
 
 def gen_ct_dicom_dict(ct_filelist):
     CtCache = {}
@@ -52,7 +44,6 @@ def gen_ct_dicom_dict(ct_filelist):
     return CtCache
     pass
 
-
 def get_ct_filelist_by_folder(folder):
     ct_filelist = []
     for file in os.listdir(folder):
@@ -74,7 +65,6 @@ def get_ct_filelist_by_folder(folder):
 
     return ct_filelist
 
-
 def get_max_contours_by_filter_img(A, filter_img, ContourRetrievalMode=cv2.RETR_EXTERNAL):
     # gray_image = cv2.cvtColor(filter_img, cv2.COLOR_RGB2GRAY)
     gray_image = filter_img
@@ -83,7 +73,6 @@ def get_max_contours_by_filter_img(A, filter_img, ContourRetrievalMode=cv2.RETR_
     # _, contours, _ = cv2.findContours(gray_image, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
     _, contours, _ = cv2.findContours(gray_image, ContourRetrievalMode, cv2.CHAIN_APPROX_NONE)
     return contours
-
 
 def get_max_contours(A, constant_value=None, ContourRetrievalMode=cv2.RETR_EXTERNAL):
     constant = None
@@ -142,7 +131,6 @@ def get_rect_infos_and_center_pts(contours, h_min=13, w_min=13, h_max=19, w_max=
     sorted_app_center_pts = sorted(app_center_pts, key=lambda cen_pt: cen_pt[0], reverse=False)
     return (sorted_app_center_pts, rect_infos, app_center_pts)
 
-
 def convert_to_gray_image(pixel_array):
     img = np.copy(pixel_array)
     # Convert to float to avoid overflow or underflow losses.
@@ -152,7 +140,6 @@ def convert_to_gray_image(pixel_array):
     # Convert to uint
     img_2d_scaled = np.uint8(img_2d_scaled)
     return img_2d_scaled
-
 
 # DISCUSS_LATTER
 def get_2level_max_contours(img, gray_img):
@@ -329,7 +316,6 @@ def get_contours_of_first_slice_in_special_case(first_slice_dict):
 
     pass
 
-
 def get_app_center_pts_of_first_slice(first_slice_dict):
     ps_x = first_slice_dict['PixelSpacing_x']
     ps_y = first_slice_dict['PixelSpacing_y']
@@ -365,9 +351,6 @@ def get_app_center_pts_of_first_slice(first_slice_dict):
     return x_sorted_pts
     pass
 
-
-
-# Useful in code
 def get_view_scope_by_slice(first_slice_dict, padding=30):
     (contours, constant) = get_max_contours(first_slice_dict['rescale_pixel_array'])
     print('PixelSpacing_(x,y)=({}, {})'.format(first_slice_dict['PixelSpacing_x'], first_slice_dict['PixelSpacing_y']))
@@ -430,10 +413,6 @@ def get_view_scope_by_slice(first_slice_dict, padding=30):
     # The way to use return value is
     # gray_img = gray_img[ view_min_y: view_max_y, view_min_x:view_max_x]
 
-
-
-
-# Useful
 def distance(pt1, pt2):
     import math
     axis_num = len(pt1)
@@ -443,8 +422,6 @@ def distance(pt1, pt2):
     ans = math.sqrt(sum)
     return ans
 
-
-# Useful
 def get_most_closed_pt(src_pt, pts, allowed_distance=100):
     if pts == None:
         return None
@@ -702,7 +679,6 @@ def get_metric_pt(metric_line, pt_idx, pt_idx_remainder):
         pt[axis_idx] += ((end_pt[axis_idx] - pt[axis_idx]) * pt_idx_remainder)
         # pt[axis_idx] = pt[axis_idx] + diff_with_ratio
     return pt
-
 def reduce_distance_step(metric_line, pt_idx, pt_idx_remainder, dist):
     # reduce dist and move further more step for (pt_idx, pt_idx_remainder)
     # ret_dist = ??  reduce dist into ret_dist
@@ -761,7 +737,6 @@ def reduce_distance_step(metric_line, pt_idx, pt_idx_remainder, dist):
 
     pass
     # return (ret_dist, ret_pt_idx, ret_pt_idx_remainder)
-
 def get_metric_pt_info_by_travel_distance(metric_line, pt_idx, pt_idx_remainder, travel_dist):
     dist = travel_dist
     count_max = len(metric_line)
