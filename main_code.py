@@ -875,6 +875,10 @@ def wrap_to_rp_file(RP_OperatorsName, rs_filepath, tandem_rp_line, out_rp_filepa
     rp_fp.RTPlanTime = str(float(rs_fp.StudyTime) + 0.001)
     rp_fp.InstanceCreationTime = str(float(rs_fp.InstanceCreationTime) + 0.001)
 
+    # Clean Dose Reference
+    rp_fp.DoseReferenceSequence.clear()
+
+
     # The template structure for applicator
     # Tandem -> rp_fp.ApplicationSetupSequence[0].ChannelSequence[0]
     # Rt Ovoid -> rp_fp.ApplicationSetupSequence[0].ChannelSequence[1]
@@ -882,31 +886,30 @@ def wrap_to_rp_file(RP_OperatorsName, rs_filepath, tandem_rp_line, out_rp_filepa
     # For each applicator .NumberOfControlPoints is mean number of point
     # For each applicator .BrachyControlPointSequence is mean the array of points
 
-    rp_fp.ApplicationSetupSequence[0].ChannelSequence[0].NumberOfControlPoints = len(tandem_rp_line)
+
     BCPItemTemplate = copy.deepcopy(rp_fp.ApplicationSetupSequence[0].ChannelSequence[0].BrachyControlPointSequence[0])
-    rp_fp.ApplicationSetupSequence[0].ChannelSequence[0].BrachyControlPointSequence.clear()
+    rp_lines = [tandem_rp_line, rt_ovoid_rp_line, lt_ovoid_rp_line]
+    rp_Ref_ROI_Numbers = [21, 22, 23]
+    rp_ControlPointRelativePositions = [3.5, 3.5, 3.5]
+    for idx,rp_line in enumerate(rp_lines):
+        # Change ROINumber of RP_Template_TestData RS into output RP output file
+        # Do  I need to fit ROINumber in RS or not? I still have no answer
+        rp_fp.ApplicationSetupSequence[0].ChannelSequence[idx].ReferencedROINumber = rp_Ref_ROI_Numbers[idx]
+        rp_fp.ApplicationSetupSequence[0].ChannelSequence[idx].NumberOfControlPoints = len(rp_line)
+        rp_fp.ApplicationSetupSequence[0].ChannelSequence[idx].BrachyControlPointSequence.clear()
+        for pt_idx, pt in enumerate( rp_line ):
+            BCPPt = copy.deepcopy(BCPItemTemplate)
+            BCPPt.ControlPointRelativePosition = rp_ControlPointRelativePositions[idx] + pt_idx * 5
+            BCPPt.ControlPoint3DPosition[0] = pt[0]
+            BCPPt.ControlPoint3DPosition[1] = pt[1]
+            BCPPt.ControlPoint3DPosition[2] = pt[2]
+            BCPStartPt = copy.deepcopy(BCPPt)
+            BCPEndPt = copy.deepcopy(BCPPt)
+            BCPStartPt.ControlPointIndex = 2 * pt_idx
+            BCPEndPt.ControlPointIndex = 2 * pt_idx + 1
+            rp_fp.ApplicationSetupSequence[0].ChannelSequence[idx].BrachyControlPointSequence.append(BCPStartPt)
+            rp_fp.ApplicationSetupSequence[0].ChannelSequence[idx].BrachyControlPointSequence.append(BCPEndPt)
 
-    # Clean Dose Reference
-    rp_fp.DoseReferenceSequence.clear()
-
-    for idx, pt in enumerate(tandem_rp_line):
-        BCPPt = copy.deepcopy(BCPItemTemplate)
-        BCPPt.ControlPointRelativePosition = 3.5 + idx * 5
-        BCPPt.ControlPoint3DPosition[0] = pt[0]
-        BCPPt.ControlPoint3DPosition[1] = pt[1]
-        BCPPt.ControlPoint3DPosition[2] = pt[2]
-        BCPStartPt = copy.deepcopy(BCPPt)
-        BCPEndPt = copy.deepcopy(BCPPt)
-        BCPStartPt.ControlPointIndex = 2 * idx
-        BCPEndPt.ControlPointIndex = 2 * idx + 1
-        rp_fp.ApplicationSetupSequence[0].ChannelSequence[0].BrachyControlPointSequence.append(BCPStartPt)
-        rp_fp.ApplicationSetupSequence[0].ChannelSequence[0].BrachyControlPointSequence.append(BCPEndPt)
-
-    # Change ROINumber of RP_Template_TestData RS into output RP output file
-    # Do  I need to fit ROINumber in RS or not? I still have no answer
-    rp_fp.ApplicationSetupSequence[0].ChannelSequence[0].ReferencedROINumber = 21
-    rp_fp.ApplicationSetupSequence[0].ChannelSequence[1].ReferencedROINumber = 22
-    rp_fp.ApplicationSetupSequence[0].ChannelSequence[2].ReferencedROINumber = 23
     pydicom.write_file(out_rp_filepath, rp_fp)
 
     pass
