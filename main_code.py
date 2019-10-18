@@ -902,14 +902,6 @@ def get_and_show_tandem(metric_line, first_purpose_distance_mm, each_purpose_dis
     return tandem_rp_line
 
 
-# Disable
-def blockPrint():
-    sys.stdout = open(os.devnull, 'w')
-
-# Restore
-def enablePrint():
-    sys.stdout = sys.__stdout__
-
 
 def run_and_make_rp_v02(folder, out_rp_filepath):
     print('folder = ', folder)
