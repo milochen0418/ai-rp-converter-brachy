@@ -913,37 +913,6 @@ def enablePrint():
 
 
 # Un-useful
-def line_interpolate(line, point_num=20):
-    # GET linspace between two points [pt1, pt2)
-    def get_linspace_list(pt1, pt2, point_num):
-        linspace = []
-        for i in range(point_num):
-            scale_num = float(point_num)
-            s = float(i) / scale_num
-            x = pt1[0]
-            y = pt1[1]
-            z = pt1[2]
-            x_diff = s * (pt2[0] - pt1[0])
-            y_diff = s * (pt2[1] - pt1[1])
-            z_diff = s * (pt2[2] - pt1[2])
-            x = x + x_diff
-            y = y + y_diff
-            z = z + z_diff
-            new_pt = [x, y, z]
-            linspace.append(new_pt)
-        return linspace
-
-    new_line = []
-    for i in range(len(line) - 1):
-        pt1 = line[i]
-        pt2 = line[i + 1]
-        linspace = get_linspace_list(pt1, pt2, point_num)
-        new_line.extend(linspace)
-    new_line.append(line[-1])
-    return new_line
-
-
-# Un-useful
 def get_closed_ai_pt(ai_interpolated_line, pt):
     def distance(pt1, pt2):
         # return ( (pt1[0]-pt2[0])**2 + (pt1[1]-pt2[1])**2 )
