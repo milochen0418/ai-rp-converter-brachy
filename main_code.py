@@ -477,28 +477,6 @@ def get_most_closed_pt(src_pt, pts, allowed_distance=100):
     return dst_pt
 
 
-# Un-Useful
-def get_batch_process_dict_v02(root_folder):
-    process_dict = {}
-    if not os.path.isdir(root_folder):
-        return process_dict
-
-    dataset_folder_list = []
-    for patient_id_file in os.listdir(root_folder):
-        patient_id_filepath = r"{}/{}".format(root_folder, patient_id_file)
-        if not os.path.isdir(patient_id_filepath):
-            continue
-        for study_date_file in os.listdir(patient_id_filepath):
-            study_date_filepath = r"{}/{}".format(patient_id_filepath, study_date_file)
-            if not os.path.isdir(study_date_filepath):
-                continue
-            dataset_folder_list.append(study_date_filepath)
-    for folder in dataset_folder_list:
-        input_dict = {}
-        # TODO in future if you need
-        process_dict[folder] = input_dict
-    return process_dict
-
 
 # Un-Useful
 def example_get_batch_process_dict():
