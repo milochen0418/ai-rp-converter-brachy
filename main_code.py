@@ -827,13 +827,6 @@ def convert_lines_in_metrics(lines, ct_folder):
 
 def get_and_show_tandem(metric_line, first_purpose_distance_mm, each_purpose_distance_mm):
     tandem_rp_line = []
-
-    def distance(pt1, pt2):
-        import math
-        # print(r"pt1 = {}, pt2 = {}".format(pt1, pt2))
-        ret_dist = math.sqrt((pt1[0] - pt2[0]) ** 2 + (pt1[1] - pt2[1]) ** 2 + (pt1[2] - pt2[2]) ** 2)
-        return ret_dist
-
     pt_idx = 0
     pt_idx_remainder = 0
     # first_purpose_distance_mm = 7 # get first RD point by 7mm
