@@ -808,7 +808,7 @@ def convert_lines_in_metrics(lines, ct_folder):
             new_pt = [new_pt_x, new_pt_y, pt_z]
             new_line.append(new_pt)
     return new_lines
-def get_and_show_tandem(metric_line, first_purpose_distance_mm, each_purpose_distance_mm):
+def get_applicator_rp_line(metric_line, first_purpose_distance_mm, each_purpose_distance_mm):
     tandem_rp_line = []
     pt_idx = 0
     pt_idx_remainder = 0
@@ -926,7 +926,7 @@ def generate_brachy_rp_file(RP_OperatorsName, folder, out_rp_filepath):
     print('metric_line = ',metric_line)
 
     metric_line.reverse()
-    tandem_rp_line = get_and_show_tandem(metric_line, 4, 5)
+    tandem_rp_line = get_applicator_rp_line(metric_line, 4, 5)
 
     print('tandem_rp_line = {}',tandem_rp_line)
     wrap_to_rp_file(RP_OperatorsName, rs_filepath, tandem_rp_line, out_rp_filepath=out_rp_filepath)
