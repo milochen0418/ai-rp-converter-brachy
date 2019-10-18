@@ -911,113 +911,6 @@ def enablePrint():
     sys.stdout = sys.__stdout__
 
 
-
-
-# Un-useful
-def drwang_output_result_dump(f_list, dump_filepath):
-    idx = 0
-    drwang_output_result = {}
-    for folder in f_list:
-        if idx <= 1:
-            idx = idx + 1
-            continue
-        print(folder)
-        blockPrint()
-        line = get_CT_tandem_metric_line_by_folder(folder)
-        enablePrint()
-        print('len(line) = {}, line = {}'.format(len(line), line))
-        interpolated_line = line_interpolate(line, 20)
-        print('len() = {}, interpolated_line = {}'.format(len(interpolated_line), interpolated_line))
-        print(interpolated_line)
-
-        out3_list = []  # interpolated_line, [man_pt, distance]
-        out3_dict = {}
-        for pt in interpolated_line:
-            float_ai_pt = [float(i) for i in pt]
-            tuple_pt = tuple(float_ai_pt)
-            item = [None, '', '']
-            item[0] = tuple_pt
-            out3_dict[tuple_pt] = item
-            out3_list.append(item)
-        man_line = get_CT_tandem_metric_rp_line_by_folder(folder)
-        print('number points of man_line = {}'.format(len(man_line)))
-        for pt in man_line:
-            # print(pt)
-            ai_pt, dist = get_closed_ai_pt(interpolated_line, pt)
-            print('man_pt = {},  most closed ai_pt = {} with dist={}'.format(pt, ai_pt, dist))
-            tuple_ai_pt = tuple(ai_pt)
-            item = out3_dict[tuple_ai_pt]
-            float_man_pt = [float(i) for i in pt]  # convert man_pt in list type into float man_pt
-            item[1] = tuple(float_man_pt)
-            item[2] = dist
-        # show data
-        drwang_output_result[folder] = out3_list
-    # python_object_dump(drwang_output_result, 'drwang_output_result.bytes')
-    python_object_dump(drwang_output_result, dump_filepath)
-
-
-# Un-useful
-def drwang_output_result_to_csv(dump_filepath, csv_filepath):
-    drwang_output_result = python_object_load(dump_filepath)
-    print('aaa')
-    sorted_folder = sorted(drwang_output_result.keys())
-    # Step 1. insert header behind body
-    for folder in sorted_folder:
-        print(folder)
-        header = [folder, '', '']
-        body = drwang_output_result[folder]  # body is list for data, which are 3 element list
-        body.insert(0, header)
-    # Step 2. figure which is the maxminum value ofr len of each body
-    maximum_len = 0
-    for folder in sorted_folder:
-        body = drwang_output_result[folder]
-        len_body = len(body)
-        if len_body > maximum_len:
-            maximum_len = len_body
-
-    # Step 3. Start to generate csv
-    # Step 3.1 generate total maxiumum list
-    maximum_list = []
-    for idx in range(maximum_len):
-        row_item = []
-        for folder in sorted_folder:
-            body = drwang_output_result[folder]
-            if idx < len(body):
-                row_item.extend(body[idx])
-            else:
-                row_item.extend(['', '', ''])
-        maximum_list.append(row_item)
-    # Step 3.1.2 Eliminate the float, whose decimal point are too long,  value by round() (optional)
-    for row_idx, rowlist in enumerate(maximum_list):
-        if row_idx == 0:  # if header, ignore it
-            continue
-        for col_idx, tuple_item in enumerate(rowlist):
-            # cell_item = [] #maximum_list[row_idx][col_idx]
-            if type(tuple_item) == tuple:
-                cell_item = []
-                for float_item in tuple_item:
-                    cell_item.append(round(float_item, 3))
-                tuple_cell_item = tuple(cell_item)
-                maximum_list[row_idx][col_idx] = tuple_cell_item
-    # Step 3.2 generate csv file
-    output_csv_filepath = csv_filepath
-    with open(output_csv_filepath, mode='w', newline='') as csv_file:
-        csv_writter = csv.writer(csv_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
-        # csv_writter.writerow(out_dict['header'])
-        for rowlist in maximum_list:
-            csv_writter.writerow(rowlist)
-    pass
-
-
-# Un-useful
-wang_f_list = [
-    'RAL_plan_new_20190905/29059811-3',  # (max = 1.38, avg = 1.02)
-    'RAL_plan_new_20190905/34698361-1',  # (max = 4.103, avg = 0.906 )
-    'RAL_plan_new_20190905/34698361-5',  # (max = 2.47, avg = 0.545 )
-    'RAL_plan_new_20190905/35413048-3'  # (max = 2.936, avg = 0.598 )
-]
-
-
 # Un-Useful
 def drwang_output_show_3D(dump_filepath, show_folder='RAL_plan_new_20190905/29059811-3'):
     from mpl_toolkits import mplot3d
@@ -1075,15 +968,6 @@ def drwang_output_show_3D(dump_filepath, show_folder='RAL_plan_new_20190905/2905
     ax.scatter3D(x_list, y_list, z_list, c=c_list, cmap=cm.coolwarm)
     plt.show()
 
-
-# drwang_output_show_3D(dump_filepath = 'drwang_output_result.bytes')
-
-# Un-useful
-for f in wang_f_list:
-    if (True == False):
-        show_folder = f
-        print('3D data for show_folder = ', show_folder)
-        drwang_output_show_3D(dump_filepath='drwang_output_result.bytes', show_folder=show_folder)
 
 
 # Un-useful
