@@ -110,7 +110,7 @@ def get_max_contours(A, constant_value=None, ContourRetrievalMode=cv2.RETR_EXTER
     return (contours, constant)
 
 
-# MAYUNUSEFUL
+# Useful
 def get_rect_infos_and_center_pts(contours, h_min=13, w_min=13, h_max=19, w_max=19):
     app_center_pts = []
     rect_infos = []
@@ -152,18 +152,6 @@ def convert_to_gray_image(pixel_array):
     # Convert to uint
     img_2d_scaled = np.uint8(img_2d_scaled)
     return img_2d_scaled
-
-
-# MAYUNUSEFUL
-def show_diagram(np_array):
-    data = np_array.ravel()  # reshape to 1 dimesion array
-    sorted_data = np.copy(data)
-    sorted_data.sort()
-    print("major value = ", sorted_data[-10])
-    # the_bins = int( (np.max(data) - np.min(data)) / (12*12) )
-    the_bins = 64
-    plt.hist(data, bins=the_bins, color=sns.desaturate("indianred", .8), alpha=.4)
-    plt.show()
 
 
 # DISCUSS_LATTER
@@ -2343,7 +2331,6 @@ def run_and_make_rp_v02(folder, out_rp_filepath):
     lines = make_lines_process(app_pts)
     # The CT data is the format with 512 x 512, but we want to tranfer it into real metric space
     metric_lines = convert_lines_in_metrics(lines, folder)
-
     metric_line = metric_lines[1].copy()
     print('metric_line = ', metric_line)
 
