@@ -8,6 +8,8 @@ import math
 from decimal import Decimal
 import random
 
+print(cv2.__version__)
+
 
 # The purpose of python_object_dump() is to output python object in bytes, so that
 # Jupyter notebook can read and show it .
@@ -526,6 +528,177 @@ def make_lines_process(app_pts):
         lines[idx] = line
     return lines
 
+
+def algo_run_with_implicator_by_folder(folder):
+    # app_pts_dict[z] = [[x,y,z], [x,y,z], [x,y,z] ]
+    app_pts_dict = {}
+    ct_filelist = get_ct_filelist_by_folder(folder)
+    ct_dicom_dict = gen_ct_dicom_dict(ct_filelist)
+    sorted_ct_dicom_dict_keys = sorted(ct_dicom_dict['SliceLocation'].keys())
+    first_slice_dict = ct_dicom_dict['SliceLocation'][sorted_ct_dicom_dict_keys[0]]
+    based_center_pts = get_app_center_pts_of_first_slice(first_slice_dict)
+    #based_center_pts = get_app_center_pts_with_implicator_of_first_slice(first_slice_dict)
+
+
+
+    if len(based_center_pts) != 3:
+        print('len(based_center_pts) is wrong, folder = ', folder)
+        return
+    else:
+        print(based_center_pts)
+
+    first_slice_dict['data'] = {}
+    first_slice_dict['data']['center_pts'] = based_center_pts
+    (view_min_y, view_max_y, view_min_x, view_max_x) = get_view_scope_by_slice(first_slice_dict, padding=100)
+
+    prev_slice_dict = None
+    for z in sorted_ct_dicom_dict_keys:
+        app_pts_dict[z] = []
+        slice_dict = ct_dicom_dict['SliceLocation'][z]
+        if 'data' not in slice_dict.keys():
+            slice_dict['data'] = {}
+        slice_dict['data']['prev_slice_dict'] = prev_slice_dict
+        print('z = ', z, 'filepath = ', slice_dict['filepath'])
+
+        if 'data' in slice_dict and 'center_pts' in slice_dict['data']:
+            prev_slice_dict = slice_dict
+            # pure_show_slice_dict(slice_dict, (view_min_y, view_max_y, view_min_x, view_max_x))
+            # First slice
+            print('center_pts = ', slice_dict['data']['center_pts'])
+            for pt in slice_dict['data']['center_pts']:
+                x = pt[0]
+                y = pt[1]
+                app_pts_dict[z].append([x, y, z])
+            continue
+
+        img = slice_dict['rescale_pixel_array']
+        gray_img = convert_to_gray_image(img)
+        # fig = plt.figure(figsize=(20, 5), dpi=80, facecolor='w', edgecolor='k')
+        # threshed_im = cv2.adaptiveThreshold(gray_img, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 15, -22)
+        gray_img = gray_img[view_min_y: view_max_y, view_min_x:view_max_x]
+        img = img[view_min_y: view_max_y, view_min_x:view_max_x]
+
+        # threshed_im = cv2.adaptiveThreshold(gray_img, 255, cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY, 15, -22)
+        # threshed_im = cv2.adaptiveThreshold(gray_img, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 5, 7)
+        threshed_im = cv2.adaptiveThreshold(gray_img, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 15, -22)
+        # I'm not sure why it is the perfect value in our case.
+
+        # plt.subplot(1, 4, 1)
+        # plt.imshow(threshed_im, cmap=plt.cm.bone)
+        # plt.subplot(1, 4, 2)
+        # plt.imshow(img, cmap=plt.cm.bone)
+        # plt.subplot(1, 4, 3)
+        # plt.imshow(gray_img, cmap='gray', vmin=0, vmax=255)
+
+        filter_img = threshed_im
+        # contours = get_max_contours_by_filter_img(img, filter_img)
+
+        # contours = get_max_contours_by_filter_img(img, filter_img, ContourRetrievalMode=cv2.RETR_TREE)
+        # (contours_without_filter,constant) = get_max_contours(img, ContourRetrievalMode=cv2.RETR_TREE)
+        # proc_img = np.copy(img)
+        # contours.extend(contours_without_filter)
+
+        contours = get_max_contours_by_filter_img(img, filter_img, ContourRetrievalMode=cv2.RETR_TREE)
+
+        (contours_without_filter, constant) = get_max_contours(img, ContourRetrievalMode=cv2.RETR_TREE)
+        contours.extend(contours_without_filter)
+
+        (contours_without_filter, constant) = get_max_contours(img, ContourRetrievalMode=cv2.RETR_EXTERNAL)
+        contours.extend(contours_without_filter)
+
+        the_contours = get_max_contours_by_filter_img(img, filter_img, ContourRetrievalMode=cv2.RETR_EXTERNAL)
+        contours.extend(the_contours)
+
+        proc_img = np.copy(img)
+        contours.extend(contours_without_filter)
+
+        ellipse_center_pts = []
+        draw_ellipse_center_pts = []
+        for contour in contours:
+            if len(contour) < 5:
+                # You need at least 5 points in contour, so that you can use fitEllipse
+
+                reshape_contour = contour.reshape(contour.shape[0], contour.shape[2])
+                xs = [pt[0] for pt in reshape_contour]
+                ys = [pt[1] for pt in reshape_contour]
+                x = int((min(xs) + max(xs)) / 2)
+                y = int((min(ys) + max(ys)) / 2)
+                # enablePrint()
+                # print("special fitEllipse(x,y) = ({},{})".format(x,y))
+                # blockPrint()
+                ellipse_center_pts.append([x, y])
+                continue
+            ellipse = cv2.fitEllipse(contour)  # auto-figure the ellipse to fit contour
+            # print(ellipse)
+            ellipse_poly = cv2.ellipse2Poly((int(ellipse[0][0]), int(ellipse[0][1])),
+                                            (int(ellipse[1][0] / 2), int(ellipse[1][1] / 2)), int(ellipse[2]), 0, 360,
+                                            5)
+            draw_x = int(ellipse[0][0])
+            draw_y = int(ellipse[0][1])
+            draw_ellipse_center_pts.append([draw_x, draw_y])
+            x = int(ellipse[0][0]) + view_min_x
+            y = int(ellipse[0][1]) + view_min_y
+            ellipse_center_pts.append([x, y])
+            reshape_poly = ellipse_poly.reshape(ellipse_poly.shape[0], 1, ellipse_poly.shape[1])
+            cv2.drawContours(proc_img, reshape_poly, -1, (255, 0, 0), 1)
+            # cv2.line(proc_img,(draw_x,draw_y),(draw_x,draw_y),(255,0,0),3)
+
+        figure_center_pts = []
+        for pt in prev_slice_dict['data']['center_pts']:
+            if len(prev_slice_dict['data']['center_pts']) == 1:
+                eval_pt = pt
+                pp_slice_dict = prev_slice_dict['data']['prev_slice_dict']
+                # pp_slice_dict is prev_prev_slice_dict
+                # if prev_prev_slice_dict != None and len(prev_prev_slice_dict['data']['center_pts'])==1:
+                if pp_slice_dict != None and len(pp_slice_dict['data']['center_pts']) == 1:
+                    # prev_prev_pt = prev_prev_slice_dict['data']['center_pts'][0]
+                    pp_pt = pp_slice_dict['data']['center_pts'][0]
+                    prev_pt = prev_slice_dict['data']['center_pts'][0]
+                    eval_pt[0] = eval_pt[0] + (prev_pt[0] - pp_pt[0])
+                    eval_pt[1] = eval_pt[1] + (prev_pt[1] - pp_pt[1])
+                    print('update eval_pt = {}', eval_pt)
+                    ps_x = slice_dict['PixelSpacing_x']
+                    ps_y = slice_dict['PixelSpacing_y']
+                    # print("(ps_x, ps_y) = ({},{})".format(ps_x,ps_y))
+                    a_distance_mm = 15.0
+                    a_distance = int(a_distance_mm / ps_x)
+                dst_pt = get_most_closed_pt(eval_pt, ellipse_center_pts, allowed_distance=a_distance)
+            else:
+                ps_x = slice_dict['PixelSpacing_x']
+                ps_y = slice_dict['PixelSpacing_y']
+                # print("(ps_x, ps_y) = ({},{})".format(ps_x,ps_y))
+                a_distance_mm = 10.0
+                a_distance = int(a_distance_mm / ps_x)
+                dst_pt = get_most_closed_pt(pt, ellipse_center_pts, allowed_distance=a_distance)
+            if dst_pt != None:
+                print('dst_pt != None with dst_pt = ({},{})'.format(dst_pt[0], dst_pt[1]))
+                figure_center_pts.append(dst_pt)
+            else:
+                print('dst_pt == None with pt = ({},{})'.format(pt[0], pt[1]))
+
+        if 'data' not in slice_dict.keys():
+            slice_dict['data'] = {}
+        slice_dict['data']['center_pts'] = figure_center_pts
+
+        print('ellipse_center_pts = ', ellipse_center_pts)
+        print('center_pts = ', slice_dict['data']['center_pts'])
+
+        # plt.subplot(1, 4, 4)
+        for [x, y] in figure_center_pts:
+            app_pts_dict[z].append([x, y, z])
+            draw_x = x - view_min_x
+            draw_y = y - view_min_y
+            cv2.line(proc_img, (draw_x, draw_y), (draw_x, draw_y), (255, 0, 0), 3)
+
+        # plt.subplot(1, 4, 4)
+        # plt.imshow(proc_img, cmap=plt.cm.bone)
+        # plt.show()
+        prev_slice_dict = slice_dict
+    print(app_pts_dict)
+    return app_pts_dict
+
+
+
 def algo_run_by_folder(folder):
     # app_pts_dict[z] = [[x,y,z], [x,y,z], [x,y,z] ]
     app_pts_dict = {}
@@ -987,7 +1160,8 @@ def generate_brachy_rp_file(RP_OperatorsName, folder, out_rp_filepath):
             rs_filepath = filepath
 
     # the function will get all 3D pt of applicator
-    app_pts = algo_run_by_folder(folder)
+    #app_pts = algo_run_by_folder(folder)
+    app_pts = algo_run_with_implicator_by_folder(folder)
     # transform all 3D pt of applicator into each line for each applicator and the line have been sorted by z
     lines = make_lines_process(app_pts)
     # The CT data is the format with 512 x 512, but we want to tranfer it into real metric space
