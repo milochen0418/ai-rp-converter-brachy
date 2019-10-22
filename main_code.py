@@ -9,6 +9,8 @@ from decimal import Decimal
 import random
 
 
+# The purpose of python_object_dump() is to output python object in bytes, so that
+# Jupyter notebook can read and show it .
 import pickle
 def python_object_dump(obj, filename):
     file_w = open(filename, "wb")
