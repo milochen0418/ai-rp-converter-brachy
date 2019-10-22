@@ -328,6 +328,7 @@ def get_contours_of_first_slice_in_special_case(first_slice_dict):
     return contours
 
     pass
+
 def get_app_center_pts_of_first_slice(first_slice_dict):
     ps_x = first_slice_dict['PixelSpacing_x']
     ps_y = first_slice_dict['PixelSpacing_y']
@@ -340,12 +341,11 @@ def get_app_center_pts_of_first_slice(first_slice_dict):
     (contours, constant) = get_max_contours(first_slice_dict['rescale_pixel_array'])
 
     # (sorted_app_center_pts, rect_infos, app_center_pts) = get_rect_infos_and_center_pts(contours)
-    (sorted_app_center_pts, rect_infos, app_center_pts) = get_rect_infos_and_center_pts(contours, h_max=h_max,
-                                                                                        h_min=h_min, w_max=w_max,
-                                                                                        w_min=w_min)
+    (sorted_app_center_pts, rect_infos, app_center_pts) = get_rect_infos_and_center_pts(contours, h_max=h_max,h_min=h_min, w_max=w_max,w_min=w_min)
     print('\n\n')
     print(sorted_app_center_pts)
     # TODO After researching done, write the code to finish this task
+
     if sorted_app_center_pts == None or len(sorted_app_center_pts) != 3:
         contours = get_contours_of_first_slice_in_special_case(first_slice_dict)
         if len(contours) != 3:
@@ -362,6 +362,38 @@ def get_app_center_pts_of_first_slice(first_slice_dict):
     print('get_app_center_pts_of_first_slice() -> x_sorted_pts = ', x_sorted_pts)
     return x_sorted_pts
     pass
+
+
+def get_app_center_pts_with_implicator_of_first_slice(first_slice_dict):
+    ps_x = first_slice_dict['PixelSpacing_x']
+    ps_y = first_slice_dict['PixelSpacing_y']
+    h_max = int((19.0 * 4.19921e-1) / ps_y)
+    #h_min = int((13.0 * 4.19921e-1) / ps_y)
+    h_min = int((0.2 * 4.19921e-1) / ps_y)
+
+    w_max = int((19.0 * 4.19921e-1) / ps_x)
+    #w_min = int((13.0 * 4.19921e-1) / ps_x)
+    w_min = int((0.2 * 4.19921e-1) / ps_x)
+
+    # print('(h={},{} , w={},{})'.format(h_max, h_min, w_max, w_min))
+
+    (contours, constant) = get_max_contours(first_slice_dict['rescale_pixel_array'])
+
+    # (sorted_app_center_pts, rect_infos, app_center_pts) = get_rect_infos_and_center_pts(contours)
+    (sorted_app_center_pts, rect_infos, app_center_pts) = get_rect_infos_and_center_pts(contours, h_max=h_max,h_min=h_min, w_max=w_max,w_min=w_min)
+    print('\n\n')
+    print(sorted_app_center_pts)
+    # TODO After researching done, write the code to finish this task
+    print('\n\n')
+
+    x_sorted_pts = sorted(app_center_pts, key=lambda cen_pt: cen_pt[0], reverse=False)
+    print('get_app_center_pts_of_first_slice() -> x_sorted_pts = ', x_sorted_pts)
+    return x_sorted_pts
+    pass
+
+
+
+
 def get_view_scope_by_slice(first_slice_dict, padding=30):
     (contours, constant) = get_max_contours(first_slice_dict['rescale_pixel_array'])
     print('PixelSpacing_(x,y)=({}, {})'.format(first_slice_dict['PixelSpacing_x'], first_slice_dict['PixelSpacing_y']))
@@ -502,6 +534,7 @@ def algo_run_by_folder(folder):
     sorted_ct_dicom_dict_keys = sorted(ct_dicom_dict['SliceLocation'].keys())
     first_slice_dict = ct_dicom_dict['SliceLocation'][sorted_ct_dicom_dict_keys[0]]
     based_center_pts = get_app_center_pts_of_first_slice(first_slice_dict)
+
     if len(based_center_pts) != 3:
         print('len(based_center_pts) is wrong, folder = ', folder)
         return
@@ -830,6 +863,7 @@ def convert_lines_in_metrics(lines, ct_folder):
             new_pt = [new_pt_x, new_pt_y, pt_z]
             new_line.append(new_pt)
     return new_lines
+
 def get_applicator_rp_line(metric_line, first_purpose_distance_mm, each_purpose_distance_mm):
     tandem_rp_line = []
     pt_idx = 0
@@ -983,7 +1017,7 @@ def generate_brachy_rp_file(RP_OperatorsName, folder, out_rp_filepath):
 
 #generate_brachy_rp_file(RP_OperatorsName='thoth', folder='RALmilo', out_rp_filepath=r'brachy.rp.dcm')
 #generate_brachy_rp_file(RP_OperatorsName='thoth', folder='16568131', out_rp_filepath=r'brachy.rp.dcm')
-generate_brachy_rp_file(RP_OperatorsName='thoth', folder='24460566', out_rp_filepath=r'brachy.rp.dcm')
+generate_brachy_rp_file(RP_OperatorsName='AI', folder='24460566', out_rp_filepath=r'brachy.rp.dcm')
 
 
 
