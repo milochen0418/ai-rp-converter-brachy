@@ -536,16 +536,8 @@ def algo_run_with_implicator_by_folder(folder):
     ct_dicom_dict = gen_ct_dicom_dict(ct_filelist)
     sorted_ct_dicom_dict_keys = sorted(ct_dicom_dict['SliceLocation'].keys())
     first_slice_dict = ct_dicom_dict['SliceLocation'][sorted_ct_dicom_dict_keys[0]]
-    based_center_pts = get_app_center_pts_of_first_slice(first_slice_dict)
-    #based_center_pts = get_app_center_pts_with_implicator_of_first_slice(first_slice_dict)
+    based_center_pts = get_app_center_pts_with_implicator_of_first_slice(first_slice_dict)
 
-
-
-    if len(based_center_pts) != 3:
-        print('len(based_center_pts) is wrong, folder = ', folder)
-        return
-    else:
-        print(based_center_pts)
 
     first_slice_dict['data'] = {}
     first_slice_dict['data']['center_pts'] = based_center_pts
