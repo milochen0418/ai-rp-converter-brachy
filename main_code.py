@@ -140,6 +140,7 @@ def get_max_contours(A, constant_value=None, ContourRetrievalMode=cv2.RETR_EXTER
     _, contours, _ = cv2.findContours(gray_image, ContourRetrievalMode, cv2.CHAIN_APPROX_NONE)
     # return contours (list of np.array) and constant (you assume they are almsot highest)
     return (contours, constant)
+
 def get_rect_infos_and_center_pts(contours, h_min=13, w_min=13, h_max=19, w_max=19):
     app_center_pts = []
     rect_infos = []
@@ -170,6 +171,7 @@ def get_rect_infos_and_center_pts(contours, h_min=13, w_min=13, h_max=19, w_max=
         rect_infos.append(rect_info)
     sorted_app_center_pts = sorted(app_center_pts, key=lambda cen_pt: cen_pt[0], reverse=False)
     return (sorted_app_center_pts, rect_infos, app_center_pts)
+
 def get_2level_max_contours(img, gray_img):
     def get_max_contours_by_filter_img(A, filter_img, ContourRetrievalMode=cv2.RETR_TREE):
         # gray_image = cv2.cvtColor(filter_img, cv2.COLOR_RGB2GRAY)
@@ -470,6 +472,11 @@ def get_view_scope_by_slice(first_slice_dict, padding=30):
 
 def distance(pt1, pt2):
     axis_num = len(pt1)
+    # Assume maximum of axis number of pt is 3
+    # Because we may save pt[4] as another appended information for algorithm
+    if(axis_num > 3):
+        axis_num = 3
+
     sum = 0.0
     for idx in range(axis_num):
         sum = sum + (pt1[idx] - pt2[idx]) ** 2
@@ -493,7 +500,8 @@ def get_most_closed_pt(src_pt, pts, allowed_distance=100):
                 dst_pt = pt
         pass
     return dst_pt
-def make_lines_process(app_pts):
+def make_lines_process(app_pts, app_pts_extend_data = {}):
+    # app_pts =  {"-96": [[206, 282, "-96"], [237, 280, "-96"], [274, 276, "-96"]], "-94",[...], ... }
     lines = [[], [], []]
     sorted_app_pts_keys = sorted(app_pts.keys())
     print(sorted_app_pts_keys)
@@ -541,12 +549,15 @@ def make_lines_process(app_pts):
 def algo_run_by_folder_new(folder):
     # app_pts_dict[z] = [[x,y,z], [x,y,z], [x,y,z] ]
     app_pts_dict = {}
+    app_pts_extend_data = {}
     ct_filelist = get_ct_filelist_by_folder(folder)
     ct_dicom_dict = gen_ct_dicom_dict(ct_filelist)
     sorted_ct_dicom_dict_keys = sorted(ct_dicom_dict['SliceLocation'].keys())
     first_slice_dict = ct_dicom_dict['SliceLocation'][sorted_ct_dicom_dict_keys[0]]
     based_center_pts = get_app_center_pts_of_first_slice(first_slice_dict)
 
+    print(based_center_pts)
+    first_tandem_pt = based_center_pts[1].copy()
 
     first_slice_dict['data'] = {}
     first_slice_dict['data']['center_pts'] = based_center_pts
@@ -696,7 +707,8 @@ def algo_run_by_folder_new(folder):
         # plt.show()
         prev_slice_dict = slice_dict
     print(app_pts_dict)
-    return app_pts_dict
+    app_pts_extend_data = {}
+    return app_pts_dict, app_pts_extend_data
 
 
 def algo_run_with_implicator_by_folder(folder):
@@ -1329,10 +1341,14 @@ def generate_brachy_rp_file(RP_OperatorsName, folder, out_rp_filepath):
     # the function will get all 3D pt of applicator
     #app_pts = algo_run_by_folder(folder)
     #app_pts = algo_run_with_implicator_by_folder(folder)
-    app_pts = algo_run_by_folder_new(folder)
+    (app_pts, app_pts_extend_data) = algo_run_by_folder_new(folder)
 
     # transform all 3D pt of applicator into each line for each applicator and the line have been sorted by z
-    lines = make_lines_process(app_pts)
+
+    print('app_pts = ',app_pts) #
+    # app_pts =  {"-96": [[206, 282, "-96"], [237, 280, "-96"], [274, 276, "-96"]], "-94",[...], ... }
+    #app_pts_extend_data = {}
+    lines = make_lines_process(app_pts, app_pts_extend_data)
 
     #%%
     # The CT data is the format with 512 x 512, but we want to tranfer it into real metric space
