@@ -141,11 +141,32 @@ def get_max_contours(A, constant_value=None, ContourRetrievalMode=cv2.RETR_EXTER
     # return contours (list of np.array) and constant (you assume they are almsot highest)
     return (contours, constant)
 
+def get_rect_info_from_cv_contour(cv_contour):
+    i = cv_contour
+    con = i.reshape(i.shape[0], i.shape[2])
+    x_min = con[:, 0].min()
+    x_max = con[:, 0].max()
+    x_mean = con[:, 0].mean()
+    y_min = con[:, 1].min()
+    y_max = con[:, 1].max()
+    y_mean = con[:, 1].mean()
+    h = y_max - y_min
+    w = x_max - x_min
+    x_mean = int(x_mean)
+    y_mean = int(y_mean)
+    rect_info = [(x_min, x_max, y_min, y_max), (w, h), (x_mean, y_mean)]
+    return rect_info
+
+
 def get_rect_infos_and_center_pts(contours, h_min=13, w_min=13, h_max=19, w_max=19):
     app_center_pts = []
+    app_center_pts_extend_data = []
     rect_infos = []
     for contour in contours:
         # Step 2. make useful information
+        rect_info = get_rect_info_from_cv_contour(cv_contour = contour)
+        # rect_info is [(x_min, x_max, y_min, y_max), (w, h), (x_mean, y_mean)]
+        """
         i = contour
         con = i.reshape(i.shape[0], i.shape[2])
         x_min = con[:, 0].min()
@@ -159,10 +180,18 @@ def get_rect_infos_and_center_pts(contours, h_min=13, w_min=13, h_max=19, w_max=
         x_mean = int(x_mean)
         y_mean = int(y_mean)
         rect_info = [(x_min, x_max, y_min, y_max), (w, h), (x_mean, y_mean)]
+        """
+        (x_min, x_max, y_min, y_max) = rect_info[0]
+        (w,h) = rect_info[1]
+        (x_mean, y_mean) = rect_info[2]
+
+
         # if h >= 13 and h < 19 and w >= 13 and h < 19:
         if h >= h_min and h < h_max and w >= w_min and w < w_max:
             cen_pt = [x_mean, y_mean]
             app_center_pts.append(cen_pt)
+            app_center_pts_extend_data.append({'contour':contour, 'rect_info':rect_info})
+
         else:
             # print('(h={},{} , w={},{})'.format(h_max, h_min, w_max, w_min))
             # print('Not matching ! rect_info = ', rect_info)
@@ -170,7 +199,7 @@ def get_rect_infos_and_center_pts(contours, h_min=13, w_min=13, h_max=19, w_max=
         # print(rect_info)
         rect_infos.append(rect_info)
     sorted_app_center_pts = sorted(app_center_pts, key=lambda cen_pt: cen_pt[0], reverse=False)
-    return (sorted_app_center_pts, rect_infos, app_center_pts)
+    return (sorted_app_center_pts, rect_infos, app_center_pts, app_center_pts_extend_data)
 
 def get_2level_max_contours(img, gray_img):
     def get_max_contours_by_filter_img(A, filter_img, ContourRetrievalMode=cv2.RETR_TREE):
@@ -355,7 +384,11 @@ def get_app_center_pts_of_first_slice(first_slice_dict):
     (contours, constant) = get_max_contours(first_slice_dict['rescale_pixel_array'])
 
     # (sorted_app_center_pts, rect_infos, app_center_pts) = get_rect_infos_and_center_pts(contours)
-    (sorted_app_center_pts, rect_infos, app_center_pts) = get_rect_infos_and_center_pts(contours, h_max=h_max,h_min=h_min, w_max=w_max,w_min=w_min)
+    #(sorted_app_center_pts, rect_infos, app_center_pts) = get_rect_infos_and_center_pts(contours, h_max=h_max,h_min=h_min, w_max=w_max,w_min=w_min)
+    #(sorted_app_center_pts, rect_infos, app_center_pts, app_center_pts_extend_data)
+    (sorted_app_center_pts, rect_infos, app_center_pts, app_center_pts_extend_data) = get_rect_infos_and_center_pts(contours, h_max=h_max,h_min=h_min, w_max=w_max,w_min=w_min)
+
+
     print('\n\n')
     print(sorted_app_center_pts)
     # TODO After researching done, write the code to finish this task
@@ -364,9 +397,7 @@ def get_app_center_pts_of_first_slice(first_slice_dict):
         contours = get_contours_of_first_slice_in_special_case(first_slice_dict)
         if len(contours) != 3:
             print('Error process for special case of first slice')
-        (sorted_app_center_pts, rect_infos, app_center_pts) = get_rect_infos_and_center_pts(contours, h_max=h_max,
-                                                                                            h_min=0, w_max=w_max,
-                                                                                            w_min=0)
+        (sorted_app_center_pts, rect_infos, app_center_pts, app_center_pts_extend_data) = get_rect_infos_and_center_pts( contours, h_max=h_max, h_min=0, w_max=w_max, w_min=0)
         x_sorted_pts = sorted(app_center_pts, key=lambda cen_pt: cen_pt[0], reverse=False)
         return x_sorted_pts
         pass
@@ -420,17 +451,14 @@ def get_view_scope_by_slice(first_slice_dict, padding=30):
     print('(h={},{} , w={},{})'.format(h_max, h_min, w_max, w_min))
 
     # (sorted_app_center_pts, rect_infos, app_center_pts) = get_rect_infos_and_center_pts(contours)
-    (sorted_app_center_pts, rect_infos, app_center_pts) = get_rect_infos_and_center_pts(contours, h_max=h_max,
-                                                                                        w_max=w_max, h_min=h_min,
-                                                                                        w_min=w_min)
+
+    (sorted_app_center_pts, rect_infos, app_center_pts, _) = get_rect_infos_and_center_pts(contours, h_max=h_max,w_max=w_max, h_min=h_min,w_min=w_min)
     print('sorted_app_center_pts = ', sorted_app_center_pts)
     if sorted_app_center_pts == None or len(sorted_app_center_pts) != 3:
         contours = get_contours_of_first_slice_in_special_case(first_slice_dict)
         if len(contours) != 3:
             print('Error process for special case of first slice')
-        (sorted_app_center_pts, rect_infos, app_center_pts) = get_rect_infos_and_center_pts(contours, h_max=h_max,
-                                                                                            h_min=0, w_max=w_max,
-                                                                                            w_min=0)
+        (sorted_app_center_pts, rect_infos, app_center_pts,_) = get_rect_infos_and_center_pts(contours, h_max=h_max,h_min=0, w_max=w_max,w_min=0)
         padding = padding + 30
 
     x_sorted_pts = sorted(app_center_pts, key=lambda cen_pt: cen_pt[0], reverse=False)
