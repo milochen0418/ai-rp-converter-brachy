@@ -665,6 +665,8 @@ def algo_run_by_folder_new(folder):
         contours.extend(contours_without_filter)
 
         ellipse_center_pts = []
+        ellipse_center_pts_extend_data = []
+
         draw_ellipse_center_pts = []
         for contour in contours:
             if len(contour) < 5:
@@ -678,12 +680,15 @@ def algo_run_by_folder_new(folder):
                 # print("special fitEllipse(x,y) = ({},{})".format(x,y))
                 # blockPrint()
                 ellipse_center_pts.append([x, y])
+                ellipse_center_pts_extend_data.append({})
+                ellipse_center_pts_extend_data[-1]['cen_pt'] = [x, y]
+                ellipse_center_pts_extend_data[-1]['contour'] = contour
+                ellipse_center_pts_extend_data[-1]['rect_info'] = get_rect_info_from_cv_contour(cv_contour = contour)
+
                 continue
             ellipse = cv2.fitEllipse(contour)  # auto-figure the ellipse to fit contour
             # print(ellipse)
-            ellipse_poly = cv2.ellipse2Poly((int(ellipse[0][0]), int(ellipse[0][1])),
-                                            (int(ellipse[1][0] / 2), int(ellipse[1][1] / 2)), int(ellipse[2]), 0, 360,
-                                            5)
+            ellipse_poly = cv2.ellipse2Poly((int(ellipse[0][0]), int(ellipse[0][1])), (int(ellipse[1][0] / 2), int(ellipse[1][1] / 2)), int(ellipse[2]), 0, 360, 5)
             draw_x = int(ellipse[0][0])
             draw_y = int(ellipse[0][1])
             draw_ellipse_center_pts.append([draw_x, draw_y])
