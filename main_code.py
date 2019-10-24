@@ -385,15 +385,11 @@ def get_app_center_pts_of_first_slice(first_slice_dict):
     #(sorted_app_center_pts, rect_infos, app_center_pts) = get_rect_infos_and_center_pts(contours)
     #(sorted_app_center_pts, rect_infos, app_center_pts) = get_rect_infos_and_center_pts(contours, h_max=h_max,h_min=h_min, w_max=w_max,w_min=w_min)
     #(sorted_app_center_pts, rect_infos, app_center_pts, app_center_pts_extend_data)
+
     (sorted_app_center_pts, rect_infos, app_center_pts, app_center_pts_extend_data) = get_rect_infos_and_center_pts(contours, h_max=h_max,h_min=h_min, w_max=w_max,w_min=w_min)
-    sorted_app_center_pts_extend_data = []
-    for pt_idx, pt in enumerate(sorted_app_center_pts):
-        for ext_data_idx, extend_data in enumerate(app_center_pts_extend_data):
-            cen_pt = extend_data['cen_pt']
-            if (cen_pt[0] == pt[0] and cen_pt[1] == pt[1]) :
-                append_item = copy.deepcopy(extend_data)
-                sorted_app_center_pts_extend_data.append( append_item )
-                break
+
+
+
 
     print('app_center_pts_extend_data = ')
 
@@ -409,12 +405,33 @@ def get_app_center_pts_of_first_slice(first_slice_dict):
         if len(contours) != 3:
             print('Error process for special case of first slice')
         (sorted_app_center_pts, rect_infos, app_center_pts, app_center_pts_extend_data) = get_rect_infos_and_center_pts( contours, h_max=h_max, h_min=0, w_max=w_max, w_min=0)
+
+
         x_sorted_pts = sorted(app_center_pts, key=lambda cen_pt: cen_pt[0], reverse=False)
+        # Make sorted_app_center_pts_extend_data by x_sorted_pts
+        sorted_app_center_pts_extend_data = []
+        for pt_idx, pt in enumerate(x_sorted_pts):
+            for ext_data_idx, extend_data in enumerate(app_center_pts_extend_data):
+                cen_pt = extend_data['cen_pt']
+                if (cen_pt[0] == pt[0] and cen_pt[1] == pt[1]):
+                    append_item = copy.deepcopy(extend_data)
+                    sorted_app_center_pts_extend_data.append(append_item)
+                    break
         return (x_sorted_pts, app_center_pts_extend_data)
         pass
     print('\n\n')
-
     x_sorted_pts = sorted(app_center_pts, key=lambda cen_pt: cen_pt[0], reverse=False)
+    # Make sorted_app_center_pts_extend_data by x_sorted_pts
+    sorted_app_center_pts_extend_data = []
+    for pt_idx, pt in enumerate(x_sorted_pts):
+        for ext_data_idx, extend_data in enumerate(app_center_pts_extend_data):
+            cen_pt = extend_data['cen_pt']
+            if (cen_pt[0] == pt[0] and cen_pt[1] == pt[1]):
+                append_item = copy.deepcopy(extend_data)
+                sorted_app_center_pts_extend_data.append(append_item)
+                break
+    print(x_sorted_pts)
+
     print('get_app_center_pts_of_first_slice() -> x_sorted_pts = ', x_sorted_pts)
 
 
@@ -573,7 +590,8 @@ def algo_run_by_folder_new(folder):
 
     based_center_pts, app_center_pts_extend_data = get_app_center_pts_of_first_slice(first_slice_dict)
     print(app_center_pts_extend_data)
-    exit(0)
+
+
 
     print(based_center_pts)
     print(app_center_pts_extend_data)
