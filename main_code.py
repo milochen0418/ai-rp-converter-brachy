@@ -582,7 +582,7 @@ def make_lines_process(app_pts, app_pts_extend_data = {}):
 def algo_run_by_folder_new(folder):
     # app_pts_dict[z] = [[x,y,z], [x,y,z], [x,y,z] ]
     app_pts_dict = {}
-    app_pts_extend_data = {}
+    app_pts_dict_extend_data = {}
     ct_filelist = get_ct_filelist_by_folder(folder)
     ct_dicom_dict = gen_ct_dicom_dict(ct_filelist)
     sorted_ct_dicom_dict_keys = sorted(ct_dicom_dict['SliceLocation'].keys())
@@ -590,6 +590,7 @@ def algo_run_by_folder_new(folder):
 
     based_center_pts, app_center_pts_extend_data = get_app_center_pts_of_first_slice(first_slice_dict)
     print(app_center_pts_extend_data)
+
 
 
 
@@ -606,6 +607,7 @@ def algo_run_by_folder_new(folder):
     prev_slice_dict = None
     for z in sorted_ct_dicom_dict_keys:
         app_pts_dict[z] = []
+        app_pts_dict_extend_data[z] = []
         slice_dict = ct_dicom_dict['SliceLocation'][z]
         if 'data' not in slice_dict.keys():
             slice_dict['data'] = {}
@@ -617,11 +619,16 @@ def algo_run_by_folder_new(folder):
             # pure_show_slice_dict(slice_dict, (view_min_y, view_max_y, view_min_x, view_max_x))
             # First slice
             print('center_pts = ', slice_dict['data']['center_pts'])
-            for pt in slice_dict['data']['center_pts']:
+            #for pt in slice_dict['data']['center_pts']:
+            for pt_idx, pt in enumerate(slice_dict['data']['center_pts']):
+
                 x = pt[0]
                 y = pt[1]
                 app_pts_dict[z].append([x, y, z])
+                app_pts_dict_extend_data[z].append( slice_dict['data']['pts_extend_data'][pt_idx] )
             continue
+        #first_slice_dict['data']['center_pts'] = based_center_pts
+        #first_slice_dict['data']['pts_extend_data'] = app_center_pts_extend_data
 
         img = slice_dict['rescale_pixel_array']
         gray_img = convert_to_gray_image(img)
@@ -747,13 +754,19 @@ def algo_run_by_folder_new(folder):
         if 'data' not in slice_dict.keys():
             slice_dict['data'] = {}
         slice_dict['data']['center_pts'] = figure_center_pts
+        slice_dict['data']['pts_extend_data'] = figure_center_pts_extend_data
 
         print('ellipse_center_pts = ', ellipse_center_pts)
         print('center_pts = ', slice_dict['data']['center_pts'])
 
         # plt.subplot(1, 4, 4)
-        for [x, y] in figure_center_pts:
+
+        #for [x, y] in figure_center_pts:
+
+        for pt_idx, [x, y] in enumerate(figure_center_pts):
             app_pts_dict[z].append([x, y, z])
+            app_pts_dict_extend_data[z].append(figure_center_pts_extend_data[pt_idx])
+
             draw_x = x - view_min_x
             draw_y = y - view_min_y
             cv2.line(proc_img, (draw_x, draw_y), (draw_x, draw_y), (255, 0, 0), 3)
@@ -763,7 +776,7 @@ def algo_run_by_folder_new(folder):
         # plt.show()
         prev_slice_dict = slice_dict
     print(app_pts_dict)
-    return (app_pts_dict, app_pts_extend_data)
+    return (app_pts_dict, app_pts_dict_extend_data)
 
 
 def algo_run_with_implicator_by_folder(folder):
@@ -1397,6 +1410,8 @@ def generate_brachy_rp_file(RP_OperatorsName, folder, out_rp_filepath):
     #app_pts = algo_run_by_folder(folder)
     #app_pts = algo_run_with_implicator_by_folder(folder)
     (app_pts, app_pts_extend_data) = algo_run_by_folder_new(folder)
+
+    print('aaaaaa look data of (app_pts, app_pts_extend_data)')
 
     # transform all 3D pt of applicator into each line for each applicator and the line have been sorted by z
 
