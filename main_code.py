@@ -695,10 +695,16 @@ def algo_run_by_folder_new(folder):
             x = int(ellipse[0][0]) + view_min_x
             y = int(ellipse[0][1]) + view_min_y
             ellipse_center_pts.append([x, y])
+            ellipse_center_pts_extend_data.append({})
+            ellipse_center_pts_extend_data[-1]['cen_pt'] = [x, y]
+            ellipse_center_pts_extend_data[-1]['contour'] = contour
+            ellipse_center_pts_extend_data[-1]['rect_info'] = get_rect_info_from_cv_contour(cv_contour=contour)
+
             reshape_poly = ellipse_poly.reshape(ellipse_poly.shape[0], 1, ellipse_poly.shape[1])
             cv2.drawContours(proc_img, reshape_poly, -1, (255, 0, 0), 1)
             # cv2.line(proc_img,(draw_x,draw_y),(draw_x,draw_y),(255,0,0),3)
         figure_center_pts = []
+        figure_center_pts_extend_data = []
         for pt in prev_slice_dict['data']['center_pts']:
             if len(prev_slice_dict['data']['center_pts']) == 1:
                 eval_pt = pt
@@ -728,6 +734,14 @@ def algo_run_by_folder_new(folder):
             if dst_pt != None:
                 print('dst_pt != None with dst_pt = ({},{})'.format(dst_pt[0], dst_pt[1]))
                 figure_center_pts.append(dst_pt)
+                figure_center_pts_extend_data.append({})
+                figure_center_pts_extend_data[-1]['cen_pt'] = dst_pt
+                for ell_idx, ell_pt in enumerate(ellipse_center_pts):
+                    if ( ell_pt[0] == dst_pt[0] and ell_pt[1] == dst_pt[1] ):
+                        ell_extend_data = ellipse_center_pts_extend_data[ell_idx]
+                        figure_center_pts_extend_data[-1]['contour'] = ell_extend_data['contour']
+                        figure_center_pts_extend_data[-1]['rect_info'] = ell_extend_data['rect_info']
+                        break
             else:
                 print('dst_pt == None with pt = ({},{})'.format(pt[0], pt[1]))
 
