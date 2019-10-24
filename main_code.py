@@ -533,23 +533,35 @@ def get_most_closed_pt(src_pt, pts, allowed_distance=100):
                 dst_pt = pt
         pass
     return dst_pt
-def make_lines_process(app_pts, app_pts_extend_data = {}):
+def make_lines_process(app_pts, app_pts_extend_data = {}, z_map = {}):
     print('make_lines_process()')
     # app_pts =  {"-96": [[206, 282, "-96"], [237, 280, "-96"], [274, 276, "-96"]], "-94",[...], ... }
+    print('aaaaaa')
+
+    # ps_x = z_map[z]['x_spacing']
+    # ps_y = z_map[z]['y_spacing']
+    # h_max = int((19.0 * 4.19921e-1) / ps_y)
+    # h_min = int((13.0 * 4.19921e-1) / ps_y)
+    # w_max = int((19.0 * 4.19921e-1) / ps_x)
+    # w_min = int((13.0 * 4.19921e-1) / ps_x)
+
     lines = [[], [], []]
     sorted_app_pts_keys = sorted(app_pts.keys())
     print(sorted_app_pts_keys)
 
-    for key_idx in range(len(sorted_app_pts_keys)):
-        key = sorted_app_pts_keys[key_idx]
+    #for key_idx in range(len(sorted_app_pts_keys)):
+    for key_idx, key  in enumerate(sorted_app_pts_keys):
+        #key = sorted_app_pts_keys[key_idx]
         pts = app_pts[key]
+        pts_extend_data = app_pts_extend_data[key]
+        print('key_idx = {}'.format(key_idx))
 
         if key_idx == 0:
             lines[0].append(pts[0])
             lines[1].append(pts[1])
             lines[2].append(pts[2])
         else:
-            for line in lines:
+            for line_idx, line in enumerate(lines):
                 last_line_pt = line[-1]
                 if last_line_pt == None:
                     continue
@@ -572,7 +584,6 @@ def make_lines_process(app_pts, app_pts_extend_data = {}):
                 line.append(candidate_pt)
                 # the data structure fo each line will be like
                 # [(x0,y0,z0), (x1,y1,z1), ... ,(xn,yn,zn),None]
-
     # clean dummy None in last element in each line
     for idx in range(len(lines)):
         line = lines[idx]
@@ -1419,7 +1430,9 @@ def generate_brachy_rp_file(RP_OperatorsName, folder, out_rp_filepath):
     print('app_pts = ',app_pts)
     # app_pts =  {"-96": [[206, 282, "-96"], [237, 280, "-96"], [274, 276, "-96"]], "-94",[...], ... }
     #app_pts_extend_data = {}
-    lines = make_lines_process(app_pts, app_pts_extend_data)
+    z_map, ct_filepath_map = get_maps_with_folder(folder)
+
+    lines = make_lines_process(app_pts, app_pts_extend_data, z_map)
 
     #%%
     # The CT data is the format with 512 x 512, but we want to tranfer it into real metric space
