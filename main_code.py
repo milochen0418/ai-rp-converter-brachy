@@ -190,8 +190,7 @@ def get_rect_infos_and_center_pts(contours, h_min=13, w_min=13, h_max=19, w_max=
         if h >= h_min and h < h_max and w >= w_min and w < w_max:
             cen_pt = [x_mean, y_mean]
             app_center_pts.append(cen_pt)
-            app_center_pts_extend_data.append({'contour':contour, 'rect_info':rect_info})
-
+            app_center_pts_extend_data.append({'cen_pt':cen_pt,'contour':contour, 'rect_info':rect_info})
         else:
             # print('(h={},{} , w={},{})'.format(h_max, h_min, w_max, w_min))
             # print('Not matching ! rect_info = ', rect_info)
@@ -387,6 +386,8 @@ def get_app_center_pts_of_first_slice(first_slice_dict):
     #(sorted_app_center_pts, rect_infos, app_center_pts) = get_rect_infos_and_center_pts(contours, h_max=h_max,h_min=h_min, w_max=w_max,w_min=w_min)
     #(sorted_app_center_pts, rect_infos, app_center_pts, app_center_pts_extend_data)
     (sorted_app_center_pts, rect_infos, app_center_pts, app_center_pts_extend_data) = get_rect_infos_and_center_pts(contours, h_max=h_max,h_min=h_min, w_max=w_max,w_min=w_min)
+    print('app_center_pts_extend_data = ')
+    #print(app_center_pts_extend_data)
 
 
     print('\n\n')
@@ -399,42 +400,17 @@ def get_app_center_pts_of_first_slice(first_slice_dict):
             print('Error process for special case of first slice')
         (sorted_app_center_pts, rect_infos, app_center_pts, app_center_pts_extend_data) = get_rect_infos_and_center_pts( contours, h_max=h_max, h_min=0, w_max=w_max, w_min=0)
         x_sorted_pts = sorted(app_center_pts, key=lambda cen_pt: cen_pt[0], reverse=False)
-        return x_sorted_pts
+        return (x_sorted_pts, app_center_pts_extend_data)
         pass
     print('\n\n')
 
     x_sorted_pts = sorted(app_center_pts, key=lambda cen_pt: cen_pt[0], reverse=False)
     print('get_app_center_pts_of_first_slice() -> x_sorted_pts = ', x_sorted_pts)
-    return x_sorted_pts
+
+    #return x_sorted_pts
+    return x_sorted_pts, app_center_pts_extend_data
     pass
 
-
-def get_app_center_pts_with_implicator_of_first_slice(first_slice_dict):
-    ps_x = first_slice_dict['PixelSpacing_x']
-    ps_y = first_slice_dict['PixelSpacing_y']
-    h_max = int((19.0 * 4.19921e-1) / ps_y)
-    #h_min = int((13.0 * 4.19921e-1) / ps_y)
-    h_min = int((0.2 * 4.19921e-1) / ps_y)
-
-    w_max = int((19.0 * 4.19921e-1) / ps_x)
-    #w_min = int((13.0 * 4.19921e-1) / ps_x)
-    w_min = int((0.2 * 4.19921e-1) / ps_x)
-
-    # print('(h={},{} , w={},{})'.format(h_max, h_min, w_max, w_min))
-
-    (contours, constant) = get_max_contours(first_slice_dict['rescale_pixel_array'])
-
-    # (sorted_app_center_pts, rect_infos, app_center_pts) = get_rect_infos_and_center_pts(contours)
-    (sorted_app_center_pts, rect_infos, app_center_pts) = get_rect_infos_and_center_pts(contours, h_max=h_max,h_min=h_min, w_max=w_max,w_min=w_min)
-    print('\n\n')
-    print(sorted_app_center_pts)
-    # TODO After researching done, write the code to finish this task
-    print('\n\n')
-
-    x_sorted_pts = sorted(app_center_pts, key=lambda cen_pt: cen_pt[0], reverse=False)
-    print('get_app_center_pts_of_first_slice() -> x_sorted_pts = ', x_sorted_pts)
-    return x_sorted_pts
-    pass
 
 
 
@@ -582,9 +558,14 @@ def algo_run_by_folder_new(folder):
     ct_dicom_dict = gen_ct_dicom_dict(ct_filelist)
     sorted_ct_dicom_dict_keys = sorted(ct_dicom_dict['SliceLocation'].keys())
     first_slice_dict = ct_dicom_dict['SliceLocation'][sorted_ct_dicom_dict_keys[0]]
-    based_center_pts = get_app_center_pts_of_first_slice(first_slice_dict)
+
+    based_center_pts, app_center_pts_extend_data = get_app_center_pts_of_first_slice(first_slice_dict)
+
+
 
     print(based_center_pts)
+    print(app_center_pts_extend_data)
+
     first_tandem_pt = based_center_pts[1].copy()
 
     first_slice_dict['data'] = {}
@@ -734,9 +715,9 @@ def algo_run_by_folder_new(folder):
         # plt.imshow(proc_img, cmap=plt.cm.bone)
         # plt.show()
         prev_slice_dict = slice_dict
+
     print(app_pts_dict)
-    app_pts_extend_data = {}
-    return app_pts_dict, app_pts_extend_data
+    return (app_pts_dict, app_pts_extend_data)
 
 
 def algo_run_with_implicator_by_folder(folder):
