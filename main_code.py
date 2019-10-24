@@ -569,6 +569,8 @@ def make_lines_process(app_pts, app_pts_extend_data = {}, z_map = {}):
                     # It's mean the algorithm for the line with line_idx is not keep going
                     continue
                 last_line_pt_x = last_line_pt[0]
+                last_line_pt_y = last_line_pt[1]
+
 
                 candidate_pt = None
                 # looking forward for candidate_pt
@@ -578,10 +580,22 @@ def make_lines_process(app_pts, app_pts_extend_data = {}, z_map = {}):
                     # Special case to process Tandem
                     for pt_idx, pt in enumerate(pts):
                         #pt = pts[pt_idx]
-                        pt_x = pt[0]
+                        pt_x = pt[0] # in pixel unit
+                        pt_y = pt[1] # in pixel unit
+                        z = pt[2]
+                        ps_x = z_map[z]['x_spacing']
+                        ps_y = z_map[z]['y_spacing']
+
                         ##if abs(last_line_pt_x - pt_x) < 5
                         # if abs(last_line_pt_x - pt_x) < 5 or (lines[0][-1] == None and lines[2][-1] == None):
-                        if abs(last_line_pt_x - pt_x) < 10:
+                        diff_x_pixel = abs(last_line_pt_x - pt_x)
+                        diff_y_pixel = abs(last_line_pt_y - pt_y)
+                        diff_x_mm = diff_x_pixel * ps_x
+                        diff_y_mm = diff_y_pixel * ps_y
+                        diff_dist_mm = math.sqrt( diff_x_mm**2 + diff_y_mm**2 )
+
+                        #if abs(last_line_pt_x - pt_x) < 10:
+                        if diff_dist_mm < 6:
                             if candidate_pt == None:
                                 candidate_pt = pt
                             else:
@@ -1489,7 +1503,10 @@ def generate_brachy_rp_file(RP_OperatorsName, folder, out_rp_filepath):
     z_map, ct_filepath_map = get_maps_with_folder(folder)
 
     lines = make_lines_process(app_pts, app_pts_extend_data, z_map)
-
+    print('lines[0] = {}'.format(lines[0]))
+    print('lines[1] = {}'.format(lines[1]))
+    print('lines[2] = {}'.format(lines[2]))
+    exit(0)
     #%%
     # The CT data is the format with 512 x 512, but we want to tranfer it into real metric space
     metric_lines = convert_lines_in_metrics(lines, folder)
