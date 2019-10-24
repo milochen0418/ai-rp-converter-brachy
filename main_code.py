@@ -608,12 +608,12 @@ def make_lines_process(app_pts, app_pts_extend_data = {}, z_map = {}):
                             h_max = int((19.0 * 4.19921e-1) / ps_y)
                             h_min = int((13.0 * 4.19921e-1) / ps_y)
                             # adjust h_min
-                            h_min = int(( (13.0-3.0) * 4.19921e-1) / ps_y)
+                            h_min = int(( (13.0-10.0) * 4.19921e-1) / ps_y)
                             w_max = int((19.0 * 4.19921e-1) / ps_x)
 
                             w_min = int((13.0 * 4.19921e-1) / ps_x)
                             # adjust w_min
-                            w_min = int(( (13.0-3.0) * 4.19921e-1) / ps_x)
+                            w_min = int(( (13.0-10.0) * 4.19921e-1) / ps_x)
 
                             if (h < h_min and w < w_min):
                                 # ignore this point because the rect of OVoid should satify the size's condition
