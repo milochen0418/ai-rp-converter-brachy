@@ -560,28 +560,83 @@ def make_lines_process(app_pts, app_pts_extend_data = {}, z_map = {}):
             lines[0].append(pts[0])
             lines[1].append(pts[1])
             lines[2].append(pts[2])
+            print(lines[0])
+
         else:
             for line_idx, line in enumerate(lines):
                 last_line_pt = line[-1]
                 if last_line_pt == None:
+                    # It's mean the algorithm for the line with line_idx is not keep going
                     continue
                 last_line_pt_x = last_line_pt[0]
 
                 candidate_pt = None
                 # looking forward for candidate_pt
-                for pt_idx in range(len(pts)):
-                    pt = pts[pt_idx]
-                    pt_x = pt[0]
-                    ##if abs(last_line_pt_x - pt_x) < 5
-                    # if abs(last_line_pt_x - pt_x) < 5 or (lines[0][-1] == None and lines[2][-1] == None):
-                    if abs(last_line_pt_x - pt_x) < 10:
-                        if candidate_pt == None:
-                            candidate_pt = pt
-                        else:
-                            candidate_pt_x = candidate_pt[0]
-                            if abs(candidate_pt_x - last_line_pt_x) > abs(pt_x - last_line_pt_x):
-                                candidate_pt = last_line_pt
-                line.append(candidate_pt)
+                #for pt_idx in range(len(pts)):
+
+                if (line_idx == 1) :
+                    # Special case to process Tandem
+                    for pt_idx, pt in enumerate(pts):
+                        #pt = pts[pt_idx]
+                        pt_x = pt[0]
+                        ##if abs(last_line_pt_x - pt_x) < 5
+                        # if abs(last_line_pt_x - pt_x) < 5 or (lines[0][-1] == None and lines[2][-1] == None):
+                        if abs(last_line_pt_x - pt_x) < 10:
+                            if candidate_pt == None:
+                                candidate_pt = pt
+                            else:
+                                candidate_pt_x = candidate_pt[0]
+                                if abs(candidate_pt_x - last_line_pt_x) > abs(pt_x - last_line_pt_x):
+                                    candidate_pt = last_line_pt
+                    line.append(candidate_pt)
+                elif (line_idx == 0 or line_idx == 2) :
+                    # Case to process Rt Ovoid (0)  and Lt Ovoid (2)
+
+                    for pt_idx, pt in enumerate(pts):
+                        #pt = pts[pt_idx]
+                        extend_data = pts_extend_data[pt_idx]
+                        pt_x = pt[0]
+                        ##if abs(last_line_pt_x - pt_x) < 5
+                        # if abs(last_line_pt_x - pt_x) < 5 or (lines[0][-1] == None and lines[2][-1] == None):
+                        if abs(last_line_pt_x - pt_x) < 10:
+                            (w, h) = extend_data['rect_info'][1]
+                            print('pt = {}'.format(pt))
+                            z = pt[2]
+                            ps_x = z_map[z]['x_spacing']
+                            ps_y = z_map[z]['y_spacing']
+                            print('ps_x, ps_y = {},{}'.format(ps_x, ps_y))
+                            h_max = int((19.0 * 4.19921e-1) / ps_y)
+                            h_min = int((13.0 * 4.19921e-1) / ps_y)
+                            # adjust h_min
+                            h_min = int(( (13.0-3.0) * 4.19921e-1) / ps_y)
+                            w_max = int((19.0 * 4.19921e-1) / ps_x)
+
+                            w_min = int((13.0 * 4.19921e-1) / ps_x)
+                            # adjust w_min
+                            w_min = int(( (13.0-3.0) * 4.19921e-1) / ps_x)
+
+                            if (h < h_min and w < w_min):
+                                # ignore this point because the rect of OVoid should satify the size's condition
+                                # This condition is try to ignore possibility of the jumping from tips of OVoid to the needle that close to OVoid)
+                                continue
+
+                            # ps_x = z_map[z]['x_spacing']
+                            # ps_y = z_map[z]['y_spacing']
+                            # h_max = int((19.0 * 4.19921e-1) / ps_y)
+                            # h_min = int((13.0 * 4.19921e-1) / ps_y)
+                            # w_max = int((19.0 * 4.19921e-1) / ps_x)
+                            # w_min = int((13.0 * 4.19921e-1) / ps_x)
+
+                            if candidate_pt == None:
+                                candidate_pt = pt
+                            else:
+                                candidate_pt_x = candidate_pt[0]
+                                if abs(candidate_pt_x - last_line_pt_x) > abs(pt_x - last_line_pt_x):
+                                    candidate_pt = last_line_pt
+                    line.append(candidate_pt)
+
+
+
                 # the data structure fo each line will be like
                 # [(x0,y0,z0), (x1,y1,z1), ... ,(xn,yn,zn),None]
     # clean dummy None in last element in each line
@@ -1188,12 +1243,13 @@ def reduce_distance_step(metric_line, pt_idx, pt_idx_remainder, dist):
         return (dist_after_walking, walking_stop_pt_idx, walking_stop_pt_idx_remainder)
     else:  # CASE 2 the end_pt is enough, so walking_stop_pt is between [start_pt, end_pt)
         walking_stop_pt_idx = start_pt_idx
-
         # Figure out walking_stop_pt_idx_remainder
         segment_dist = distance(start_pt, end_pt)
+        if (segment_dist == 0):
+            # To solve bug of divide zero, Sometimes the segment_dist will be zero
+            segment_dist = 0.000000001
         ratio = dist / segment_dist
         walking_stop_pt_idx_remainder = start_pt_idx_remainder + (1 - start_pt_idx_remainder) * ratio
-
         dist_after_walking = 0
         return (dist_after_walking, walking_stop_pt_idx, walking_stop_pt_idx_remainder)
 
