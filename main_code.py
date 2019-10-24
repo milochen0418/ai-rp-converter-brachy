@@ -534,6 +534,7 @@ def get_most_closed_pt(src_pt, pts, allowed_distance=100):
         pass
     return dst_pt
 def make_lines_process(app_pts, app_pts_extend_data = {}):
+    print('make_lines_process()')
     # app_pts =  {"-96": [[206, 282, "-96"], [237, 280, "-96"], [274, 276, "-96"]], "-94",[...], ... }
     lines = [[], [], []]
     sorted_app_pts_keys = sorted(app_pts.keys())
@@ -1415,7 +1416,7 @@ def generate_brachy_rp_file(RP_OperatorsName, folder, out_rp_filepath):
 
     # transform all 3D pt of applicator into each line for each applicator and the line have been sorted by z
 
-    print('app_pts = ',app_pts) #
+    print('app_pts = ',app_pts)
     # app_pts =  {"-96": [[206, 282, "-96"], [237, 280, "-96"], [274, 276, "-96"]], "-94",[...], ... }
     #app_pts_extend_data = {}
     lines = make_lines_process(app_pts, app_pts_extend_data)
