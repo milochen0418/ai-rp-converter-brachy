@@ -672,9 +672,6 @@ def algo_run_by_folder_new(folder):
     based_center_pts, app_center_pts_extend_data = get_app_center_pts_of_first_slice(first_slice_dict)
     print(app_center_pts_extend_data)
 
-
-
-
     print(based_center_pts)
     print(app_center_pts_extend_data)
 
@@ -1444,7 +1441,7 @@ def wrap_to_rp_file(RP_OperatorsName, rs_filepath, tandem_rp_line, out_rp_filepa
     rp_lines = [tandem_rp_line, rt_ovoid_rp_line, lt_ovoid_rp_line]
 
     #TODO rp_Ref_ROI_Numbers need to match to current RS's ROI number of three applicators
-    rp_Ref_ROI_Numbers = [16, 17, 18]
+    rp_Ref_ROI_Numbers = [15, 16, 17]
     rp_ControlPointRelativePositions = [3.5, 3.5, 3.5]
     for idx,rp_line in enumerate(rp_lines):
         # Change ROINumber of RP_Template_TestData RS into output RP output file
@@ -1472,11 +1469,6 @@ def wrap_to_rp_file(RP_OperatorsName, rs_filepath, tandem_rp_line, out_rp_filepa
 
 
 def generate_brachy_rp_file(RP_OperatorsName, folder, out_rp_filepath):
-
-    #%%
-    RP_OperatorsName = 'AI'
-    folder = '24460566'
-    out_rp_filepath = r'brachy.rp.dcm'
     print('folder = ', folder )
     rs_filepath = ''
     ct_filelist = []
@@ -1546,7 +1538,10 @@ def generate_brachy_rp_file(RP_OperatorsName, folder, out_rp_filepath):
 #generate_brachy_rp_file(RP_OperatorsName='thoth', folder='RALmilo', out_rp_filepath=r'brachy.rp.dcm')
 #generate_brachy_rp_file(RP_OperatorsName='thoth', folder='16568131', out_rp_filepath=r'brachy.rp.dcm')
 
-generate_brachy_rp_file(RP_OperatorsName='AI', folder='24460566', out_rp_filepath=r'brachy.rp.dcm')
+#generate_brachy_rp_file(RP_OperatorsName='AI', folder='24460566', out_rp_filepath=r'brachy.rp.dcm')
+
+
+generate_brachy_rp_file(RP_OperatorsName='cylin', folder='24460566-ctdate20191015', out_rp_filepath=r'brachy.rp-ctdate20191015.dcm')
 
 
 
