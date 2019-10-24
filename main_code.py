@@ -600,6 +600,7 @@ def algo_run_by_folder_new(folder):
 
     first_slice_dict['data'] = {}
     first_slice_dict['data']['center_pts'] = based_center_pts
+    first_slice_dict['data']['pts_extend_data'] = app_center_pts_extend_data
     (view_min_y, view_max_y, view_min_x, view_max_x) = get_view_scope_by_slice(first_slice_dict, padding=100)
 
     prev_slice_dict = None
@@ -668,7 +669,6 @@ def algo_run_by_folder_new(folder):
         for contour in contours:
             if len(contour) < 5:
                 # You need at least 5 points in contour, so that you can use fitEllipse
-
                 reshape_contour = contour.reshape(contour.shape[0], contour.shape[2])
                 xs = [pt[0] for pt in reshape_contour]
                 ys = [pt[1] for pt in reshape_contour]
@@ -693,7 +693,6 @@ def algo_run_by_folder_new(folder):
             reshape_poly = ellipse_poly.reshape(ellipse_poly.shape[0], 1, ellipse_poly.shape[1])
             cv2.drawContours(proc_img, reshape_poly, -1, (255, 0, 0), 1)
             # cv2.line(proc_img,(draw_x,draw_y),(draw_x,draw_y),(255,0,0),3)
-
         figure_center_pts = []
         for pt in prev_slice_dict['data']['center_pts']:
             if len(prev_slice_dict['data']['center_pts']) == 1:
@@ -745,7 +744,6 @@ def algo_run_by_folder_new(folder):
         # plt.imshow(proc_img, cmap=plt.cm.bone)
         # plt.show()
         prev_slice_dict = slice_dict
-
     print(app_pts_dict)
     return (app_pts_dict, app_pts_extend_data)
 
