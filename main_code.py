@@ -1506,8 +1506,8 @@ def generate_brachy_rp_file(RP_OperatorsName, folder, out_rp_filepath):
     print('lines[0] = {}'.format(lines[0]))
     print('lines[1] = {}'.format(lines[1]))
     print('lines[2] = {}'.format(lines[2]))
-    exit(0)
-    #%%
+
+
     # The CT data is the format with 512 x 512, but we want to tranfer it into real metric space
     metric_lines = convert_lines_in_metrics(lines, folder)
     # Show the lines information in metrics
@@ -1516,8 +1516,14 @@ def generate_brachy_rp_file(RP_OperatorsName, folder, out_rp_filepath):
     metric_rt_ovoid_line = metric_lines[2].copy()
 
     print('metric_tandem_line = ', metric_tandem_line)
+    print('Tandem  ->  lines[1] = {}'.format(lines[1]))
+
     print('metric_lt_ovoid_line = ', metric_lt_ovoid_line)
+    print('lt_ovoid -> lines[0] = {}'.format(lines[0]))
+
     print('metric_rt_ovoid_line = ', metric_rt_ovoid_line)
+    print('rt_ovoid -> lines[2] = {}'.format(lines[2]))
+
 
     metric_tandem_line.reverse()
     metric_lt_ovoid_line.reverse()
@@ -1527,9 +1533,13 @@ def generate_brachy_rp_file(RP_OperatorsName, folder, out_rp_filepath):
     lt_ovoid_rp_line = get_applicator_rp_line(metric_lt_ovoid_line, 0, 5)
     rt_ovoid_rp_line = get_applicator_rp_line(metric_rt_ovoid_line, 0 ,5)
 
+
     print('tandem_rp_line = {}'.format(tandem_rp_line) )
     print('lt_ovoid_rp_line = {}'.format(lt_ovoid_rp_line) )
     print('rt_ovoid_rp_line = {}'.format(rt_ovoid_rp_line) )
+
+
+
     wrap_to_rp_file(RP_OperatorsName, rs_filepath, tandem_rp_line, out_rp_filepath=out_rp_filepath, lt_ovoid_rp_line=lt_ovoid_rp_line, rt_ovoid_rp_line=rt_ovoid_rp_line)
     print('out_rp_filepath = {}'.format(out_rp_filepath))
 
