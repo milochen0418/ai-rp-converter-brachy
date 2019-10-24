@@ -699,7 +699,6 @@ def algo_run_by_folder_new(folder):
             ellipse_center_pts_extend_data[-1]['cen_pt'] = [x, y]
             ellipse_center_pts_extend_data[-1]['contour'] = contour
             ellipse_center_pts_extend_data[-1]['rect_info'] = get_rect_info_from_cv_contour(cv_contour=contour)
-
             reshape_poly = ellipse_poly.reshape(ellipse_poly.shape[0], 1, ellipse_poly.shape[1])
             cv2.drawContours(proc_img, reshape_poly, -1, (255, 0, 0), 1)
             # cv2.line(proc_img,(draw_x,draw_y),(draw_x,draw_y),(255,0,0),3)
