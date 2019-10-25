@@ -153,6 +153,9 @@ def get_view_scope_by_dicom_dict(dicom_dict):
     view_min_x = loc_min_x - padding
     view_max_x = loc_max_x + padding
     #(view_min_y, view_max_y, view_min_x, view_max_x) = (0,0,0,0)
+    # fake answer
+    return (156, 356, 156, 356)
+    #return (view_min_y=156, view_max_y=356, view_min_x=156, view_max_x=356)
     return (view_min_y, view_max_y, view_min_x, view_max_x)
 def get_contours_from_edge_detection_algo_01(img, filter_img):
     contours = get_max_contours_by_filter_img(img, filter_img, ContourRetrievalMode=cv2.RETR_TREE)
@@ -296,6 +299,16 @@ def generate_output_to_ct_obj(ct_obj):
     ct_obj['output']['contours']['algo02'] = get_contours_from_edge_detection_algo_02(img, filter_img)
     ct_obj['output']['contours']['algo03'] = get_contours_from_edge_detection_algo_03(img)
     ct_obj['output']['contours']['algo04'] = get_contours_from_edge_detection_algo_04(img)
+
+    # Process to contours to fit global pixel img
+    ct_obj['output']['contours512'] = {}
+    for algo_key in sorted(ct_obj['output']['contours'].keys()):
+        ct_obj['output']['contours512'][algo_key] =  copy.deepcopy(ct_obj['output']['contours'][algo_key] )
+        contours = ct_obj['output']['contours512'][algo_key]
+        for contour in contours:
+            for [pt] in contour:
+                pt[0] = view_min_x + pt[0]
+                pt[1] = view_min_y + pt[1]
 
     # Generate contours infos like x,y mean and area_mm
     ct_obj['output']['contours_infos'] = {}
@@ -461,17 +474,32 @@ def generate_patient_mean_area_csv_report(folder, algo_key='algo01', csv_filepat
 
 
 
-
-
 def plot_with_contours(dicom_dict, z, algo_keys):
     import matplotlib.pyplot as plt
     import pydicom
     z_map = dicom_dict['z']
+    #z = sorted(z_map.keys())[0]
+    z = sorted(z_map.keys())[10]
+
     ct_obj = z_map[z]
     print(ct_obj.keys())
     pixel_array = ct_obj['rescale_pixel_array']
-    plt.imshow(pixel_array, cmap=plt.cm.bone)
+    metadata = dicom_dict['metadata']
+    #(view_min_y, view_max_y, view_min_x, view_max_x) = metadata['view_scope']
+    contours = ct_obj['output']['contours512']['algo03']
+    img = copy.deepcopy(pixel_array)
+    for contour in contours:
+        cv2.drawContours(img, contour, -1, (0, 0, 255), 1)
+
+
+
+    #plt.imshow(pixel_array, cmap=plt.cm.bone)
+    plt.imshow(img, cmap=plt.cm.bone)
+
     plt.show()
+    plt.use('agg')
+
+
 
     pass
 
@@ -480,10 +508,17 @@ if __name__ == '__main__':
     root_folder = r'RAL_plan_new_20190905'
     f_list = [ os.path.join(root_folder, file) for file in os.listdir(root_folder) ]
 
+    #folder = r'RAL_plan_new_20190905/35252020-2'
+    #folder = r'24460566'
+    #folder = r'RAL_plan_new_20190905/29059811-2'
     folder = r'RAL_plan_new_20190905/35252020-2'
     algo_keys = ['algo01', 'algo02', 'algo03', 'algo04']
     dicom_dict = get_dicom_dict(folder)
+    generate_metadata_to_dicom_dict(dicom_dict)
+    generate_output_to_dicom_dict(dicom_dict)
+
     plot_with_contours(dicom_dict, z=-84, algo_keys = algo_keys )
+
     exit(0)
 
 
@@ -516,5 +551,3 @@ if __name__ == '__main__':
         for algo_key in algo_keys:
             csv_filepath = r'more_infos/{}-{}.csv'.format(os.path.basename(folder), algo_key)
             generate_patient_mean_area_csv_report(folder, algo_key=algo_key, csv_filepath=csv_filepath)
-
-
