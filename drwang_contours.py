@@ -7,6 +7,7 @@ import copy
 import math
 from decimal import Decimal
 import random
+from IPython.display import display, HTML
 
 
 # FUNCTIONS - Algorithm processing Fucntions
@@ -47,6 +48,14 @@ def get_max_contours(A, constant_value=None, ContourRetrievalMode=cv2.RETR_EXTER
     gray_image = cv2.cvtColor(filter_img, cv2.COLOR_RGB2GRAY)
     _, contours, _ = cv2.findContours(gray_image, ContourRetrievalMode, cv2.CHAIN_APPROX_NONE)
     return (contours, constant)
+def get_max_contours_by_filter_img(A, filter_img, ContourRetrievalMode=cv2.RETR_EXTERNAL):
+    # gray_image = cv2.cvtColor(filter_img, cv2.COLOR_RGB2GRAY)
+    gray_image = filter_img
+    # findContours
+    # _, contours, _ = cv2.findContours(gray_image, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
+    # _, contours, _ = cv2.findContours(gray_image, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+    _, contours, _ = cv2.findContours(gray_image, ContourRetrievalMode, cv2.CHAIN_APPROX_NONE)
+    return contours
 def get_view_scope_by_dicom_dict(dicom_dict):
     def get_rect_info_from_cv_contour(cv_contour):
         i = cv_contour
@@ -141,6 +150,20 @@ def get_view_scope_by_dicom_dict(dicom_dict):
     view_max_x = loc_max_x + padding
     #(view_min_y, view_max_y, view_min_x, view_max_x) = (0,0,0,0)
     return (view_min_y, view_max_y, view_min_x, view_max_x)
+def get_contours_from_edge_detection_algo_01(img, filter_img):
+    contours = get_max_contours_by_filter_img(img, filter_img, ContourRetrievalMode=cv2.RETR_TREE)
+    return contours
+def get_contours_from_edge_detection_algo_02(img, filter_img):
+    contours = get_max_contours_by_filter_img(img, filter_img, ContourRetrievalMode=cv2.RETR_EXTERNAL)
+    return contours
+def get_contours_from_edge_detection_algo_03(img):
+    (contours_without_filter, constant) = get_max_contours(img, ContourRetrievalMode=cv2.RETR_TREE)
+    contours = contours_without_filter
+    return contours
+def get_contours_from_edge_detection_algo_04(img):
+    (contours_without_filter, constant) = get_max_contours(img, ContourRetrievalMode=cv2.RETR_EXTERNAL)
+    contours = contours_without_filter
+    return contours
 
 
 # FUNCTIONS - DICOM data processing Functions
@@ -220,7 +243,6 @@ def print_info_by_folder(folder):
 
 
 # FUNCTIONS - generate our expected output for each ct_obj in dicom_dict['z'].   (PS:z_map)
-
 def generate_output_to_dicom_dict(dicom_dict):
     folder = dicom_dict['metadata']['folder']
     z_map = dicom_dict['z']
@@ -237,8 +259,14 @@ def generate_output_to_ct_obj(ct_obj):
     #view_pixel_array = rescale_pixel_array[view_min_y:view_max_y, view_min_x:view_max_x]
     img = ct_obj['rescale_pixel_array']
     gray_img = convert_to_gray_image(img)
-
-
+    gray_img = gray_img[view_min_y: view_max_y, view_min_x:view_max_x]
+    img = img[view_min_y: view_max_y, view_min_x:view_max_x]
+    filter_img = cv2.adaptiveThreshold(gray_img, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 15, -22)
+    ct_obj['output']['contours'] = {}
+    ct_obj['output']['contours']['algo01'] = get_contours_from_edge_detection_algo_01(img, filter_img)
+    ct_obj['output']['contours']['algo02'] = get_contours_from_edge_detection_algo_02(img, filter_img)
+    ct_obj['output']['contours']['algo03'] = get_contours_from_edge_detection_algo_03(img)
+    ct_obj['output']['contours']['algo04'] = get_contours_from_edge_detection_algo_04(img)
     pass
 
 
@@ -260,8 +288,13 @@ if __name__ == '__main__':
     z_map = dicom_dict['z']
     for z_idx,z in enumerate(sorted(z_map.keys())):
         ct_obj = z_map[z]
-        out = ct_obj['output']
-        print('z = {}, output = {}'.format(z, out.keys()))
+        contours_dict = ct_obj['output']['contours']
+        for idx, algo_key in enumerate(sorted(contours_dict.keys())):
+            contours = contours_dict[algo_key]
+            print(len(contours))
+
+
+
 
 
 
