@@ -205,7 +205,7 @@ def get_dicom_folder_pathinfo(folder):
     dicom_folder['rp_filepath'] = rp_filepath
     return dicom_folder
 
-def get_dicom_dict(folder) :
+def get_dicom_dict(folder):
     z_map = {}
     ct_filepath_map = {}
     out_dict = {}
@@ -216,7 +216,7 @@ def get_dicom_dict(folder) :
     pathinfo = get_dicom_folder_pathinfo(folder)
     ct_filelist = pathinfo['ct_filelist']
     for ct_filepath in ct_filelist:
-        print('ct_filepath = ', ct_filepath)
+        # print('ct_filepath = ', ct_filepath)
         ct_fp = pydicom.read_file(ct_filepath)
         ct_obj = {}
         ct_obj['dicom_dict'] = out_dict
@@ -242,7 +242,7 @@ def generate_metadata_to_dicom_dict(dicom_dict):
     # metadata['view_scope'] = (view_min_y, view_max_y, view_min_x, view_max_x)
 def print_info_by_folder(folder):
     out_dict = get_dicom_dict(folder)
-    print('aaa')
+    #print('aaa')
     z_map = out_dict['z']
     for z_idx, z in enumerate(sorted(z_map.keys())):
         ct_obj = z_map[z]
@@ -282,7 +282,7 @@ def generate_output_to_ct_obj(ct_obj):
 def generate_csv_report(f_list, csv_filepath = 'contours.csv'):
     all_dicom_dict = {}
     all_sheet_dict = {}
-    all_sheet = {}
+
     # Figure out all_dicom_dict and make empty sheet
     for folder in sorted(f_list):
         dicom_dict = get_dicom_dict(folder)
@@ -297,6 +297,7 @@ def generate_csv_report(f_list, csv_filepath = 'contours.csv'):
     sheet_width = 1 + len(sorted_algo_keys) # (z, algo01, algo02 ,... algo n)
 
     # Generate all_sheet_dict and fill all of value in it
+    max_sheet_len = 0
     for folder_idx, folder in enumerate(sorted(all_dicom_dict.keys())):
         dicom_dict = all_dicom_dict[folder]
         header1 = [folder] + [''] * (sheet_width -1)
@@ -313,15 +314,46 @@ def generate_csv_report(f_list, csv_filepath = 'contours.csv'):
                 body_row.append(contours_num)
             sheet_dict['body'] = sheet_dict['body'] + [body_row]
         all_sheet_dict[folder] = sheet_dict
+        sheet_len = len(sheet_dict['header']) + len(sheet_dict['body'])
+        if sheet_len > max_sheet_len:
+            max_sheet_len = sheet_len
+    # For every sheet_dict whose sheet_len < max_sheet_len, append empty row for sheet, so that the len of sheet_dict will the same as to max_sheet_len
+    for folder in sorted(all_sheet_dict.keys()):
+        sheet_dict = all_sheet_dict[folder]
+        sheet_len = len(sheet_dict['header']) + len(sheet_dict['body'])
+        append_sheet_len = max_sheet_len - sheet_len
+        #print('append_sheet_len = {}, max_sheet_len = {}, sheet_len = {}'.format(append_sheet_len, max_sheet_len, sheet_len))
+        if (append_sheet_len > 0):
+            empty_body_row = [''] * sheet_width
+            sheet_dict['body'] = sheet_dict['body'] + ([empty_body_row] * append_sheet_len)
+        #body_len = len(sheet_dict['body'])
+        #sheet_len = len(sheet_dict['header']) + len(sheet_dict['body'])
+        #append_sheet_len = max_sheet_len - sheet_len
+        #print('Adjust-> body_len = {}, append_sheet_len = {}, max_sheet_len = {}, sheet_len = {}'.format(body_len, append_sheet_len, max_sheet_len, sheet_len))
+        sheet_dict['csv'] = sheet_dict['header'] + sheet_dict['body']
+
+        print('len of all_sheet_dict[folder={}] = {}'.format(folder, len( all_sheet_dict[folder]['csv'] )) )
+
+    # Generate spread sheet
+    csv_data = []
+    for idx in range(max_sheet_len):
+        csv_row = []
+        for folder in sorted(all_sheet_dict.keys()):
+            sheet_dict = all_sheet_dict[folder]
+            csv_row = csv_row + all_sheet_dict[folder]['csv'][idx]
+        #print(len(sheet_dict['csv'][idx]))
+        print('len(csv_row) = {}'.format(len(csv_row)) )
 
 
+        break
+        # csv = csv + [csv_row]
+    print('Show csv ')
 
-    pass
+
 
 if __name__ == '__main__':
     root_folder = r'RAL_plan_new_20190905'
     f_list = [ os.path.join(root_folder, file) for file in os.listdir(root_folder) ]
-
     a = ['aa','zz'] + ['bb','cc'] + [''] * 3
     print(a)
 
@@ -343,15 +375,4 @@ if __name__ == '__main__':
             contours = contours_dict[algo_key]
             print(len(contours))
     generate_csv_report(f_list[0:2], csv_filepath = 'contours.csv')
-
-
-
-
-
-
-
-
-
-
-
 
