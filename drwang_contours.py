@@ -5,6 +5,10 @@ import numpy as np
 import cv2
 import copy
 import math
+
+import openpyxl
+import csv, codecs
+
 from decimal import Decimal
 import random
 from IPython.display import display, HTML
@@ -168,6 +172,7 @@ def get_contours_from_edge_detection_algo_04(img):
 
 # FUNCTIONS - DICOM data processing Functions
 def get_dicom_folder_pathinfo(folder):
+    print('get_dicom_folder_pathinfo - folder = {}'.format(folder))
     dicom_folder = {}
     ct_filelist = []
     rs_filepath = None
@@ -199,6 +204,7 @@ def get_dicom_folder_pathinfo(folder):
     dicom_folder['rd_filepath'] = rd_filepath
     dicom_folder['rp_filepath'] = rp_filepath
     return dicom_folder
+
 def get_dicom_dict(folder) :
     z_map = {}
     ct_filepath_map = {}
@@ -210,6 +216,7 @@ def get_dicom_dict(folder) :
     pathinfo = get_dicom_folder_pathinfo(folder)
     ct_filelist = pathinfo['ct_filelist']
     for ct_filepath in ct_filelist:
+        print('ct_filepath = ', ct_filepath)
         ct_fp = pydicom.read_file(ct_filepath)
         ct_obj = {}
         ct_obj['dicom_dict'] = out_dict
@@ -272,9 +279,52 @@ def generate_output_to_ct_obj(ct_obj):
 
 # FUNCTIONS - main function
 
+def generate_csv_report(f_list, csv_filepath = 'contours.csv'):
+    all_dicom_dict = {}
+    all_sheet_dict = {}
+    all_sheet = {}
+    # Figure out all_dicom_dict and make empty sheet
+    for folder in sorted(f_list):
+        dicom_dict = get_dicom_dict(folder)
+        generate_metadata_to_dicom_dict(dicom_dict)
+        generate_output_to_dicom_dict(dicom_dict)
+        all_dicom_dict[folder] = dicom_dict
+    # Figure out sheet_width and algo_keys
+    dicom_dict = all_dicom_dict[ sorted(all_dicom_dict.keys())[0]]
+    z_map = dicom_dict['z']
+    ct_obj = z_map[ sorted(z_map.keys())[0] ]
+    sorted_algo_keys = sorted(ct_obj['output']['contours'].keys())
+    sheet_width = 1 + len(sorted_algo_keys) # (z, algo01, algo02 ,... algo n)
+
+    # Generate all_sheet_dict and fill all of value in it
+    for folder_idx, folder in enumerate(sorted(all_dicom_dict.keys())):
+        dicom_dict = all_dicom_dict[folder]
+        header1 = [folder] + [''] * (sheet_width -1)
+        header2 = ['z'] + sorted_algo_keys
+        sheet_dict = {}
+        sheet_dict['header'] = [header1] + [header2]
+        sheet_dict['body'] = []
+        z_map = dicom_dict['z']
+        for z in sorted(z_map.keys()):
+            ct_obj = z_map[z]
+            body_row = [z]
+            for algo in sorted(ct_obj['output']['contours'].keys()):
+                contours_num = len( ct_obj['output']['contours'][algo])
+                body_row.append(contours_num)
+            sheet_dict['body'] = sheet_dict['body'] + [body_row]
+        all_sheet_dict[folder] = sheet_dict
+
+
+
+    pass
+
 if __name__ == '__main__':
     root_folder = r'RAL_plan_new_20190905'
     f_list = [ os.path.join(root_folder, file) for file in os.listdir(root_folder) ]
+
+    a = ['aa','zz'] + ['bb','cc'] + [''] * 3
+    print(a)
+
     folder = f_list[0]
     #print_info_by_folder(folder)
     dicom_dict = get_dicom_dict(folder)
@@ -292,7 +342,7 @@ if __name__ == '__main__':
         for idx, algo_key in enumerate(sorted(contours_dict.keys())):
             contours = contours_dict[algo_key]
             print(len(contours))
-
+    generate_csv_report(f_list[0:2], csv_filepath = 'contours.csv')
 
 
 
