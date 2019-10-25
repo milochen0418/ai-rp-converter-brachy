@@ -320,7 +320,7 @@ def generate_output_to_ct_obj(ct_obj):
     pass
 
 # FUNCTIONS - main function
-def generate_csv_report(f_list, csv_filepath = 'contours.csv'):
+def generate_csv_contour_number_csv_report(f_list, csv_filepath = 'contours.csv'):
     output_csv_filepath = csv_filepath
     all_dicom_dict = {}
     all_sheet_dict = {}
@@ -386,6 +386,7 @@ def generate_csv_report(f_list, csv_filepath = 'contours.csv'):
             csv_writter.writerow(rowlist)
 
 
+
 if __name__ == '__main__':
     root_folder = r'RAL_plan_new_20190905'
     f_list = [ os.path.join(root_folder, file) for file in os.listdir(root_folder) ]
@@ -409,8 +410,7 @@ if __name__ == '__main__':
             for cidx, contour in enumerate(contours):
                 area_mm2 = get_contour_area_mm2(contour, ct_obj['ps_x'], ct_obj['ps_y'])
                 print('len={}, area_mm2 = {}'.format(len(contour), area_mm2))
-            exit(0)
             #print(len(contours))
-    generate_csv_report(f_list, csv_filepath = 'contours.csv')
+    generate_csv_contour_number_csv_report(f_list, csv_filepath = 'contours.csv')
     print('write done for contours.csv')
 
