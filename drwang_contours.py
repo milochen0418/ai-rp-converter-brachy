@@ -172,7 +172,6 @@ def get_contours_from_edge_detection_algo_04(img):
 
 # FUNCTIONS - DICOM data processing Functions
 def get_dicom_folder_pathinfo(folder):
-    print('get_dicom_folder_pathinfo - folder = {}'.format(folder))
     dicom_folder = {}
     ct_filelist = []
     rs_filepath = None
@@ -280,6 +279,7 @@ def generate_output_to_ct_obj(ct_obj):
 # FUNCTIONS - main function
 
 def generate_csv_report(f_list, csv_filepath = 'contours.csv'):
+    output_csv_filepath = csv_filepath
     all_dicom_dict = {}
     all_sheet_dict = {}
 
@@ -322,17 +322,11 @@ def generate_csv_report(f_list, csv_filepath = 'contours.csv'):
         sheet_dict = all_sheet_dict[folder]
         sheet_len = len(sheet_dict['header']) + len(sheet_dict['body'])
         append_sheet_len = max_sheet_len - sheet_len
-        #print('append_sheet_len = {}, max_sheet_len = {}, sheet_len = {}'.format(append_sheet_len, max_sheet_len, sheet_len))
         if (append_sheet_len > 0):
             empty_body_row = [''] * sheet_width
             sheet_dict['body'] = sheet_dict['body'] + ([empty_body_row] * append_sheet_len)
-        #body_len = len(sheet_dict['body'])
-        #sheet_len = len(sheet_dict['header']) + len(sheet_dict['body'])
-        #append_sheet_len = max_sheet_len - sheet_len
-        #print('Adjust-> body_len = {}, append_sheet_len = {}, max_sheet_len = {}, sheet_len = {}'.format(body_len, append_sheet_len, max_sheet_len, sheet_len))
         sheet_dict['csv'] = sheet_dict['header'] + sheet_dict['body']
-
-        print('len of all_sheet_dict[folder={}] = {}'.format(folder, len( all_sheet_dict[folder]['csv'] )) )
+        #print('len of all_sheet_dict[folder={}] = {}'.format(folder, len( all_sheet_dict[folder]['csv'] )) )
 
     # Generate spread sheet
     csv_data = []
@@ -342,9 +336,12 @@ def generate_csv_report(f_list, csv_filepath = 'contours.csv'):
             sheet_dict = all_sheet_dict[folder]
             csv_row = csv_row + all_sheet_dict[folder]['csv'][idx]
         csv_data.append(csv_row)
-    print('Show csv ')
-    print('show')
-
+    # Start to write csv from csv_data into output_csv_filepath
+    with open(output_csv_filepath, mode='w', newline='') as csv_file:
+        csv_writter = csv.writer(csv_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+        #csv_writter.writerow(out_dict['header'])
+        for rowlist in csv_data:
+            csv_writter.writerow(rowlist)
 
 
 if __name__ == '__main__':
@@ -355,7 +352,7 @@ if __name__ == '__main__':
     #print_info_by_folder(folder)
     dicom_dict = get_dicom_dict(folder)
     generate_metadata_to_dicom_dict(dicom_dict)
-    # Now it is support meta
+    # Now it is support metadata. You can see it at  dicom_dict['metadata']
     # And you can generate its output
     #print(dicom_dict['metadata'])
     generate_output_to_dicom_dict(dicom_dict)
@@ -368,5 +365,6 @@ if __name__ == '__main__':
         for idx, algo_key in enumerate(sorted(contours_dict.keys())):
             contours = contours_dict[algo_key]
             print(len(contours))
-    generate_csv_report(f_list[0:2], csv_filepath = 'contours.csv')
+    generate_csv_report(f_list, csv_filepath = 'contours.csv')
+    print('write done for contours.csv')
 
