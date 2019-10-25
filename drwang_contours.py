@@ -5,13 +5,13 @@ import numpy as np
 import cv2
 import copy
 import math
+from sys import exit
 
 import openpyxl
 import csv, codecs
 
 from decimal import Decimal
 import random
-from IPython.display import display, HTML
 
 
 # FUNCTIONS - Algorithm processing Fucntions
@@ -168,6 +168,10 @@ def get_contours_from_edge_detection_algo_04(img):
     (contours_without_filter, constant) = get_max_contours(img, ContourRetrievalMode=cv2.RETR_EXTERNAL)
     contours = contours_without_filter
     return contours
+def get_contour_area_mm2(contour,ps_x, ps_y) :
+    area_mm2  = cv2.contourArea(contour) * ps_x * ps_y
+    return area_mm2
+
 
 
 # FUNCTIONS - DICOM data processing Functions
@@ -203,7 +207,6 @@ def get_dicom_folder_pathinfo(folder):
     dicom_folder['rd_filepath'] = rd_filepath
     dicom_folder['rp_filepath'] = rp_filepath
     return dicom_folder
-
 def get_dicom_dict(folder):
     z_map = {}
     ct_filepath_map = {}
@@ -257,7 +260,6 @@ def generate_output_to_dicom_dict(dicom_dict):
         #print('z={}, {}'.format(z, ct_obj.keys()))
         generate_output_to_ct_obj(ct_obj)
         # information is in ct_obj['output']
-
 def generate_output_to_ct_obj(ct_obj):
     out = ct_obj['output']
     rescale_pixel_array = ct_obj['rescale_pixel_array']
@@ -275,12 +277,7 @@ def generate_output_to_ct_obj(ct_obj):
     ct_obj['output']['contours']['algo04'] = get_contours_from_edge_detection_algo_04(img)
     pass
 
-
 # FUNCTIONS - main function
-def get_contour_area_mm2(contour) :
-    # TODO
-    return 10
-
 def generate_csv_report(f_list, csv_filepath = 'contours.csv'):
     output_csv_filepath = csv_filepath
     all_dicom_dict = {}
@@ -367,7 +364,11 @@ if __name__ == '__main__':
         contours_dict = ct_obj['output']['contours']
         for idx, algo_key in enumerate(sorted(contours_dict.keys())):
             contours = contours_dict[algo_key]
-            print(len(contours))
+            for cidx, contour in enumerate(contours):
+                area_mm2 = get_contour_area_mm2(contour, ct_obj['ps_x'], ct_obj['ps_y'])
+                print('len={}, area_mm2 = {}'.format(len(contour), area_mm2))
+            exit(0)
+            #print(len(contours))
     generate_csv_report(f_list, csv_filepath = 'contours.csv')
     print('write done for contours.csv')
 
