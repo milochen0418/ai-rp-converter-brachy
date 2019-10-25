@@ -461,17 +461,6 @@ def generate_patient_mean_area_csv_report(folder, algo_key='algo01', csv_filepat
 
 
 
-    for z in sorted(z_map.keys()):
-        ct_obj = z_map[z]
-        infos = copy.deepcopy(ct_obj['output']['contours_infos'][algo_key])
-        infos.sort(key=lambda info: info['mean'][0]) # sorting infos by mean x
-        for info_idx, info in enumerate(infos):
-            pass
-
-
-
-    pass
-
 
 
 if __name__ == '__main__':
