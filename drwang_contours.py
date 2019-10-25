@@ -306,7 +306,7 @@ def generate_output_to_ct_obj(ct_obj):
         contours_infos = []
         for contour in contours:
             contours_info = {}
-            contours_infos.append(contours_info)
+            #contours_infos.append(contours_info)
             (x,y) = get_contour_xy_mean(contour)
             global_x_pixel = x + view_min_x
             global_y_pixel = y + view_min_y
@@ -386,6 +386,7 @@ def generate_contour_number_csv_report(f_list, csv_filepath = 'contours.csv'):
             csv_writter.writerow(rowlist)
 
 def generate_patient_mean_area_csv_report(folder, algo_key='algo01', csv_filepath = '29059811-1-algo01.csv'):
+    output_csv_filepath = csv_filepath
     dicom_dict = get_dicom_dict(folder)
     generate_metadata_to_dicom_dict(dicom_dict)
     generate_output_to_dicom_dict(dicom_dict)
@@ -447,6 +448,12 @@ def generate_patient_mean_area_csv_report(folder, algo_key='algo01', csv_filepat
         sheet_row = sheet_row + write_infos
         sheet_row = sheet_row + ['']*(sheet_width-len(sheet_row))
         sheet[z_idx+3] = sheet_row
+    with open(output_csv_filepath, mode='w', newline='') as csv_file:
+        csv_writter = csv.writer(csv_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+        #csv_writter.writerow(out_dict['header'])
+        for rowlist in sheet:
+            csv_writter.writerow(rowlist)
+
     print('Time to lookup sheet variable')
 
 
@@ -494,11 +501,12 @@ if __name__ == '__main__':
     #generate_contour_number_csv_report(f_list, csv_filepath = 'contours.csv')
     #print('write done for contours.csv')
 
-    folder = f_list[0]
-    print(os.path.basename(folder))
-    algo_keys = ['algo01', 'algo02', 'algo03', 'algo04']
-    for algo_key in algo_keys:
-        csv_filepath = '{}-{}.csv'.format(os.path.basename(folder), algo_key)
-        generate_patient_mean_area_csv_report(folder, algo_key=algo_key, csv_filepath=csv_filepath)
-        break
+
+    for folder in f_list:
+        print(os.path.basename(folder))
+        algo_keys = ['algo01', 'algo02', 'algo03', 'algo04']
+        for algo_key in algo_keys:
+            csv_filepath = r'more_infos/{}-{}.csv'.format(os.path.basename(folder), algo_key)
+            generate_patient_mean_area_csv_report(folder, algo_key=algo_key, csv_filepath=csv_filepath)
+
 
