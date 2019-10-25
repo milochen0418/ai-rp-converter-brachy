@@ -320,7 +320,7 @@ def generate_output_to_ct_obj(ct_obj):
     pass
 
 # FUNCTIONS - main function
-def generate_csv_contour_number_csv_report(f_list, csv_filepath = 'contours.csv'):
+def generate_contour_number_csv_report(f_list, csv_filepath = 'contours.csv'):
     output_csv_filepath = csv_filepath
     all_dicom_dict = {}
     all_sheet_dict = {}
@@ -385,6 +385,74 @@ def generate_csv_contour_number_csv_report(f_list, csv_filepath = 'contours.csv'
         for rowlist in csv_data:
             csv_writter.writerow(rowlist)
 
+def generate_patient_mean_area_csv_report(folder, algo_key='algo01', csv_filepath = '29059811-1-algo01.csv'):
+    dicom_dict = get_dicom_dict(folder)
+    generate_metadata_to_dicom_dict(dicom_dict)
+    generate_output_to_dicom_dict(dicom_dict)
+    sheet_width = 0
+    sheet_height = 0
+    z_map = dicom_dict['z']
+    max_of_contours = 0
+    for z in sorted(z_map.keys()):
+        ct_obj = z_map[z]
+        contours_infos = ct_obj['output']['contours_infos'][algo_key]
+        len_contours = len(contours_infos)
+        if len_contours > max_of_contours:
+            max_of_contours = len_contours
+    sheet_width = 2 + max_of_contours # 1st col is z, 2nd col is number of contours
+    sheet_height = 3 + len(z_map.keys()) # 1st row -> folder name. 2nd row -> algo key. 3rd row->data header
+
+    # declare sheet is list of list and will use it to write csv file
+    sheet = []
+    sheet.append([folder]) # idx = 0
+    sheet.append([algo_key]) # idx = 1
+    sheet.append(['z', 'contours#']) # idx = 2
+    for z in sorted(z_map.keys()):
+        ct_obj = z_map[z]
+        contours_infos = ct_obj['output']['contours_infos'][algo_key]
+        contour_num = len(contours_infos)
+        row = [z, contour_num]
+        sheet.append(row)
+    sheet[0] = sheet[0] + ['']*(sheet_width-len(sheet[0]))
+    sheet[1] = sheet[1] + ['']*(sheet_width-len(sheet[1]))
+    header = sheet[2]
+    for c_idx in range(sheet_width - 2):
+        header.append('contour {}'.format(c_idx+1))
+
+    for z_idx, z in enumerate(sorted(z_map.keys())):
+        ct_obj = z_map[z]
+        contours_infos = ct_obj['output']['contours_infos'][algo_key]
+        write_infos = []
+        infos = copy.deepcopy(ct_obj['output']['contours_infos'][algo_key])
+        infos.sort(key=lambda info: info['mean'][0]) # sorting infos by mean x
+        for info_idx, info in enumerate(infos):
+            mean_x = info['mean'][0]
+            mean_y = info['mean'][1]
+            area_mm2 = info['area_mm2']
+            write_info = '({},{})pixel - {}mm2'.format(mean_x, mean_y, area_mm2)
+            write_infos.append(write_info)
+        # Write infos into correct row_sheet
+        sheet_row = sheet[z_idx+3]
+        sheet_row = sheet_row + write_infos
+        sheet_row = sheet_row + ['']*(sheet_width-len(sheet_row))
+    print('Time to lookup sheet variable')
+
+
+
+
+
+
+    for z in sorted(z_map.keys()):
+        ct_obj = z_map[z]
+        infos = copy.deepcopy(ct_obj['output']['contours_infos'][algo_key])
+        infos.sort(key=lambda info: info['mean'][0]) # sorting infos by mean x
+        for info_idx, info in enumerate(infos):
+            pass
+
+
+
+    pass
+
 
 
 if __name__ == '__main__':
@@ -411,6 +479,14 @@ if __name__ == '__main__':
                 area_mm2 = get_contour_area_mm2(contour, ct_obj['ps_x'], ct_obj['ps_y'])
                 print('len={}, area_mm2 = {}'.format(len(contour), area_mm2))
             #print(len(contours))
-    generate_csv_contour_number_csv_report(f_list, csv_filepath = 'contours.csv')
-    print('write done for contours.csv')
+    #generate_contour_number_csv_report(f_list, csv_filepath = 'contours.csv')
+    #print('write done for contours.csv')
+
+    folder = f_list[0]
+    print(os.path.basename(folder))
+    algo_keys = ['algo01', 'algo02', 'algo03', 'algo04']
+    for algo_key in algo_keys:
+        csv_filepath = '{}-{}.csv'.format(os.path.basename(folder), algo_key)
+        generate_patient_mean_area_csv_report(folder, algo_key=algo_key, csv_filepath=csv_filepath)
+        break
 
