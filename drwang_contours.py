@@ -313,6 +313,8 @@ def generate_output_to_ct_obj(ct_obj):
             area_mm2 = get_contour_area_mm2(contour, ps_x, ps_y)
             contours_info['mean'] = [global_x_pixel, global_y_pixel]
             contours_info['area_mm2'] = area_mm2
+            contours_info['contour'] = contour
+            contours_infos.append(contours_info)
         ct_obj['output']['contours_infos'][algo_key] = contours_infos
 
     pass
