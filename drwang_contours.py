@@ -341,21 +341,15 @@ def generate_csv_report(f_list, csv_filepath = 'contours.csv'):
         for folder in sorted(all_sheet_dict.keys()):
             sheet_dict = all_sheet_dict[folder]
             csv_row = csv_row + all_sheet_dict[folder]['csv'][idx]
-        #print(len(sheet_dict['csv'][idx]))
-        print('len(csv_row) = {}'.format(len(csv_row)) )
-
-
-        break
-        # csv = csv + [csv_row]
+        csv_data.append(csv_row)
     print('Show csv ')
+    print('show')
 
 
 
 if __name__ == '__main__':
     root_folder = r'RAL_plan_new_20190905'
     f_list = [ os.path.join(root_folder, file) for file in os.listdir(root_folder) ]
-    a = ['aa','zz'] + ['bb','cc'] + [''] * 3
-    print(a)
 
     folder = f_list[0]
     #print_info_by_folder(folder)
