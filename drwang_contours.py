@@ -168,9 +168,30 @@ def get_contours_from_edge_detection_algo_04(img):
     (contours_without_filter, constant) = get_max_contours(img, ContourRetrievalMode=cv2.RETR_EXTERNAL)
     contours = contours_without_filter
     return contours
+def get_rect_info_from_cv_contour(cv_contour):
+    i = cv_contour
+    con = i.reshape(i.shape[0], i.shape[2])
+    x_min = con[:, 0].min()
+    x_max = con[:, 0].max()
+    x_mean = con[:, 0].mean()
+    y_min = con[:, 1].min()
+    y_max = con[:, 1].max()
+    y_mean = con[:, 1].mean()
+    h = y_max - y_min
+    w = x_max - x_min
+    x_mean = int(x_mean)
+    y_mean = int(y_mean)
+    rect_info = [(x_min, x_max, y_min, y_max), (w, h), (x_mean, y_mean)]
+    return rect_info
+def get_contour_xy_mean(cv_contour):
+    rect_info = get_rect_info_from_cv_contour(cv_contour)
+    (x_mean, y_mean) = rect_info[2]
+    return (x_mean, y_mean)
 def get_contour_area_mm2(contour,ps_x, ps_y) :
     area_mm2  = cv2.contourArea(contour) * ps_x * ps_y
     return area_mm2
+
+
 
 
 
@@ -275,6 +296,25 @@ def generate_output_to_ct_obj(ct_obj):
     ct_obj['output']['contours']['algo02'] = get_contours_from_edge_detection_algo_02(img, filter_img)
     ct_obj['output']['contours']['algo03'] = get_contours_from_edge_detection_algo_03(img)
     ct_obj['output']['contours']['algo04'] = get_contours_from_edge_detection_algo_04(img)
+
+    # Generate contours infos like x,y mean and area_mm
+    ct_obj['output']['contours_infos'] = {}
+    ps_x = ct_obj['ps_x']
+    ps_y = ct_obj['ps_y']
+    for algo_key in (ct_obj['output']['contours'].keys()):
+        contours = ct_obj['output']['contours'][algo_key]
+        contours_infos = []
+        for contour in contours:
+            contours_info = {}
+            contours_infos.append(contours_info)
+            (x,y) = get_contour_xy_mean(contour)
+            global_x_pixel = x + view_min_x
+            global_y_pixel = y + view_min_y
+            area_mm2 = get_contour_area_mm2(contour, ps_x, ps_y)
+            contours_info['mean'] = [global_x_pixel, global_y_pixel]
+            contours_info['area_mm2'] = area_mm2
+        ct_obj['output']['contours_infos'][algo_key] = contours_infos
+
     pass
 
 # FUNCTIONS - main function
