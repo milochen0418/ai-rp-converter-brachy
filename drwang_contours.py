@@ -404,24 +404,35 @@ def generate_patient_mean_area_csv_report(folder, algo_key='algo01', csv_filepat
 
     # declare sheet is list of list and will use it to write csv file
     sheet = []
+
+    # write first 3 rows
     sheet.append([folder]) # idx = 0
     sheet.append([algo_key]) # idx = 1
     sheet.append(['z', 'contours#']) # idx = 2
+
+    # fill first 2 columns
     for z in sorted(z_map.keys()):
         ct_obj = z_map[z]
         contours_infos = ct_obj['output']['contours_infos'][algo_key]
         contour_num = len(contours_infos)
         row = [z, contour_num]
         sheet.append(row)
+
+    # fill space for empty cell in first 2 rows
     sheet[0] = sheet[0] + ['']*(sheet_width-len(sheet[0]))
     sheet[1] = sheet[1] + ['']*(sheet_width-len(sheet[1]))
+
+    # write done for 3rd row
     header = sheet[2]
     for c_idx in range(sheet_width - 2):
         header.append('contour {}'.format(c_idx+1))
 
+    # Now, 1,2,3 th row are finished. 1,2 th col are finished too.
+    # another (row,col) is the cell to show contour's info
+
+    # Process to write all contours info value
     for z_idx, z in enumerate(sorted(z_map.keys())):
         ct_obj = z_map[z]
-        contours_infos = ct_obj['output']['contours_infos'][algo_key]
         write_infos = []
         infos = copy.deepcopy(ct_obj['output']['contours_infos'][algo_key])
         infos.sort(key=lambda info: info['mean'][0]) # sorting infos by mean x
@@ -432,9 +443,10 @@ def generate_patient_mean_area_csv_report(folder, algo_key='algo01', csv_filepat
             write_info = '({},{})pixel - {}mm2'.format(mean_x, mean_y, area_mm2)
             write_infos.append(write_info)
         # Write infos into correct row_sheet
-        sheet_row = sheet[z_idx+3]
+        sheet_row = copy.deepcopy(sheet[z_idx+3])
         sheet_row = sheet_row + write_infos
         sheet_row = sheet_row + ['']*(sheet_width-len(sheet_row))
+        sheet[z_idx+3] = sheet_row
     print('Time to lookup sheet variable')
 
 
