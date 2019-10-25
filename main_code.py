@@ -388,13 +388,8 @@ def get_app_center_pts_of_first_slice(first_slice_dict):
 
     (sorted_app_center_pts, rect_infos, app_center_pts, app_center_pts_extend_data) = get_rect_infos_and_center_pts(contours, h_max=h_max,h_min=h_min, w_max=w_max,w_min=w_min)
 
-
-
-
     print('app_center_pts_extend_data = ')
-
     #print(app_center_pts_extend_data)
-
 
     print('\n\n')
     print(sorted_app_center_pts)
