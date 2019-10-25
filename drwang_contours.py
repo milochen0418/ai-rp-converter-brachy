@@ -10,6 +10,18 @@ import random
 
 
 # FUNCTIONS - Algorithm processing Fucntions
+def distance(pt1, pt2):
+    axis_num = len(pt1)
+    # Assume maximum of axis number of pt is 3
+    # Because we may save pt[4] as another appended information for algorithm
+    if(axis_num > 3):
+        axis_num = 3
+
+    sum = 0.0
+    for idx in range(axis_num):
+        sum = sum + (pt1[idx] - pt2[idx]) ** 2
+    ans = math.sqrt(sum)
+    return ans
 def convert_to_gray_image(pixel_array):
     img = np.copy(pixel_array)
     # Convert to float to avoid overflow or underflow losses.
@@ -177,6 +189,7 @@ def get_dicom_dict(folder) :
     for ct_filepath in ct_filelist:
         ct_fp = pydicom.read_file(ct_filepath)
         ct_obj = {}
+        ct_obj['dicom_dict'] = out_dict
         ct_obj['filepath'] = ct_filepath
         ct_obj["pixel_array"] = copy.deepcopy(ct_fp.pixel_array)
         ct_obj["RescaleSlope"] = ct_fp.RescaleSlope
@@ -220,6 +233,12 @@ def generate_output_to_dicom_dict(dicom_dict):
 def generate_output_to_ct_obj(ct_obj):
     out = ct_obj['output']
     rescale_pixel_array = ct_obj['rescale_pixel_array']
+    (view_min_y, view_max_y, view_min_x, view_max_x) = ct_obj['dicom_dict']['metadata']['view_scope']
+    #view_pixel_array = rescale_pixel_array[view_min_y:view_max_y, view_min_x:view_max_x]
+    img = ct_obj['rescale_pixel_array']
+    gray_img = convert_to_gray_image(img)
+
+
     pass
 
 
@@ -233,9 +252,11 @@ if __name__ == '__main__':
     dicom_dict = get_dicom_dict(folder)
     generate_metadata_to_dicom_dict(dicom_dict)
     # Now it is support meta
-    print(dicom_dict['metadata'])
-    #metadata -> view_scope is format of (view_min_y, view_max_y, view_min_x, view_max_x)
-    generate_metadata_to_dicom_dict(dicom_dict)
+    # And you can generate its output
+    #print(dicom_dict['metadata'])
+    generate_output_to_dicom_dict(dicom_dict)
+
+    # It's start to travel each output of ct_obj in dicom_dict
     z_map = dicom_dict['z']
     for z_idx,z in enumerate(sorted(z_map.keys())):
         ct_obj = z_map[z]
