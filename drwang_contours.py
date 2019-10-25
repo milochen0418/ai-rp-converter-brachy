@@ -277,6 +277,9 @@ def generate_output_to_ct_obj(ct_obj):
 
 
 # FUNCTIONS - main function
+def get_contour_area_mm2(contour) :
+    # TODO
+    return 10
 
 def generate_csv_report(f_list, csv_filepath = 'contours.csv'):
     output_csv_filepath = csv_filepath
