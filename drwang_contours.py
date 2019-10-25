@@ -441,7 +441,10 @@ def generate_patient_mean_area_csv_report(folder, algo_key='algo01', csv_filepat
             mean_x = info['mean'][0]
             mean_y = info['mean'][1]
             area_mm2 = info['area_mm2']
-            write_info = '({},{})pixel - {}mm2'.format(mean_x, mean_y, area_mm2)
+            write_info = '({},{})px - {}mm2'.format(mean_x, mean_y, area_mm2)
+            write_info_mean = '223,221'
+            write_info_area = '23.1'
+
             write_infos.append(write_info)
         # Write infos into correct row_sheet
         sheet_row = copy.deepcopy(sheet[z_idx+3])
@@ -460,12 +463,29 @@ def generate_patient_mean_area_csv_report(folder, algo_key='algo01', csv_filepat
 
 
 
+def plot_with_contours(dicom_dict, z, algo_keys):
+    import matplotlib.pyplot as plt
+    import pydicom
+    z_map = dicom_dict['z']
+    ct_obj = z_map[z]
+    print(ct_obj.keys())
+    pixel_array = ct_obj['rescale_pixel_array']
+    plt.imshow(pixel_array, cmap=plt.cm.bone)
+    plt.show()
 
+    pass
 
 
 if __name__ == '__main__':
     root_folder = r'RAL_plan_new_20190905'
     f_list = [ os.path.join(root_folder, file) for file in os.listdir(root_folder) ]
+
+    folder = r'RAL_plan_new_20190905/35252020-2'
+    algo_keys = ['algo01', 'algo02', 'algo03', 'algo04']
+    dicom_dict = get_dicom_dict(folder)
+    plot_with_contours(dicom_dict, z=-84, algo_keys = algo_keys )
+    exit(0)
+
 
     folder = f_list[0]
     #print_info_by_folder(folder)
@@ -489,7 +509,6 @@ if __name__ == '__main__':
             #print(len(contours))
     #generate_contour_number_csv_report(f_list, csv_filepath = 'contours.csv')
     #print('write done for contours.csv')
-
 
     for folder in f_list:
         print(os.path.basename(folder))
