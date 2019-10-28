@@ -41,7 +41,6 @@ def python_object_load(filename):
             return None
     return obj2
 
-
 def gen_ct_dicom_dict(ct_filelist):
     CtCache = {}
     CtCache["SOPInstanceUID"] = {}  # Query ct data by the key SOPInstanceUID
@@ -109,6 +108,7 @@ def convert_to_gray_image(pixel_array):
     # Convert to uint
     img_2d_scaled = np.uint8(img_2d_scaled)
     return img_2d_scaled
+
 def get_max_contours_by_filter_img(A, filter_img, ContourRetrievalMode=cv2.RETR_EXTERNAL):
     # gray_image = cv2.cvtColor(filter_img, cv2.COLOR_RGB2GRAY)
     gray_image = filter_img
@@ -117,6 +117,7 @@ def get_max_contours_by_filter_img(A, filter_img, ContourRetrievalMode=cv2.RETR_
     # _, contours, _ = cv2.findContours(gray_image, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
     _, contours, _ = cv2.findContours(gray_image, ContourRetrievalMode, cv2.CHAIN_APPROX_NONE)
     return contours
+
 def get_max_contours(A, constant_value=None, ContourRetrievalMode=cv2.RETR_EXTERNAL):
     constant = None
     if constant_value == None:
@@ -156,7 +157,6 @@ def get_rect_info_from_cv_contour(cv_contour):
     y_mean = int(y_mean)
     rect_info = [(x_min, x_max, y_min, y_max), (w, h), (x_mean, y_mean)]
     return rect_info
-
 
 def get_rect_infos_and_center_pts(contours, h_min=13, w_min=13, h_max=19, w_max=19):
     app_center_pts = []
@@ -388,8 +388,13 @@ def get_app_center_pts_of_first_slice(first_slice_dict):
 
     (sorted_app_center_pts, rect_infos, app_center_pts, app_center_pts_extend_data) = get_rect_infos_and_center_pts(contours, h_max=h_max,h_min=h_min, w_max=w_max,w_min=w_min)
 
+
+
+
     print('app_center_pts_extend_data = ')
+
     #print(app_center_pts_extend_data)
+
 
     print('\n\n')
     print(sorted_app_center_pts)
@@ -434,9 +439,6 @@ def get_app_center_pts_of_first_slice(first_slice_dict):
     #return x_sorted_pts
     return x_sorted_pts, app_center_pts_extend_data
     pass
-
-
-
 
 
 def get_view_scope_by_slice(first_slice_dict, padding=30):
@@ -851,7 +853,6 @@ def algo_run_by_folder_new(folder):
     print(app_pts_dict)
     return (app_pts_dict, app_pts_dict_extend_data)
 
-
 def algo_run_with_implicator_by_folder(folder):
     # app_pts_dict[z] = [[x,y,z], [x,y,z], [x,y,z] ]
     app_pts_dict = {}
@@ -1011,8 +1012,6 @@ def algo_run_with_implicator_by_folder(folder):
         prev_slice_dict = slice_dict
     print(app_pts_dict)
     return app_pts_dict
-
-
 
 def algo_run_by_folder(folder):
     # app_pts_dict[z] = [[x,y,z], [x,y,z], [x,y,z] ]
@@ -1436,7 +1435,7 @@ def wrap_to_rp_file(RP_OperatorsName, rs_filepath, tandem_rp_line, out_rp_filepa
     rp_lines = [tandem_rp_line, rt_ovoid_rp_line, lt_ovoid_rp_line]
 
     #TODO rp_Ref_ROI_Numbers need to match to current RS's ROI number of three applicators
-    rp_Ref_ROI_Numbers = [15, 16, 17]
+    rp_Ref_ROI_Numbers = [16, 17, 18]
     rp_ControlPointRelativePositions = [3.5, 3.5, 3.5]
     for idx,rp_line in enumerate(rp_lines):
         # Change ROINumber of RP_Template_TestData RS into output RP output file
@@ -1536,7 +1535,15 @@ def generate_brachy_rp_file(RP_OperatorsName, folder, out_rp_filepath):
 #generate_brachy_rp_file(RP_OperatorsName='AI', folder='24460566', out_rp_filepath=r'brachy.rp.dcm')
 
 
-generate_brachy_rp_file(RP_OperatorsName='cylin', folder='24460566-ctdate20191015', out_rp_filepath=r'brachy.rp-ctdate20191015.dcm')
+#generate_brachy_rp_file(RP_OperatorsName='cylin', folder='24460566-ctdate20191015', out_rp_filepath=r'brachy.rp-ctdate20191015.dcm')
+
+
+#generate_brachy_rp_file(RP_OperatorsName='cylin', folder='35214237-1', out_rp_filepath=r'RP.35214237-ctdate20191015.dcm')
+
+
+generate_brachy_rp_file(RP_OperatorsName='cylin', folder='RAL', out_rp_filepath=r'RP.24460566-ctdate20191015.dcm')
+
+
 
 
 
