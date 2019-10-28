@@ -194,6 +194,54 @@ def get_contour_area_mm2(contour,ps_x, ps_y) :
     area_mm2  = cv2.contourArea(contour) * ps_x * ps_y
     return area_mm2
 
+def get_minimum_rect_from_contours(contours, padding=2):
+    rect = (x_min, x_max, y_min, y_max) = (0, 0, 0, 0)
+    is_first = True
+    for contour in contours:
+        reshaped_contour = contour.reshape(contour.shape[0], contour.shape[2])
+        for pt in reshaped_contour:
+            x = pt[0]
+            y = pt[1]
+            if is_first == True:
+                x_min = x
+                x_max = x
+                y_min = y
+                y_max = y
+                is_first = False
+            else:
+                if x < x_min:
+                    x_min = x
+                if x > x_max:
+                    x_max = x
+                if y < y_min:
+                    y_min = y
+                if y > y_max:
+                    y_max = y
+    x_min -= padding
+    x_max += padding
+    y_min -= padding
+    y_max += padding
+    rect = (x_min, x_max, y_min, y_max)
+    return rect
+def is_point_in_rect(pt, rect=(0, 0, 0, 0)):
+    (x_min, x_max, y_min, y_max) = rect
+    x = pt[0]
+    y = pt[1]
+    if x >= x_min and x < x_max and y >= y_min and y < y_max:
+        return True
+    else:
+        return False
+def is_contour_in_rect(contour, rect=(0, 0, 0, 0)):
+    (x_min, x_max, y_min, y_max) = rect
+    isContourInRect = True
+    reshaped_contour = contour.reshape(contour.shape[0], contour.shape[2])
+    for pt in reshaped_contour:
+        if False == is_point_in_rect(pt, rect):
+            isContourInRect = False
+            break
+    return isContourInRect
+
+
 
 
 
@@ -284,6 +332,7 @@ def generate_output_to_dicom_dict(dicom_dict):
         #print('z={}, {}'.format(z, ct_obj.keys()))
         generate_output_to_ct_obj(ct_obj)
         # information is in ct_obj['output']
+
 def generate_output_to_ct_obj(ct_obj):
     out = ct_obj['output']
     rescale_pixel_array = ct_obj['rescale_pixel_array']
@@ -329,7 +378,6 @@ def generate_output_to_ct_obj(ct_obj):
             contours_info['contour'] = contour
             contours_infos.append(contours_info)
         ct_obj['output']['contours_infos'][algo_key] = contours_infos
-
     pass
 
 # FUNCTIONS - main function
@@ -491,16 +539,10 @@ def plot_with_contours(dicom_dict, z, algo_keys):
     for contour in contours:
         cv2.drawContours(img, contour, -1, (0, 0, 255), 1)
 
-
-
     #plt.imshow(pixel_array, cmap=plt.cm.bone)
     plt.imshow(img, cmap=plt.cm.bone)
-
     plt.show()
     plt.use('agg')
-
-
-
     pass
 
 
