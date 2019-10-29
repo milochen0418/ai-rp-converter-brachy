@@ -626,7 +626,9 @@ if __name__ == '__main__':
 
     folders = os.listdir(root_folder)
     print('folders = {}'.format(folders))
-    folder = '35252020-2'
+    #folder = '35252020-2'
+    folder = '29059811-2'
+
     bytes_filepath = os.path.join('contours_bytes', r'{}.bytes'.format(folder))
     #plot_with_contours(dicom_dict, z=sorted(dicom_dict['z'].keys())[10], algo_key='algo03')
     dicom_dict = python_object_load(bytes_filepath)
@@ -740,7 +742,7 @@ if __name__ == '__main__':
         if idx_z == 0:
             # It is possible that thicker pipe part of tandem is not scanned in CT file, so that only can detect two pipe in this case.
             # So that when center_pts_dict < 3 in following case after using algo03
-            if (len(center_pts_dict) < 3)  :
+            if (len(center_pts_dict[z]) < 3)  :
                 break
             prev_pt = ( center_pts_dict[z][1][0], center_pts_dict[z][1][1], float(z))
             prev_info['pt'] = prev_pt
@@ -764,8 +766,10 @@ if __name__ == '__main__':
     if len(tandem) == 0:
         # TODO
         print('TODO tandem for the case that without thicker pipe in scanned CT')
+        exit(0)
 
-    # Step 6.
+    # Step 6. Trace tandem
+
 
 
 
