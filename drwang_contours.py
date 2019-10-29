@@ -649,8 +649,15 @@ if __name__ == '__main__':
     folder = '29059811-2'
 
     bytes_filepath = os.path.join('contours_bytes', r'{}.bytes'.format(folder))
+
     #plot_with_contours(dicom_dict, z=sorted(dicom_dict['z'].keys())[10], algo_key='algo03')
     dicom_dict = python_object_load(bytes_filepath)
+
+    for z_idx, z in enumerate(sorted(dicom_dict['z'].keys())):
+        #plot_with_contours(dicom_dict, z=sorted(dicom_dict['z'].keys())[z_idx], algo_key='algo01')
+        continue
+
+    #exit(0)
 
     # Step 1. Use algo01 to get center point of inner contour
     last_z_in_step1 = sorted(dicom_dict['z'].keys())[0]
@@ -869,7 +876,6 @@ if __name__ == '__main__':
         minimum_distance_mm = allowed_distance_mm + 1  # If minimum_distance_mm is finally large than allowed_distance_mm, it's mean there is no pt closed to prev_pt
         minimum_pt = (0, 0)
         for pt in cen_pts:
-            allowed_distance_mm
             prev_x_mm = prev_info['pt'][0] * prev_info['ps_x']
             prev_y_mm = prev_info['pt'][1] * prev_info['ps_y']
             x_mm = pt[0] * ps_x
@@ -885,7 +891,7 @@ if __name__ == '__main__':
             # This is case to say ending for the upper looper
             break
         else:
-            tandem.append( (minimum_pt[0], minimum_pt[1],z) )
+            tandem.append( (minimum_pt[0], minimum_pt[1],float(z)) )
             prev_info['pt'] = minimum_pt
             prev_info['ps_x'] = ps_x
             prev_info['ps_y'] = ps_y
