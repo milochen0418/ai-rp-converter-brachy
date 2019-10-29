@@ -271,7 +271,6 @@ def get_rect_info_from_cv_contour(cv_contour):
     y_mean = int(y_mean)
     rect_info = [(x_min, x_max, y_min, y_max), (w, h), (x_mean, y_mean)]
     return rect_info
-
 def get_most_closed_pt(src_pt, pts, allowed_distance=100):
     if pts == None:
         return None
@@ -290,6 +289,285 @@ def get_most_closed_pt(src_pt, pts, allowed_distance=100):
                 dst_pt = pt
         pass
     return dst_pt
+def algo_to_get_pixel_lines(dicom_dict):
+    # type: (dicom_dict) -> (lt_ovoid, tandem, rt_ovoid)
+    # Step 1. Use algo01 to get center point of inner contour
+    last_z_in_step1 = sorted(dicom_dict['z'].keys())[0]
+    center_pts_dict = {} # The following loop will use algo03 to figure L't Ovoid, R't Ovoid and half tandem
+    for z in sorted(dicom_dict['z'].keys()):
+        contours = dicom_dict['z'][z]['output']['contours512']['algo03']
+        #plot_with_contours(dicom_dict, z=z, algo_key='algo03')
+        # Step 1.1 The process to collect the contour which is inner of some contour into inner_contours[]
+        inner_contours = []
+        for inner_idx, inner_contour in enumerate(contours):
+            is_inner = False
+            for outer_idx, outer_contour in enumerate(contours):
+                if inner_idx == outer_idx: # ignore the same to compare itself
+                    continue
+                outer_rect = get_minimum_rect_from_contours([outer_contour])
+                if is_contour_in_rect(inner_contour, outer_rect):
+                    is_inner = True
+                    break
+            if (is_inner == True) :
+                inner_contours.append(inner_contour)
+        # Step 1.2 if there is no any inner contour, then last_z_in_step1 = z and exit the z loop
+        if (len(inner_contours)) == 0:
+            last_z_in_step1 = z
+            break
+
+        # Step 1.3 figure out center point of contour in inner_contour and sorting it by the order x
+        print('z = {}, len(inner_contours) = {}'.format(z, len(inner_contours)))
+        inner_cen_pts = []
+        for contour in inner_contours:
+            #rect_info = [(x_min, x_max, y_min, y_max), (w, h), (x_mean, y_mean)]
+            rect_info = get_rect_info_from_cv_contour(contour)
+            cen_pt = ( rect_info[2][0], rect_info[2][1] )
+            inner_cen_pts.append(cen_pt)
+        inner_cen_pts.sort(key=lambda pt:pt[0])
+        print('z = {}, inner_cen_pts = {}'.format(z, inner_cen_pts) )
+        center_pts_dict[z] = inner_cen_pts
+
+
+    # Step 2. Figure L't Ovoid
+    print('STEP 2.')
+    lt_ovoid = []
+    allowed_distance_mm = 2.5 # allowed distance when trace from bottom to tips of L't Ovoid
+    prev_info = {}
+    prev_info['pt'] = None
+    prev_info['ps_x'] = None
+    prev_info['ps_y'] = None
+    print('sorted(center_pts_dict.keys()) = {}'.format(sorted(center_pts_dict.keys())))
+    for idx_z, z in enumerate(sorted(center_pts_dict.keys())):
+        ps_x = dicom_dict['z'][z]['ps_x']
+        ps_y = dicom_dict['z'][z]['ps_y']
+        if idx_z == 0:
+            prev_pt = ( center_pts_dict[z][0][0], center_pts_dict[z][0][1], float(z))
+            prev_info['pt'] = prev_pt
+            prev_info['ps_x'] = ps_x
+            prev_info['ps_y'] = ps_y
+            lt_ovoid.append(prev_pt)
+            continue
+        prev_x_mm = prev_info['pt'][0] * prev_info['ps_x']
+        prev_y_mm = prev_info['pt'][1] * prev_info['ps_y']
+        x_mm = center_pts_dict[z][0][0] * ps_x
+        y_mm = center_pts_dict[z][0][1] * ps_y
+        if math.sqrt( (x_mm-prev_x_mm)**2 + (y_mm-prev_y_mm)**2) < allowed_distance_mm:
+            prev_pt = ( center_pts_dict[z][0][0], center_pts_dict[z][0][1], float(z))
+            prev_info['pt'] = prev_pt
+            prev_info['ps_x'] = ps_x
+            prev_info['ps_y'] = ps_y
+            lt_ovoid.append(prev_pt)
+            print('lt_ovoid = {}'.format(lt_ovoid))
+
+        else:
+            break
+
+    # Step 3. Figure R't Ovoid
+    rt_ovoid = []
+    allowed_distance_mm = 2.5 # allowed distance when trace from bottom to tips of R't Ovoid
+    prev_info = {}
+    prev_info['pt'] = None
+    prev_info['ps_x'] = None
+    prev_info['ps_y'] = None
+    print('sorted(center_pts_dict.keys()) = {}'.format(sorted(center_pts_dict.keys())))
+    for idx_z, z in enumerate(sorted(center_pts_dict.keys())):
+        ps_x = dicom_dict['z'][z]['ps_x']
+        ps_y = dicom_dict['z'][z]['ps_y']
+        if idx_z == 0:
+            prev_pt = ( center_pts_dict[z][-1][0], center_pts_dict[z][-1][1], float(z))
+            prev_info['pt'] = prev_pt
+            prev_info['ps_x'] = ps_x
+            prev_info['ps_y'] = ps_y
+            rt_ovoid.append(prev_pt)
+            continue
+        prev_x_mm = prev_info['pt'][0] * prev_info['ps_x']
+        prev_y_mm = prev_info['pt'][1] * prev_info['ps_y']
+        x_mm = center_pts_dict[z][-1][0] * ps_x
+        y_mm = center_pts_dict[z][-1][1] * ps_y
+        if math.sqrt( (x_mm-prev_x_mm)**2 + (y_mm-prev_y_mm)**2) < allowed_distance_mm:
+            prev_pt = ( center_pts_dict[z][-1][0], center_pts_dict[z][-1][1], float(z))
+            prev_info['pt'] = prev_pt
+            prev_info['ps_x'] = ps_x
+            prev_info['ps_y'] = ps_y
+            rt_ovoid.append(prev_pt)
+            print('rt_ovoid = {}'.format(rt_ovoid))
+        else:
+            #distance_mm = math.sqrt((x_mm - prev_x_mm) ** 2 + (y_mm - prev_y_mm) ** 2)
+            #print('distnace_mm = {}, '.format(distance_mm))
+
+            break
+
+    # Step 4. Figure Tandem bottom-half (thicker pipe part of tandem)
+    tandem = []
+    allowed_distance_mm = 4.5 # allowed distance when trace from bottom to tips
+    prev_info = {}
+    prev_info['pt'] = None
+    prev_info['ps_x'] = None
+    prev_info['ps_y'] = None
+    for idx_z, z in enumerate(sorted(center_pts_dict.keys())):
+        ps_x = dicom_dict['z'][z]['ps_x']
+        ps_y = dicom_dict['z'][z]['ps_y']
+        if idx_z == 0:
+            # It is possible that thicker pipe part of tandem is not scanned in CT file, so that only can detect two pipe in this case.
+            # So that when center_pts_dict < 3 in following case after using algo03
+            if (len(center_pts_dict[z]) < 3)  :
+                break
+            prev_pt = ( center_pts_dict[z][1][0], center_pts_dict[z][1][1], float(z))
+            prev_info['pt'] = prev_pt
+            prev_info['ps_x'] = ps_x
+            prev_info['ps_y'] = ps_y
+            tandem.append(prev_pt)
+            continue
+        prev_x_mm = prev_info['pt'][0] * prev_info['ps_x']
+        prev_y_mm = prev_info['pt'][1] * prev_info['ps_y']
+        x_mm = center_pts_dict[z][1][0] * ps_x
+        y_mm = center_pts_dict[z][1][1] * ps_y
+        #print('x_mm = {}, y_mm ={}'.format(x_mm, y_mm))
+        if math.sqrt( (x_mm-prev_x_mm)**2 + (y_mm-prev_y_mm)**2) < allowed_distance_mm:
+            prev_pt = ( center_pts_dict[z][1][0], center_pts_dict[z][1][1], float(z))
+            prev_info['pt'] = prev_pt
+            prev_info['ps_x'] = ps_x
+            prev_info['ps_y'] = ps_y
+            tandem.append(prev_pt)
+            print('tandem = {}'.format(tandem))
+        else:
+            break
+    #
+    # Step 5. The case to process the tandem without thicker pipe in scanned CT. when tandem = [] (empty list)
+    if len(tandem) == 0:
+        # Step 5.1 find out inner_cotnour of tandem by algo01
+        contours = dicom_dict['z'][z]['output']['contours512']['algo01']
+        #plot_with_contours(dicom_dict, z=z, algo_key='algo03')
+        # Step 5.1.1 The process to collect the contour which is inner of some contour into inner_contours[]
+        inner_contours = []
+        for inner_idx, inner_contour in enumerate(contours):
+            is_inner = False
+            for outer_idx, outer_contour in enumerate(contours):
+                if inner_idx == outer_idx: # ignore the same to compare itself
+                    continue
+                outer_rect = get_minimum_rect_from_contours([outer_contour])
+                if is_contour_in_rect(inner_contour, outer_rect):
+                    is_inner = True
+                    break
+            if (is_inner == True) :
+                inner_contours.append(inner_contour)
+        # Step 5.1.2 figure out center point of contour in inner_contour and sorting it by the order x
+        print('z = {}, len(inner_contours) = {}'.format(z, len(inner_contours)))
+        inner_cen_pts = []
+        for contour in inner_contours:
+            #rect_info = [(x_min, x_max, y_min, y_max), (w, h), (x_mean, y_mean)]
+            rect_info = get_rect_info_from_cv_contour(contour)
+            cen_pt = ( rect_info[2][0], rect_info[2][1] )
+            inner_cen_pts.append(cen_pt)
+        inner_cen_pts.sort(key=lambda pt:pt[0])
+        print('tandem first slice evaluation inner_cen_pts = {}'.format(inner_cen_pts))
+        if(len(inner_cen_pts) != 3 ) :
+            print('inner_cen_pts is not == 3')
+            raise Exception
+        tandem.append( (inner_cen_pts[1][0], inner_cen_pts[1][1], float(z)) )
+        # Step 5.1. Find Algo01 and detect the inner_contour
+
+        print('TODO tandem for the case that without thicker pipe in scanned CT')
+
+    # Step 6. Trace tandem
+    print('Step 6. Trace tandem')
+    # Step 6.1 Figure out [upper_half_z_idx_start, upper_half_z_idx_end) for upper-part of tandem
+    z = sorted(dicom_dict['z'].keys())[0]
+    last_z = tandem[-1][2]
+    print('last_z = {}'.format(last_z))
+    z_idx = sorted(dicom_dict['z'].keys()).index(last_z)
+    upper_half_z_idx_start = z_idx + 1 # upper_half_z_idx_start is the next z of last_z in current tandem data.
+    upper_half_z_idx_end = len(dicom_dict['z'].keys())
+    print('upper_half_z_idx [start,end) = [{},{})'.format(upper_half_z_idx_start, upper_half_z_idx_end))
+
+    # Step 6.2 Setup first prev_info for loop to run and also set allowed_distnace to indicate the largest moving distance between two slice.
+    # allowed_distance_mm = 8.5 # allowed distance when trace from bottom to tips of Tandem [ 8.5 mm is not ok for 35252020-2 ]
+    #allowed_distance_mm = 10.95  # allowed distance when trace from bottom to tips of Tandem
+    allowed_distance_mm = 10.95  # allowed distance when trace from bottom to tips of Tandem
+
+    prev_info = {}
+    prev_info['pt'] = tandem[-1]
+    prev_info['ps_x'] = dicom_dict['z'][last_z]['ps_x']
+    prev_info['ps_y'] = dicom_dict['z'][last_z]['ps_y']
+    # The case for 29059811-2 folder , will have the following value
+    # last_z == -92.0
+    # prev_info == {'pt': (240, 226, -92.0), 'ps_x': "3.90625e-1", 'ps_y': "3.90625e-1"}
+
+    # Step 6.3. Start to trace tandem
+    for z_idx in range(upper_half_z_idx_start, upper_half_z_idx_end):
+        z = sorted(dicom_dict['z'].keys())[z_idx]
+        ps_x = dicom_dict['z'][z]['ps_x']
+        ps_y = dicom_dict['z'][z]['ps_y']
+
+        #print('z = {}'.format(z))
+        # Step 6.3.1. Make contours variable as collecting of all contour in z-slice
+        contours = []
+        for algo_key in dicom_dict['z'][z]['output']['contours512'].keys():
+            contours = contours + dicom_dict['z'][z]['output']['contours512'][algo_key]
+        # Step 6.3.2. Convert to center pt that the idx is the same as to contours
+        cen_pts = []
+        for c_idx, c in enumerate(contours):
+            rect_info = get_rect_info_from_cv_contour(c)
+            # [(x_min, x_max, y_min, y_max), (w, h), (x_mean, y_mean)]
+            cen_pt = (rect_info[2][0], rect_info[2][0])
+            cen_pts.append(cen_pt)
+        # Step 6.3.3
+        # prev_info is like {'pt': (240, 226, -92.0), 'ps_x': "3.90625e-1", 'ps_y': "3.90625e-1"}
+        # pt in cen_pts is like (240, 226)
+        minimum_distance_mm = allowed_distance_mm + 1  # If minimum_distance_mm is finally large than allowed_distance_mm, it's mean there is no pt closed to prev_pt
+        minimum_pt = (0, 0)
+        for pt in cen_pts:
+            prev_x_mm = prev_info['pt'][0] * prev_info['ps_x']
+            prev_y_mm = prev_info['pt'][1] * prev_info['ps_y']
+            x_mm = pt[0] * ps_x
+            y_mm = pt[1] * ps_y
+            distance_mm = math.sqrt( (x_mm-prev_x_mm)**2 + (y_mm-prev_y_mm)**2 )
+            if (distance_mm > allowed_distance_mm ) : # distance_mm cannot large than allowed_distance_mm
+                continue
+            if (distance_mm < minimum_distance_mm):
+                minimum_distance_mm = distance_mm
+                minimum_pt = pt
+
+        if (minimum_distance_mm > allowed_distance_mm):
+            # This is case to say ending for the upper looper
+            break
+        else:
+            tandem.append( (minimum_pt[0], minimum_pt[1],float(z)) )
+            prev_info['pt'] = minimum_pt
+            prev_info['ps_x'] = ps_x
+            prev_info['ps_y'] = ps_y
+            print('tandem = {}'.format(tandem))
+    return (lt_ovoid, tandem, rt_ovoid)
+
+# The CT data is the format with 512 x 512, but we want to transfer it into real metric space
+def convert_lines_in_metrics(lines, dicom_dict):
+
+    #z_map, ct_filepath_map = get_maps_with_folder(ct_folder)
+    z_map = dicom_dict['z']
+
+    new_lines = []
+    for i in range(len(lines)):
+        new_lines.append([])
+
+    for line_idx in range(len(lines)):
+        line = lines[line_idx]
+        new_line = new_lines[line_idx]
+        for pt in line:
+            pt_z = pt[2]
+            z_dict = z_map[pt_z]
+            x_spacing = z_dict['x_spacing']
+            y_spacing = z_dict['y_spacing']
+            origin_x = z_dict['origin_x']
+            origin_y = z_dict['origin_y']
+            pt_x = pt[0]
+            pt_y = pt[1]
+            tmp_x = pt_x * x_spacing + origin_x
+            tmp_y = pt_y * y_spacing + origin_y
+            new_pt_x = float(Decimal(str(tmp_x)).quantize(Decimal('0.00')))  # Some format transfer stuff
+            new_pt_y = float(Decimal(str(tmp_y)).quantize(Decimal('0.00')))  # Some format transfer stuff
+            new_pt = [new_pt_x, new_pt_y, pt_z]
+            new_line.append(new_pt)
+    return new_lines
 
 
 # FUNCTIONS - DICOM data processing Functions
@@ -347,6 +625,11 @@ def get_dicom_dict(folder):
         ct_obj["rescale_pixel_array"] = ct_fp.pixel_array * ct_fp.RescaleSlope + ct_fp.RescaleIntercept
         ct_obj['ps_x'] = ct_fp.PixelSpacing[0]
         ct_obj['ps_y'] = ct_fp.PixelSpacing[1]
+
+        ct_obj['origin_x'] = ct_fp.ImagePositionPatient[0]
+        ct_obj['origin_y'] = ct_fp.ImagePositionPatient[1]
+        ct_obj['origin_z'] = ct_fp.ImagePositionPatient[2]
+
         ct_obj['SliceLocation'] = ct_fp.SliceLocation
         ct_obj['output'] = {} # put your output result in here
 
@@ -636,254 +919,6 @@ def example_dump_single_and_multiple_bytesfile():
     contours_python_object_dump(root_folder, 'all_dicom_dict.bytes')
 
 
-def algo(dicom_dict):
-    # Step 1. Use algo01 to get center point of inner contour
-    last_z_in_step1 = sorted(dicom_dict['z'].keys())[0]
-    center_pts_dict = {} # The following loop will use algo03 to figure L't Ovoid, R't Ovoid and half tandem
-    for z in sorted(dicom_dict['z'].keys()):
-        contours = dicom_dict['z'][z]['output']['contours512']['algo03']
-        #plot_with_contours(dicom_dict, z=z, algo_key='algo03')
-        # Step 1.1 The process to collect the contour which is inner of some contour into inner_contours[]
-        inner_contours = []
-        for inner_idx, inner_contour in enumerate(contours):
-            is_inner = False
-            for outer_idx, outer_contour in enumerate(contours):
-                if inner_idx == outer_idx: # ignore the same to compare itself
-                    continue
-                outer_rect = get_minimum_rect_from_contours([outer_contour])
-                if is_contour_in_rect(inner_contour, outer_rect):
-                    is_inner = True
-                    break
-            if (is_inner == True) :
-                inner_contours.append(inner_contour)
-        # Step 1.2 if there is no any inner contour, then last_z_in_step1 = z and exit the z loop
-        if (len(inner_contours)) == 0:
-            last_z_in_step1 = z
-            break
-
-        # Step 1.3 figure out center point of contour in inner_contour and sorting it by the order x
-        print('z = {}, len(inner_contours) = {}'.format(z, len(inner_contours)))
-        inner_cen_pts = []
-        for contour in inner_contours:
-            #rect_info = [(x_min, x_max, y_min, y_max), (w, h), (x_mean, y_mean)]
-            rect_info = get_rect_info_from_cv_contour(contour)
-            cen_pt = ( rect_info[2][0], rect_info[2][1] )
-            inner_cen_pts.append(cen_pt)
-        inner_cen_pts.sort(key=lambda pt:pt[0])
-        print('z = {}, inner_cen_pts = {}'.format(z, inner_cen_pts) )
-        center_pts_dict[z] = inner_cen_pts
-
-
-    # Step 2. Figure L't Ovoid
-    print('STEP 2.')
-    lt_ovoid = []
-    allowed_distance_mm = 2.5 # allowed distance when trace from bottom to tips of L't Ovoid
-    prev_info = {}
-    prev_info['pt'] = None
-    prev_info['ps_x'] = None
-    prev_info['ps_y'] = None
-    print('sorted(center_pts_dict.keys()) = {}'.format(sorted(center_pts_dict.keys())))
-    for idx_z, z in enumerate(sorted(center_pts_dict.keys())):
-        ps_x = dicom_dict['z'][z]['ps_x']
-        ps_y = dicom_dict['z'][z]['ps_y']
-        if idx_z == 0:
-            prev_pt = ( center_pts_dict[z][0][0], center_pts_dict[z][0][1], float(z))
-            prev_info['pt'] = prev_pt
-            prev_info['ps_x'] = ps_x
-            prev_info['ps_y'] = ps_y
-            lt_ovoid.append(prev_pt)
-            continue
-        prev_x_mm = prev_info['pt'][0] * prev_info['ps_x']
-        prev_y_mm = prev_info['pt'][1] * prev_info['ps_y']
-        x_mm = center_pts_dict[z][0][0] * ps_x
-        y_mm = center_pts_dict[z][0][1] * ps_y
-        if math.sqrt( (x_mm-prev_x_mm)**2 + (y_mm-prev_y_mm)**2) < allowed_distance_mm:
-            prev_pt = ( center_pts_dict[z][0][0], center_pts_dict[z][0][1], float(z))
-            prev_info['pt'] = prev_pt
-            prev_info['ps_x'] = ps_x
-            prev_info['ps_y'] = ps_y
-            lt_ovoid.append(prev_pt)
-            print('lt_ovoid = {}'.format(lt_ovoid))
-
-        else:
-            break
-
-    # Step 3. Figure R't Ovoid
-    rt_ovoid = []
-    allowed_distance_mm = 2.5 # allowed distance when trace from bottom to tips of R't Ovoid
-    prev_info = {}
-    prev_info['pt'] = None
-    prev_info['ps_x'] = None
-    prev_info['ps_y'] = None
-    print('sorted(center_pts_dict.keys()) = {}'.format(sorted(center_pts_dict.keys())))
-    for idx_z, z in enumerate(sorted(center_pts_dict.keys())):
-        ps_x = dicom_dict['z'][z]['ps_x']
-        ps_y = dicom_dict['z'][z]['ps_y']
-        if idx_z == 0:
-            prev_pt = ( center_pts_dict[z][-1][0], center_pts_dict[z][-1][1], float(z))
-            prev_info['pt'] = prev_pt
-            prev_info['ps_x'] = ps_x
-            prev_info['ps_y'] = ps_y
-            rt_ovoid.append(prev_pt)
-            continue
-        prev_x_mm = prev_info['pt'][0] * prev_info['ps_x']
-        prev_y_mm = prev_info['pt'][1] * prev_info['ps_y']
-        x_mm = center_pts_dict[z][-1][0] * ps_x
-        y_mm = center_pts_dict[z][-1][1] * ps_y
-        if math.sqrt( (x_mm-prev_x_mm)**2 + (y_mm-prev_y_mm)**2) < allowed_distance_mm:
-            prev_pt = ( center_pts_dict[z][-1][0], center_pts_dict[z][-1][1], float(z))
-            prev_info['pt'] = prev_pt
-            prev_info['ps_x'] = ps_x
-            prev_info['ps_y'] = ps_y
-            rt_ovoid.append(prev_pt)
-            print('rt_ovoid = {}'.format(rt_ovoid))
-        else:
-            #distance_mm = math.sqrt((x_mm - prev_x_mm) ** 2 + (y_mm - prev_y_mm) ** 2)
-            #print('distnace_mm = {}, '.format(distance_mm))
-
-            break
-
-    # Step 4. Figure Tandem bottom-half (thicker pipe part of tandem)
-    tandem = []
-    allowed_distance_mm = 4.5 # allowed distance when trace from bottom to tips
-    prev_info = {}
-    prev_info['pt'] = None
-    prev_info['ps_x'] = None
-    prev_info['ps_y'] = None
-    for idx_z, z in enumerate(sorted(center_pts_dict.keys())):
-        ps_x = dicom_dict['z'][z]['ps_x']
-        ps_y = dicom_dict['z'][z]['ps_y']
-        if idx_z == 0:
-            # It is possible that thicker pipe part of tandem is not scanned in CT file, so that only can detect two pipe in this case.
-            # So that when center_pts_dict < 3 in following case after using algo03
-            if (len(center_pts_dict[z]) < 3)  :
-                break
-            prev_pt = ( center_pts_dict[z][1][0], center_pts_dict[z][1][1], float(z))
-            prev_info['pt'] = prev_pt
-            prev_info['ps_x'] = ps_x
-            prev_info['ps_y'] = ps_y
-            tandem.append(prev_pt)
-            continue
-        prev_x_mm = prev_info['pt'][0] * prev_info['ps_x']
-        prev_y_mm = prev_info['pt'][1] * prev_info['ps_y']
-        x_mm = center_pts_dict[z][1][0] * ps_x
-        y_mm = center_pts_dict[z][1][1] * ps_y
-        #print('x_mm = {}, y_mm ={}'.format(x_mm, y_mm))
-        if math.sqrt( (x_mm-prev_x_mm)**2 + (y_mm-prev_y_mm)**2) < allowed_distance_mm:
-            prev_pt = ( center_pts_dict[z][1][0], center_pts_dict[z][1][1], float(z))
-            prev_info['pt'] = prev_pt
-            prev_info['ps_x'] = ps_x
-            prev_info['ps_y'] = ps_y
-            tandem.append(prev_pt)
-            print('tandem = {}'.format(tandem))
-        else:
-            break
-    #
-    # Step 5. The case to process the tandem without thicker pipe in scanned CT. when tandem = [] (empty list)
-    if len(tandem) == 0:
-        # Step 5.1 find out inner_cotnour of tandem by algo01
-        contours = dicom_dict['z'][z]['output']['contours512']['algo01']
-        #plot_with_contours(dicom_dict, z=z, algo_key='algo03')
-        # Step 5.1.1 The process to collect the contour which is inner of some contour into inner_contours[]
-        inner_contours = []
-        for inner_idx, inner_contour in enumerate(contours):
-            is_inner = False
-            for outer_idx, outer_contour in enumerate(contours):
-                if inner_idx == outer_idx: # ignore the same to compare itself
-                    continue
-                outer_rect = get_minimum_rect_from_contours([outer_contour])
-                if is_contour_in_rect(inner_contour, outer_rect):
-                    is_inner = True
-                    break
-            if (is_inner == True) :
-                inner_contours.append(inner_contour)
-        # Step 5.1.2 figure out center point of contour in inner_contour and sorting it by the order x
-        print('z = {}, len(inner_contours) = {}'.format(z, len(inner_contours)))
-        inner_cen_pts = []
-        for contour in inner_contours:
-            #rect_info = [(x_min, x_max, y_min, y_max), (w, h), (x_mean, y_mean)]
-            rect_info = get_rect_info_from_cv_contour(contour)
-            cen_pt = ( rect_info[2][0], rect_info[2][1] )
-            inner_cen_pts.append(cen_pt)
-        inner_cen_pts.sort(key=lambda pt:pt[0])
-        print('tandem first slice evaluation inner_cen_pts = {}'.format(inner_cen_pts))
-        if(len(inner_cen_pts) != 3 ) :
-            print('inner_cen_pts is not == 3')
-            raise Exception
-        tandem.append( (inner_cen_pts[1][0], inner_cen_pts[1][1], float(z)) )
-        # Step 5.1. Find Algo01 and detect the inner_contour
-
-        print('TODO tandem for the case that without thicker pipe in scanned CT')
-
-    # Step 6. Trace tandem
-    print('Step 6. Trace tandem')
-    # Step 6.1 Figure out [upper_half_z_idx_start, upper_half_z_idx_end) for upper-part of tandem
-    z = sorted(dicom_dict['z'].keys())[0]
-    last_z = tandem[-1][2]
-    print('last_z = {}'.format(last_z))
-    z_idx = sorted(dicom_dict['z'].keys()).index(last_z)
-    upper_half_z_idx_start = z_idx + 1 # upper_half_z_idx_start is the next z of last_z in current tandem data.
-    upper_half_z_idx_end = len(dicom_dict['z'].keys())
-    print('upper_half_z_idx [start,end) = [{},{})'.format(upper_half_z_idx_start, upper_half_z_idx_end))
-
-    # Step 6.2 Setup first prev_info for loop to run and also set allowed_distnace to indicate the largest moving distance between two slice.
-    # allowed_distance_mm = 8.5 # allowed distance when trace from bottom to tips of Tandem [ 8.5 mm is not ok for 35252020-2 ]
-    #allowed_distance_mm = 10.95  # allowed distance when trace from bottom to tips of Tandem
-    allowed_distance_mm = 10.95  # allowed distance when trace from bottom to tips of Tandem
-
-    prev_info = {}
-    prev_info['pt'] = tandem[-1]
-    prev_info['ps_x'] = dicom_dict['z'][last_z]['ps_x']
-    prev_info['ps_y'] = dicom_dict['z'][last_z]['ps_y']
-    # The case for 29059811-2 folder , will have the following value
-    # last_z == -92.0
-    # prev_info == {'pt': (240, 226, -92.0), 'ps_x': "3.90625e-1", 'ps_y': "3.90625e-1"}
-
-    # Step 6.3. Start to trace tandem
-    for z_idx in range(upper_half_z_idx_start, upper_half_z_idx_end):
-        z = sorted(dicom_dict['z'].keys())[z_idx]
-        ps_x = dicom_dict['z'][z]['ps_x']
-        ps_y = dicom_dict['z'][z]['ps_y']
-
-        #print('z = {}'.format(z))
-        # Step 6.3.1. Make contours variable as collecting of all contour in z-slice
-        contours = []
-        for algo_key in dicom_dict['z'][z]['output']['contours512'].keys():
-            contours = contours + dicom_dict['z'][z]['output']['contours512'][algo_key]
-        # Step 6.3.2. Convert to center pt that the idx is the same as to contours
-        cen_pts = []
-        for c_idx, c in enumerate(contours):
-            rect_info = get_rect_info_from_cv_contour(c)
-            # [(x_min, x_max, y_min, y_max), (w, h), (x_mean, y_mean)]
-            cen_pt = (rect_info[2][0], rect_info[2][0])
-            cen_pts.append(cen_pt)
-        # Step 6.3.3
-        # prev_info is like {'pt': (240, 226, -92.0), 'ps_x': "3.90625e-1", 'ps_y': "3.90625e-1"}
-        # pt in cen_pts is like (240, 226)
-        minimum_distance_mm = allowed_distance_mm + 1  # If minimum_distance_mm is finally large than allowed_distance_mm, it's mean there is no pt closed to prev_pt
-        minimum_pt = (0, 0)
-        for pt in cen_pts:
-            prev_x_mm = prev_info['pt'][0] * prev_info['ps_x']
-            prev_y_mm = prev_info['pt'][1] * prev_info['ps_y']
-            x_mm = pt[0] * ps_x
-            y_mm = pt[1] * ps_y
-            distance_mm = math.sqrt( (x_mm-prev_x_mm)**2 + (y_mm-prev_y_mm)**2 )
-            if (distance_mm > allowed_distance_mm ) : # distance_mm cannot large than allowed_distance_mm
-                continue
-            if (distance_mm < minimum_distance_mm):
-                minimum_distance_mm = distance_mm
-                minimum_pt = pt
-
-        if (minimum_distance_mm > allowed_distance_mm):
-            # This is case to say ending for the upper looper
-            break
-        else:
-            tandem.append( (minimum_pt[0], minimum_pt[1],float(z)) )
-            prev_info['pt'] = minimum_pt
-            prev_info['ps_x'] = ps_x
-            prev_info['ps_y'] = ps_y
-            print('tandem = {}'.format(tandem))
-    return (lt_ovoid, tandem, rt_ovoid)
 
 
 if __name__ == '__main__':
@@ -907,7 +942,8 @@ if __name__ == '__main__':
     for z_idx, z in enumerate(sorted(dicom_dict['z'].keys())):
         #plot_with_contours(dicom_dict, z=sorted(dicom_dict['z'].keys())[z_idx], algo_key='algo01')
         continue
-    (lt_ovoid, tandem, rt_ovoid) = algo(dicom_dict)
+
+    (lt_ovoid, tandem, rt_ovoid) = algo_to_get_pixel_lines(dicom_dict)
 
     # TODO:
     # refer main_code.py : def convert_lines_in_metrics
