@@ -544,15 +544,14 @@ def plot_with_contours(dicom_dict, z, algo_key):
     print(ct_obj.keys())
     pixel_array = ct_obj['rescale_pixel_array']
     metadata = dicom_dict['metadata']
-
     contours = ct_obj['output']['contours512'][algo_key]
     img = copy.deepcopy(pixel_array)
     for contour in contours:
         cv2.drawContours(img, contour, -1, (0, 0, 255), 1)
     #plt.imshow(pixel_array, cmap=plt.cm.bone)
+    plt.text(0, 0, 'z = {}'.format(z), fontsize=12)
     plt.imshow(img, cmap=plt.cm.bone)
     plt.show()
-    plt.use('agg')
     pass
 
 # FUNCTIONS - file dump function , so that you can accelerate develop speed
@@ -601,6 +600,9 @@ def example_dump_single_and_multiple_bytesfile():
 
 
 if __name__ == '__main__':
+    #example_dump_single_and_multiple_bytesfile()
+    #exit(0)
+
     root_folder = r'RAL_plan_new_20190905'
     print(os.listdir(root_folder))
 
@@ -608,8 +610,10 @@ if __name__ == '__main__':
     print('folders = {}'.format(folders))
     folder = '35252020-2'
     bytes_filepath = os.path.join('contours_bytes', r'{}.bytes'.format(folder))
+    #plot_with_contours(dicom_dict, z=sorted(dicom_dict['z'].keys())[10], algo_key='algo03')
     dicom_dict = python_object_load(bytes_filepath)
-    plot_with_contours(dicom_dict, z=sorted(dicom_dict['z'].keys())[10], algo_key='algo03')
+    for i in range(10):
+        plot_with_contours(dicom_dict, z=sorted(dicom_dict['z'].keys())[i], algo_key='algo03')
 
 
     exit(0)
