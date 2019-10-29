@@ -256,6 +256,22 @@ def is_contour_in_rect(contour, rect=(0, 0, 0, 0)):
             isContourInRect = False
             break
     return isContourInRect
+def get_rect_info_from_cv_contour(cv_contour):
+    i = cv_contour
+    con = i.reshape(i.shape[0], i.shape[2])
+    x_min = con[:, 0].min()
+    x_max = con[:, 0].max()
+    x_mean = con[:, 0].mean()
+    y_min = con[:, 1].min()
+    y_max = con[:, 1].max()
+    y_mean = con[:, 1].mean()
+    h = y_max - y_min
+    w = x_max - x_min
+    x_mean = int(x_mean)
+    y_mean = int(y_mean)
+    rect_info = [(x_min, x_max, y_min, y_max), (w, h), (x_mean, y_mean)]
+    return rect_info
+
 
 # FUNCTIONS - DICOM data processing Functions
 def get_dicom_folder_pathinfo(folder):
@@ -549,7 +565,9 @@ def plot_with_contours(dicom_dict, z, algo_key):
     for contour in contours:
         cv2.drawContours(img, contour, -1, (0, 0, 255), 1)
     #plt.imshow(pixel_array, cmap=plt.cm.bone)
-    plt.text(0, 0, 'z = {}'.format(z), fontsize=12)
+    folder_name = os.path.basename(dicom_dict['metadata']['folder'])
+    plt.text(0, -2, 'z = {}, folder = {}'.format(z, folder_name), fontsize=10)
+
     plt.imshow(img, cmap=plt.cm.bone)
     plt.show()
     pass
@@ -612,9 +630,48 @@ if __name__ == '__main__':
     bytes_filepath = os.path.join('contours_bytes', r'{}.bytes'.format(folder))
     #plot_with_contours(dicom_dict, z=sorted(dicom_dict['z'].keys())[10], algo_key='algo03')
     dicom_dict = python_object_load(bytes_filepath)
-    for i in range(10):
-        plot_with_contours(dicom_dict, z=sorted(dicom_dict['z'].keys())[i], algo_key='algo03')
 
+    # Step 1. Use algo01 to get center point of inner contour
+    last_z_in_step1 = sorted(dicom_dict['z'].keys())[0]
+    center_pts_dict = {}
+    for z in sorted(dicom_dict['z'].keys()):
+        contours = dicom_dict['z'][z]['output']['contours512']['algo03']
+        #plot_with_contours(dicom_dict, z=z, algo_key='algo03')
+        # Step 1.1 The process to collect the contour which is inner of some contour into inner_contours[]
+        inner_contours = []
+        for inner_idx, inner_contour in enumerate(contours):
+            is_inner = False
+            for outer_idx, outer_contour in enumerate(contours):
+                if inner_idx == outer_idx: # ignore the same to compare itself
+                    continue
+                outer_rect = get_minimum_rect_from_contours([outer_contour])
+                if is_contour_in_rect(inner_contour, outer_rect):
+                    is_inner = True
+                    break
+            if (is_inner == True) :
+                inner_contours.append(inner_contour)
+        # Step 1.2 if there is no any inner contour, then last_z_in_step1 = z and exit the z loop
+        if (len(inner_contours)) == 0:
+            last_z_in_step1 = z
+            break
+
+        # Step 1.3 figure out center point of contour in inner_contour and sorting it by the order x
+        print('z = {}, len(inner_contours) = {}'.format(z, len(inner_contours)))
+        inner_cen_pts = []
+        for contour in inner_contours:
+            #rect_info = [(x_min, x_max, y_min, y_max), (w, h), (x_mean, y_mean)]
+            rect_info = get_rect_info_from_cv_contour(contour)
+            cen_pt = ( rect_info[2][0], rect_info[2][1] )
+            inner_cen_pts.append(cen_pt)
+        inner_cen_pts.sort(key=lambda pt:pt[0])
+        print('z = {}, inner_cen_pts = {}'.format(z, inner_cen_pts) )
+        center_pts_dict[z] = inner_cen_pts
+
+
+
+
+    #for i in range(40):
+    #    plot_with_contours(dicom_dict, z=sorted(dicom_dict['z'].keys())[i], algo_key='algo03')
 
     exit(0)
 
