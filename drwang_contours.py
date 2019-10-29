@@ -566,7 +566,7 @@ def plot_with_contours(dicom_dict, z, algo_key):
         cv2.drawContours(img, contour, -1, (0, 0, 255), 1)
     #plt.imshow(pixel_array, cmap=plt.cm.bone)
     folder_name = os.path.basename(dicom_dict['metadata']['folder'])
-    plt.text(0, -2, 'z = {}, folder = {}'.format(z, folder_name), fontsize=10)
+    plt.text(0, -2, 'z = {}, folder = {}, algo={}'.format(z, folder_name,algo_key), fontsize=10)
 
     plt.imshow(img, cmap=plt.cm.bone)
     plt.show()
@@ -764,23 +764,56 @@ if __name__ == '__main__':
     #
     # Step 5. The case to process the tandem without thicker pipe in scanned CT. when tandem = [] (empty list)
     if len(tandem) == 0:
-        # TODO
+        # Step 5.1 find out inner_cotnour of tandem by algo01
+        contours = dicom_dict['z'][z]['output']['contours512']['algo01']
+        #plot_with_contours(dicom_dict, z=z, algo_key='algo03')
+        # Step 5.1.1 The process to collect the contour which is inner of some contour into inner_contours[]
+        inner_contours = []
+        for inner_idx, inner_contour in enumerate(contours):
+            is_inner = False
+            for outer_idx, outer_contour in enumerate(contours):
+                if inner_idx == outer_idx: # ignore the same to compare itself
+                    continue
+                outer_rect = get_minimum_rect_from_contours([outer_contour])
+                if is_contour_in_rect(inner_contour, outer_rect):
+                    is_inner = True
+                    break
+            if (is_inner == True) :
+                inner_contours.append(inner_contour)
+        # Step 5.1.2 figure out center point of contour in inner_contour and sorting it by the order x
+        print('z = {}, len(inner_contours) = {}'.format(z, len(inner_contours)))
+        inner_cen_pts = []
+        for contour in inner_contours:
+            #rect_info = [(x_min, x_max, y_min, y_max), (w, h), (x_mean, y_mean)]
+            rect_info = get_rect_info_from_cv_contour(contour)
+            cen_pt = ( rect_info[2][0], rect_info[2][1] )
+            inner_cen_pts.append(cen_pt)
+        inner_cen_pts.sort(key=lambda pt:pt[0])
+        print('tandem first slice evaluation inner_cen_pts = {}'.format(inner_cen_pts))
+        if(len(inner_cen_pts) != 3 ) :
+            print('inner_cen_pts is not == 3')
+            raise Exception
+        tandem.append( (inner_cen_pts[1][0], inner_cen_pts[1][1], float(z)) )
+
+
+
+
+
+
+
+        # Step 5.1. Find Algo01 and detect the inner_contour
+
         print('TODO tandem for the case that without thicker pipe in scanned CT')
-        exit(0)
 
     # Step 6. Trace tandem
+    z = sorted(dicom_dict['z'].keys())[0]
+    algo_keys = ['algo01', 'algo02', 'algo03', 'algo04']
+    last_z = tandem[-1][2]
+    z_idx = sorted(dicom_dict['z'].keys()).index(last_z)
+    next_z = sorted(dicom_dict['z'].keys())[z_idx+1]
+    print('last_z = {}, next_z = {}'.format(last_z, next_z) )
 
 
-
-
-
-
-
-
-
-
-    #for i in range(40):
-    #    plot_with_contours(dicom_dict, z=sorted(dicom_dict['z'].keys())[i], algo_key='algo03')
 
     exit(0)
 
