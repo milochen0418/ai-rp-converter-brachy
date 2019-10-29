@@ -655,7 +655,7 @@ if __name__ == '__main__':
     dicom_dict = python_object_load(bytes_filepath)
 
     for z_idx, z in enumerate(sorted(dicom_dict['z'].keys())):
-        #plot_with_contours(dicom_dict, z=sorted(dicom_dict['z'].keys())[z_idx], algo_key='algo03')
+        plot_with_contours(dicom_dict, z=sorted(dicom_dict['z'].keys())[z_idx], algo_key='algo01')
         continue
 
     #exit(0)
