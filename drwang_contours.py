@@ -6,6 +6,8 @@ import cv2
 import copy
 import math
 from sys import exit
+import datetime
+
 
 import openpyxl
 import csv, codecs
@@ -553,45 +555,78 @@ def plot_with_contours(dicom_dict, z, algo_key):
     plt.use('agg')
     pass
 
-def contours_python_object_dump(obj, filename):
+# FUNCTIONS - file dump function , so that you can accelerate develop speed
+def contours_python_object_dump(root_folder, filename):
     # Step 1. declare all_dicom_dict
     all_dicom_dict = {}
     # Step 2. Generate all our target
-    root_folder = r'RAL_plan_new_20190905'
+    #root_folder = r'RAL_plan_new_20190905'
     f_list = [ os.path.join(root_folder, file) for file in os.listdir(root_folder) ]
-
     for folder in sorted(f_list):
         dicom_dict = get_dicom_dict(folder)
         generate_metadata_to_dicom_dict(dicom_dict)
         generate_output_to_dicom_dict(dicom_dict)
         all_dicom_dict[folder] = dicom_dict
-
-    for folder in f_list:
-        print(os.path.basename(folder))
-        algo_keys = ['algo01', 'algo02', 'algo03', 'algo04']
-        for algo_key in algo_keys:
-            #csv_filepath = r'more_infos/{}-{}.csv'.format(os.path.basename(folder), algo_key)
-            #generate_patient_mean_area_csv_report(folder, algo_key=algo_key, csv_filepath=csv_filepath)
-            dicom_dict = get_dicom_dict(folder)
-            generate_metadata_to_dicom_dict(dicom_dict)
-            generate_output_to_dicom_dict(dicom_dict)
-
-
-
-            continue
-
+        byte_filename = r'{}.bytes'.format(os.path.basename(folder))
+        dump_filepath = os.path.join('contours_bytes', byte_filename)
+        python_object_dump(dicom_dict, dump_filepath)
+        print('Create {}'.format(dump_filepath))
     # Step 3. Use python_object_dump to dump it into some file
-
-    pass
+    print('Creating {} in very largest size'.format(filename))
+    python_object_dump(all_dicom_dict, filename)
+    print('Created {}'.format(filename))
 def contours_python_object_load(filename):
     # load the file to load all contours algo's result
-    obj = {}
+    obj = python_object_load(filename)
     return obj
+def example_load_multiple_bytefile(): # example code of how to use contours_python_object_load _dump
+    root_folder = r'RAL_plan_new_20190905'
+    folders = os.listdir(root_folder)
+    print('folders = {}'.format(folders))
+    all_dicom_dict = {}
+    for folder in folders:
+        print('time={}: {}'.format(datetime.datetime.now(),'load start'))
+        bytes_filepath = os.path.join('contours_bytes', r'{}.bytes'.format(folder))
+        all_dicom_dict[folder] = python_object_load(bytes_filepath)
+        print('time={}: {}'.format(datetime.datetime.now(),'load end'))
+    return all_dicom_dict
+def example_load_single_bytefile(): # example code of how to use contours_python_object_load _dump
+    print('time={}: {}'.format(datetime.datetime.now(), 'Loading the file all_dicom_dict.bytes into all_dicom_dict object'))
+    all_dicom_dict = contours_python_object_load('all_dicom_dict.bytes')
+    print('time={}: {}'.format(datetime.datetime.now(),'Load done'))
+    return all_dicom_dict
+def example_dump_single_and_multiple_bytesfile():
+    root_folder = r'RAL_plan_new_20190905'
+    contours_python_object_dump(root_folder, 'all_dicom_dict.bytes')
 
 
 if __name__ == '__main__':
     root_folder = r'RAL_plan_new_20190905'
-    f_list = [ os.path.join(root_folder, file) for file in os.listdir(root_folder) ]
+    print(os.listdir(root_folder))
+
+    folders = os.listdir(root_folder)
+    print('folders = {}'.format(folders))
+    #contours_python_object_dump(root_folder, 'all_dicom_dict.bytes')
+    all_dicom_dict = {}
+    for folder in folders:
+        print('time={}: {}'.format(datetime.datetime.now(),'load start'))
+        bytes_filepath = os.path.join('contours_bytes', r'{}.bytes'.format(folder))
+        all_dicom_dict[folder] = python_object_load(bytes_filepath)
+        print('time={}: {}'.format(datetime.datetime.now(),'load end'))
+    exit(0)
+
+    print('time={}: {}'.format(datetime.datetime.now(), 'Loading the file all_dicom_dict.bytes into all_dicom_dict object'))
+    #all_dicom_dict = contours_python_object_load('all_dicom_dict.bytes')
+
+    print('time={}: {}'.format(datetime.datetime.now(),'Load done'))
+
+    for folder in all_dicom_dict.keys():
+        #print('folder = {}'.format(folder.split('\\')[1]))
+        print(os.path.basename(folder))
+        continue
+
+    exit(0)
+    f_list = [os.path.join(root_folder, file) for file in os.listdir(root_folder)]
 
     #folder = r'RAL_plan_new_20190905/35252020-2'
     #folder = r'24460566'
@@ -601,19 +636,19 @@ if __name__ == '__main__':
     dicom_dict = get_dicom_dict(folder)
     generate_metadata_to_dicom_dict(dicom_dict)
     generate_output_to_dicom_dict(dicom_dict)
-
     plot_with_contours(dicom_dict, z=sorted(dicom_dict['z'].keys())[10], algo_key='algo03')
+
     exit(0)
 
 
 
     folder = f_list[0]
-    #print_info_by_folder(folder)
+    # print_info_by_folder(folder)
     dicom_dict = get_dicom_dict(folder)
     generate_metadata_to_dicom_dict(dicom_dict)
     # Now it is support metadata. You can see it at  dicom_dict['metadata']
     # And you can generate its output
-    #print(dicom_dict['metadata'])
+    # print(dicom_dict['metadata'])
     generate_output_to_dicom_dict(dicom_dict)
 
     # It's start to travel each output of ct_obj in dicom_dict
@@ -629,4 +664,6 @@ if __name__ == '__main__':
             #print(len(contours))
     #generate_contour_number_csv_report(f_list, csv_filepath = 'contours.csv')
     #print('write done for contours.csv')
+
+
 
