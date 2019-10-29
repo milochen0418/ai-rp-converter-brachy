@@ -645,7 +645,8 @@ if __name__ == '__main__':
 
     folders = os.listdir(root_folder)
     print('folders = {}'.format(folders))
-    folder = '35252020-2'
+    folder = '24460566-ctdate20191015'
+    #folder = '35252020-2'
     #folder = '29059811-2'
 
     bytes_filepath = os.path.join('contours_bytes', r'{}.bytes'.format(folder))
@@ -654,14 +655,14 @@ if __name__ == '__main__':
     dicom_dict = python_object_load(bytes_filepath)
 
     for z_idx, z in enumerate(sorted(dicom_dict['z'].keys())):
-        #plot_with_contours(dicom_dict, z=sorted(dicom_dict['z'].keys())[z_idx], algo_key='algo01')
+        #plot_with_contours(dicom_dict, z=sorted(dicom_dict['z'].keys())[z_idx], algo_key='algo03')
         continue
 
     #exit(0)
 
     # Step 1. Use algo01 to get center point of inner contour
     last_z_in_step1 = sorted(dicom_dict['z'].keys())[0]
-    center_pts_dict = {} # The following loop will use Alto03 to figure L't Ovoid, R't Ovoid and half tandem
+    center_pts_dict = {} # The following loop will use Algo03 to figure L't Ovoid, R't Ovoid and half tandem
     for z in sorted(dicom_dict['z'].keys()):
         contours = dicom_dict['z'][z]['output']['contours512']['algo03']
         #plot_with_contours(dicom_dict, z=z, algo_key='algo03')
@@ -842,11 +843,10 @@ if __name__ == '__main__':
     upper_half_z_idx_end = len(dicom_dict['z'].keys())
     print('upper_half_z_idx [start,end) = [{},{})'.format(upper_half_z_idx_start, upper_half_z_idx_end))
 
-
     # Step 6.2 Setup first prev_info for loop to run and also set allowed_distnace to indicate the largest moving distance between two slice.
     # allowed_distance_mm = 8.5 # allowed distance when trace from bottom to tips of Tandem [ 8.5 mm is not ok for 35252020-2 ]
+    #allowed_distance_mm = 10.95  # allowed distance when trace from bottom to tips of Tandem
     allowed_distance_mm = 10.95  # allowed distance when trace from bottom to tips of Tandem
-
 
     prev_info = {}
     prev_info['pt'] = tandem[-1]
