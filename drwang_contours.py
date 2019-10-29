@@ -9,10 +9,25 @@ from sys import exit
 
 import openpyxl
 import csv, codecs
-
 from decimal import Decimal
 import random
-
+import pickle
+def python_object_dump(obj, filename):
+    file_w = open(filename, "wb")
+    pickle.dump(obj, file_w)
+    file_w.close()
+def python_object_load(filename):
+    try:
+        file_r = open(filename, "rb")
+        obj2 = pickle.load(file_r)
+        file_r.close()
+    except:
+        try:
+            file_r.close()
+            return None
+        except:
+            return None
+    return obj2
 
 # FUNCTIONS - Algorithm processing Fucntions
 def distance(pt1, pt2):
@@ -240,8 +255,6 @@ def is_contour_in_rect(contour, rect=(0, 0, 0, 0)):
             break
     return isContourInRect
 
-
-
 # FUNCTIONS - DICOM data processing Functions
 def get_dicom_folder_pathinfo(folder):
     dicom_folder = {}
@@ -327,7 +340,6 @@ def generate_output_to_dicom_dict(dicom_dict):
         #print('z={}, {}'.format(z, ct_obj.keys()))
         generate_output_to_ct_obj(ct_obj)
         # information is in ct_obj['output']
-
 def generate_output_to_ct_obj(ct_obj):
     out = ct_obj['output']
     rescale_pixel_array = ct_obj['rescale_pixel_array']
@@ -541,6 +553,40 @@ def plot_with_contours(dicom_dict, z, algo_key):
     plt.use('agg')
     pass
 
+def contours_python_object_dump(obj, filename):
+    # Step 1. declare all_dicom_dict
+    all_dicom_dict = {}
+    # Step 2. Generate all our target
+    root_folder = r'RAL_plan_new_20190905'
+    f_list = [ os.path.join(root_folder, file) for file in os.listdir(root_folder) ]
+
+    for folder in sorted(f_list):
+        dicom_dict = get_dicom_dict(folder)
+        generate_metadata_to_dicom_dict(dicom_dict)
+        generate_output_to_dicom_dict(dicom_dict)
+        all_dicom_dict[folder] = dicom_dict
+
+    for folder in f_list:
+        print(os.path.basename(folder))
+        algo_keys = ['algo01', 'algo02', 'algo03', 'algo04']
+        for algo_key in algo_keys:
+            #csv_filepath = r'more_infos/{}-{}.csv'.format(os.path.basename(folder), algo_key)
+            #generate_patient_mean_area_csv_report(folder, algo_key=algo_key, csv_filepath=csv_filepath)
+            dicom_dict = get_dicom_dict(folder)
+            generate_metadata_to_dicom_dict(dicom_dict)
+            generate_output_to_dicom_dict(dicom_dict)
+
+
+
+            continue
+
+    # Step 3. Use python_object_dump to dump it into some file
+
+    pass
+def contours_python_object_load(filename):
+    # load the file to load all contours algo's result
+    obj = {}
+    return obj
 
 
 if __name__ == '__main__':
