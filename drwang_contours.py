@@ -193,7 +193,6 @@ def get_contour_xy_mean(cv_contour):
 def get_contour_area_mm2(contour,ps_x, ps_y) :
     area_mm2  = cv2.contourArea(contour) * ps_x * ps_y
     return area_mm2
-
 def get_minimum_rect_from_contours(contours, padding=2):
     rect = (x_min, x_max, y_min, y_max) = (0, 0, 0, 0)
     is_first = True
@@ -240,9 +239,6 @@ def is_contour_in_rect(contour, rect=(0, 0, 0, 0)):
             isContourInRect = False
             break
     return isContourInRect
-
-
-
 
 
 
@@ -321,7 +317,6 @@ def print_info_by_folder(folder):
     for z_idx, z in enumerate(sorted(z_map.keys())):
         ct_obj = z_map[z]
         print('z={}, {}'.format(z, ct_obj.keys()))
-
 
 # FUNCTIONS - generate our expected output for each ct_obj in dicom_dict['z'].   (PS:z_map)
 def generate_output_to_dicom_dict(dicom_dict):
@@ -520,31 +515,23 @@ def generate_patient_mean_area_csv_report(folder, algo_key='algo01', csv_filepat
 
     print('Time to lookup sheet variable')
 
-
-
-def plot_with_contours(dicom_dict, z, algo_keys):
+def plot_with_contours(dicom_dict, z, algo_key):
     import matplotlib.pyplot as plt
-    import pydicom
     z_map = dicom_dict['z']
-    #z = sorted(z_map.keys())[0]
-    z = sorted(z_map.keys())[10]
-
     ct_obj = z_map[z]
     print(ct_obj.keys())
     pixel_array = ct_obj['rescale_pixel_array']
     metadata = dicom_dict['metadata']
-    #(view_min_y, view_max_y, view_min_x, view_max_x) = metadata['view_scope']
-    contours = ct_obj['output']['contours512']['algo03']
+
+    contours = ct_obj['output']['contours512'][algo_key]
     img = copy.deepcopy(pixel_array)
     for contour in contours:
         cv2.drawContours(img, contour, -1, (0, 0, 255), 1)
-
     #plt.imshow(pixel_array, cmap=plt.cm.bone)
     plt.imshow(img, cmap=plt.cm.bone)
     plt.show()
     plt.use('agg')
     pass
-
 
 if __name__ == '__main__':
     root_folder = r'RAL_plan_new_20190905'
@@ -559,9 +546,9 @@ if __name__ == '__main__':
     generate_metadata_to_dicom_dict(dicom_dict)
     generate_output_to_dicom_dict(dicom_dict)
 
-    plot_with_contours(dicom_dict, z=-84, algo_keys = algo_keys )
-
+    plot_with_contours(dicom_dict, z=sorted(dicom_dict['z'].keys())[10], algo_key='algo03')
     exit(0)
+
 
 
     folder = f_list[0]
