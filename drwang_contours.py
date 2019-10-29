@@ -662,7 +662,7 @@ if __name__ == '__main__':
 
     # Step 1. Use algo01 to get center point of inner contour
     last_z_in_step1 = sorted(dicom_dict['z'].keys())[0]
-    center_pts_dict = {} # The following loop will use Algo03 to figure L't Ovoid, R't Ovoid and half tandem
+    center_pts_dict = {} # The following loop will use algo03 to figure L't Ovoid, R't Ovoid and half tandem
     for z in sorted(dicom_dict['z'].keys()):
         contours = dicom_dict['z'][z]['output']['contours512']['algo03']
         #plot_with_contours(dicom_dict, z=z, algo_key='algo03')
@@ -700,7 +700,7 @@ if __name__ == '__main__':
     # Step 2. Figure L't Ovoid
     print('STEP 2.')
     lt_ovoid = []
-    allowed_distance_mm = 4.5 # allowed distance when trace from bottom to tips of L't Ovoid
+    allowed_distance_mm = 2.5 # allowed distance when trace from bottom to tips of L't Ovoid
     prev_info = {}
     prev_info['pt'] = None
     prev_info['ps_x'] = None
@@ -722,14 +722,18 @@ if __name__ == '__main__':
         y_mm = center_pts_dict[z][0][1] * ps_y
         if math.sqrt( (x_mm-prev_x_mm)**2 + (y_mm-prev_y_mm)**2) < allowed_distance_mm:
             prev_pt = ( center_pts_dict[z][0][0], center_pts_dict[z][0][1], float(z))
+            prev_info['pt'] = prev_pt
+            prev_info['ps_x'] = ps_x
+            prev_info['ps_y'] = ps_y
             lt_ovoid.append(prev_pt)
             print('lt_ovoid = {}'.format(lt_ovoid))
+
         else:
             break
 
     # Step 3. Figure R't Ovoid
     rt_ovoid = []
-    allowed_distance_mm = 4.5 # allowed distance when trace from bottom to tips of R't Ovoid
+    allowed_distance_mm = 2.5 # allowed distance when trace from bottom to tips of R't Ovoid
     prev_info = {}
     prev_info['pt'] = None
     prev_info['ps_x'] = None
@@ -751,9 +755,15 @@ if __name__ == '__main__':
         y_mm = center_pts_dict[z][-1][1] * ps_y
         if math.sqrt( (x_mm-prev_x_mm)**2 + (y_mm-prev_y_mm)**2) < allowed_distance_mm:
             prev_pt = ( center_pts_dict[z][-1][0], center_pts_dict[z][-1][1], float(z))
+            prev_info['pt'] = prev_pt
+            prev_info['ps_x'] = ps_x
+            prev_info['ps_y'] = ps_y
             rt_ovoid.append(prev_pt)
             print('rt_ovoid = {}'.format(rt_ovoid))
         else:
+            #distance_mm = math.sqrt((x_mm - prev_x_mm) ** 2 + (y_mm - prev_y_mm) ** 2)
+            #print('distnace_mm = {}, '.format(distance_mm))
+
             break
 
     # Step 4. Figure Tandem bottom-half (thicker pipe part of tandem)
