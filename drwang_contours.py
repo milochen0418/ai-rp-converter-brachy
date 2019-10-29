@@ -440,7 +440,6 @@ def generate_contour_number_csv_report(f_list, csv_filepath = 'contours.csv'):
         #csv_writter.writerow(out_dict['header'])
         for rowlist in csv_data:
             csv_writter.writerow(rowlist)
-
 def generate_patient_mean_area_csv_report(folder, algo_key='algo01', csv_filepath = '29059811-1-algo01.csv'):
     output_csv_filepath = csv_filepath
     dicom_dict = get_dicom_dict(folder)
@@ -514,7 +513,16 @@ def generate_patient_mean_area_csv_report(folder, algo_key='algo01', csv_filepat
             csv_writter.writerow(rowlist)
 
     print('Time to lookup sheet variable')
-
+def generate_all_patient_mean_area_csv_report(root_folder): # generate for each patient's data and put in more-infos folder
+    root_folder = r'RAL_plan_new_20190905'
+    f_list = [ os.path.join(root_folder, file) for file in os.listdir(root_folder) ]
+    for folder in f_list:
+        print(os.path.basename(folder))
+        algo_keys = ['algo01', 'algo02', 'algo03', 'algo04']
+        for algo_key in algo_keys:
+            csv_filepath = r'more_infos/{}-{}.csv'.format(os.path.basename(folder), algo_key)
+            generate_patient_mean_area_csv_report(folder, algo_key=algo_key, csv_filepath=csv_filepath)
+    pass
 def plot_with_contours(dicom_dict, z, algo_key):
     import matplotlib.pyplot as plt
     z_map = dicom_dict['z']
@@ -532,6 +540,8 @@ def plot_with_contours(dicom_dict, z, algo_key):
     plt.show()
     plt.use('agg')
     pass
+
+
 
 if __name__ == '__main__':
     root_folder = r'RAL_plan_new_20190905'
@@ -574,9 +584,3 @@ if __name__ == '__main__':
     #generate_contour_number_csv_report(f_list, csv_filepath = 'contours.csv')
     #print('write done for contours.csv')
 
-    for folder in f_list:
-        print(os.path.basename(folder))
-        algo_keys = ['algo01', 'algo02', 'algo03', 'algo04']
-        for algo_key in algo_keys:
-            csv_filepath = r'more_infos/{}-{}.csv'.format(os.path.basename(folder), algo_key)
-            generate_patient_mean_area_csv_report(folder, algo_key=algo_key, csv_filepath=csv_filepath)
