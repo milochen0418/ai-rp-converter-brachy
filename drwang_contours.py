@@ -272,6 +272,25 @@ def get_rect_info_from_cv_contour(cv_contour):
     rect_info = [(x_min, x_max, y_min, y_max), (w, h), (x_mean, y_mean)]
     return rect_info
 
+def get_most_closed_pt(src_pt, pts, allowed_distance=100):
+    if pts == None:
+        return None
+    if pts == []:
+        return None
+    dst_pt = None
+    for pt in pts:
+        if distance(src_pt, pt) > allowed_distance:
+            # the point , whoes distance with src_pt < allowed_distance, cannot join this loop
+            continue
+
+        if dst_pt == None:
+            dst_pt = pt
+        else:
+            if distance(src_pt, pt) < distance(src_pt, dst_pt):
+                dst_pt = pt
+        pass
+    return dst_pt
+
 
 # FUNCTIONS - DICOM data processing Functions
 def get_dicom_folder_pathinfo(folder):
@@ -828,12 +847,49 @@ if __name__ == '__main__':
     # Step 6.3. Start to trace tandem
     for z_idx in range(upper_half_z_idx_start, upper_half_z_idx_end):
         z = sorted(dicom_dict['z'].keys())[z_idx]
+        ps_x = dicom_dict['z'][z]['ps_x']
+        ps_y = dicom_dict['z'][z]['ps_y']
+
         print('z = {}'.format(z))
         # Step 6.3.1. Make contours variable as collecting of all contour in z-slice
         contours = []
         for algo_key in dicom_dict['z'][z]['output']['contours512'].keys():
             contours = contours + dicom_dict['z'][z]['output']['contours512'][algo_key]
+        # Step 6.3.2. Convert to center pt that the idx is the same as to contours
+        cen_pts = []
+        for c_idx, c in enumerate(contours):
+            rect_info = get_rect_info_from_cv_contour(c)
+            # [(x_min, x_max, y_min, y_max), (w, h), (x_mean, y_mean)]
+            cen_pt = (rect_info[2][0], rect_info[2][0])
+            cen_pts.append(cen_pt)
+        # Step 6.3.3
+        # prev_info is like {'pt': (240, 226, -92.0), 'ps_x': "3.90625e-1", 'ps_y': "3.90625e-1"}
+        # pt in cen_pts is like (240, 226)
+        most_closed_pt = None
+        minimum_distance_mm = allowed_distance_mm + 1  # If minimum_distance_mm is finally large than allowed_distance_mm, it's mean there is no pt closed to prev_pt
+        minimum_pt = (0, 0)
+        for pt in cen_pts:
+            allowed_distance_mm
+            prev_x_mm = prev_info['pt'][0] * prev_info['ps_x']
+            prev_y_mm = prev_info['pt'][1] * prev_info['ps_y']
+            x_mm = pt[0] * ps_x
+            y_mm = pt[1] * ps_y
+            distance_mm = math.sqrt( (x_mm-prev_x_mm)**2 + (y_mm-prev_y_mm)**2 )
+            if (distance_mm > allowed_distance_mm ) : # distance_mm cannot large than allowed_distance_mm
+                continue
+            if (distance_mm < minimum_distance_mm):
+                minimum_distance_mm = distance_mm
+                minimum_pt = pt
 
+        if (minimum_distance_mm > allowed_distance_mm):
+            # This is case to say ending for the upper looper
+            break
+        else:
+            tandem.append( (minimum_pt[0], minimum_pt[1],z) )
+            prev_info['pt'] = minimum_pt
+            prev_info['ps_x'] = ps_x
+            prev_info['ps_y'] = ps_y
+            print('tandem = {}'.format(tandem))
 
 
 
