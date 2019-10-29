@@ -691,7 +691,6 @@ if __name__ == '__main__':
         prev_y_mm = prev_info['pt'][1] * prev_info['ps_y']
         x_mm = center_pts_dict[z][0][0] * ps_x
         y_mm = center_pts_dict[z][0][1] * ps_y
-        print('x_mm = {}, y_mm ={}'.format(x_mm, y_mm))
         if math.sqrt( (x_mm-prev_x_mm)**2 + (y_mm-prev_y_mm)**2) < allowed_distance_mm:
             prev_pt = ( center_pts_dict[z][0][0], center_pts_dict[z][0][1], float(z))
             lt_ovoid.append(prev_pt)
@@ -721,13 +720,54 @@ if __name__ == '__main__':
         prev_y_mm = prev_info['pt'][1] * prev_info['ps_y']
         x_mm = center_pts_dict[z][-1][0] * ps_x
         y_mm = center_pts_dict[z][-1][1] * ps_y
-        print('x_mm = {}, y_mm ={}'.format(x_mm, y_mm))
         if math.sqrt( (x_mm-prev_x_mm)**2 + (y_mm-prev_y_mm)**2) < allowed_distance_mm:
             prev_pt = ( center_pts_dict[z][-1][0], center_pts_dict[z][-1][1], float(z))
             rt_ovoid.append(prev_pt)
             print('rt_ovoid = {}'.format(rt_ovoid))
         else:
             break
+
+    # Step 4. Figure Tandem bottom-half (thicker pipe part of tandem)
+    tandem = []
+    allowed_distance_mm = 4.5 # allowed distance when trace from bottom to tips
+    prev_info = {}
+    prev_info['pt'] = None
+    prev_info['ps_x'] = None
+    prev_info['ps_y'] = None
+    for idx_z, z in enumerate(sorted(center_pts_dict.keys())):
+        ps_x = dicom_dict['z'][z]['ps_x']
+        ps_y = dicom_dict['z'][z]['ps_y']
+        if idx_z == 0:
+            # It is possible that thicker pipe part of tandem is not scanned in CT file, so that only can detect two pipe in this case.
+            # So that when center_pts_dict < 3 in following case after using algo03
+            if (len(center_pts_dict) < 3)  :
+                break
+            prev_pt = ( center_pts_dict[z][1][0], center_pts_dict[z][1][1], float(z))
+            prev_info['pt'] = prev_pt
+            prev_info['ps_x'] = ps_x
+            prev_info['ps_y'] = ps_y
+            tandem.append(prev_pt)
+            continue
+        prev_x_mm = prev_info['pt'][0] * prev_info['ps_x']
+        prev_y_mm = prev_info['pt'][1] * prev_info['ps_y']
+        x_mm = center_pts_dict[z][1][0] * ps_x
+        y_mm = center_pts_dict[z][1][1] * ps_y
+        #print('x_mm = {}, y_mm ={}'.format(x_mm, y_mm))
+        if math.sqrt( (x_mm-prev_x_mm)**2 + (y_mm-prev_y_mm)**2) < allowed_distance_mm:
+            prev_pt = ( center_pts_dict[z][1][0], center_pts_dict[z][1][1], float(z))
+            tandem.append(prev_pt)
+            print('tandem = {}'.format(tandem))
+        else:
+            break
+    #
+    # Step 5. The case to process the tandem without thicker pipe in scanned CT. when tandem = [] (empty list)
+    if len(tandem) == 0:
+        # TODO
+        print('TODO tandem for the case that without thicker pipe in scanned CT')
+
+    # Step 6.
+
+
 
 
 
