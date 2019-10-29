@@ -880,8 +880,6 @@ def algo(dicom_dict):
             prev_info['ps_x'] = ps_x
             prev_info['ps_y'] = ps_y
             print('tandem = {}'.format(tandem))
-
-
     return (lt_ovoid, tandem, rt_ovoid)
 
 
@@ -908,6 +906,12 @@ if __name__ == '__main__':
         continue
     (lt_ovoid, tandem, rt_ovoid) = algo(dicom_dict)
 
+    # TODO:
+    # refer main_code.py : def convert_lines_in_metrics
+    # And write the code to transfer to metric space for all point in lt_ovoid, tandem and rt_ovoid
+    # Then continue refer the source code of main_code.py def generate_brachy_rp_file to see how the code do after call convert_lines_in_metrics.
+    # Then you can wrap data quickly
+    
 
     #exit(0)
 
