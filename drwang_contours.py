@@ -606,64 +606,15 @@ if __name__ == '__main__':
 
     folders = os.listdir(root_folder)
     print('folders = {}'.format(folders))
-    #contours_python_object_dump(root_folder, 'all_dicom_dict.bytes')
-    all_dicom_dict = {}
-    for folder in folders:
-        print('time={}: {}'.format(datetime.datetime.now(),'load start'))
-        bytes_filepath = os.path.join('contours_bytes', r'{}.bytes'.format(folder))
-        all_dicom_dict[folder] = python_object_load(bytes_filepath)
-        print('time={}: {}'.format(datetime.datetime.now(),'load end'))
-    exit(0)
-
-    print('time={}: {}'.format(datetime.datetime.now(), 'Loading the file all_dicom_dict.bytes into all_dicom_dict object'))
-    #all_dicom_dict = contours_python_object_load('all_dicom_dict.bytes')
-
-    print('time={}: {}'.format(datetime.datetime.now(),'Load done'))
-
-    for folder in all_dicom_dict.keys():
-        #print('folder = {}'.format(folder.split('\\')[1]))
-        print(os.path.basename(folder))
-        continue
-
-    exit(0)
-    f_list = [os.path.join(root_folder, file) for file in os.listdir(root_folder)]
-
-    #folder = r'RAL_plan_new_20190905/35252020-2'
-    #folder = r'24460566'
-    #folder = r'RAL_plan_new_20190905/29059811-2'
-    folder = r'RAL_plan_new_20190905/35252020-2'
-    algo_keys = ['algo01', 'algo02', 'algo03', 'algo04']
-    dicom_dict = get_dicom_dict(folder)
-    generate_metadata_to_dicom_dict(dicom_dict)
-    generate_output_to_dicom_dict(dicom_dict)
+    folder = '35252020-2'
+    bytes_filepath = os.path.join('contours_bytes', r'{}.bytes'.format(folder))
+    dicom_dict = python_object_load(bytes_filepath)
     plot_with_contours(dicom_dict, z=sorted(dicom_dict['z'].keys())[10], algo_key='algo03')
 
+
     exit(0)
 
 
-
-    folder = f_list[0]
-    # print_info_by_folder(folder)
-    dicom_dict = get_dicom_dict(folder)
-    generate_metadata_to_dicom_dict(dicom_dict)
-    # Now it is support metadata. You can see it at  dicom_dict['metadata']
-    # And you can generate its output
-    # print(dicom_dict['metadata'])
-    generate_output_to_dicom_dict(dicom_dict)
-
-    # It's start to travel each output of ct_obj in dicom_dict
-    z_map = dicom_dict['z']
-    for z_idx,z in enumerate(sorted(z_map.keys())):
-        ct_obj = z_map[z]
-        contours_dict = ct_obj['output']['contours']
-        for idx, algo_key in enumerate(sorted(contours_dict.keys())):
-            contours = contours_dict[algo_key]
-            for cidx, contour in enumerate(contours):
-                area_mm2 = get_contour_area_mm2(contour, ct_obj['ps_x'], ct_obj['ps_y'])
-                print('len={}, area_mm2 = {}'.format(len(contour), area_mm2))
-            #print(len(contours))
-    #generate_contour_number_csv_report(f_list, csv_filepath = 'contours.csv')
-    #print('write done for contours.csv')
 
 
 
