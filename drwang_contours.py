@@ -771,6 +771,9 @@ def algo(dicom_dict):
         #print('x_mm = {}, y_mm ={}'.format(x_mm, y_mm))
         if math.sqrt( (x_mm-prev_x_mm)**2 + (y_mm-prev_y_mm)**2) < allowed_distance_mm:
             prev_pt = ( center_pts_dict[z][1][0], center_pts_dict[z][1][1], float(z))
+            prev_info['pt'] = prev_pt
+            prev_info['ps_x'] = ps_x
+            prev_info['ps_y'] = ps_y
             tandem.append(prev_pt)
             print('tandem = {}'.format(tandem))
         else:
@@ -911,7 +914,7 @@ if __name__ == '__main__':
     # And write the code to transfer to metric space for all point in lt_ovoid, tandem and rt_ovoid
     # Then continue refer the source code of main_code.py def generate_brachy_rp_file to see how the code do after call convert_lines_in_metrics.
     # Then you can wrap data quickly
-    
+
 
     #exit(0)
 
