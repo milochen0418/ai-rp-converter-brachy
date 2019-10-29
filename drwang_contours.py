@@ -636,30 +636,7 @@ def example_dump_single_and_multiple_bytesfile():
     contours_python_object_dump(root_folder, 'all_dicom_dict.bytes')
 
 
-if __name__ == '__main__':
-    #example_dump_single_and_multiple_bytesfile()
-    #exit(0)
-
-    root_folder = r'RAL_plan_new_20190905'
-    print(os.listdir(root_folder))
-
-    folders = os.listdir(root_folder)
-    print('folders = {}'.format(folders))
-    folder = '24460566-ctdate20191015'
-    #folder = '35252020-2'
-    #folder = '29059811-2'
-
-    bytes_filepath = os.path.join('contours_bytes', r'{}.bytes'.format(folder))
-
-    #plot_with_contours(dicom_dict, z=sorted(dicom_dict['z'].keys())[10], algo_key='algo03')
-    dicom_dict = python_object_load(bytes_filepath)
-
-    for z_idx, z in enumerate(sorted(dicom_dict['z'].keys())):
-        plot_with_contours(dicom_dict, z=sorted(dicom_dict['z'].keys())[z_idx], algo_key='algo01')
-        continue
-
-    #exit(0)
-
+def algo(dicom_dict):
     # Step 1. Use algo01 to get center point of inner contour
     last_z_in_step1 = sorted(dicom_dict['z'].keys())[0]
     center_pts_dict = {} # The following loop will use algo03 to figure L't Ovoid, R't Ovoid and half tandem
@@ -831,13 +808,6 @@ if __name__ == '__main__':
             print('inner_cen_pts is not == 3')
             raise Exception
         tandem.append( (inner_cen_pts[1][0], inner_cen_pts[1][1], float(z)) )
-
-
-
-
-
-
-
         # Step 5.1. Find Algo01 and detect the inner_contour
 
         print('TODO tandem for the case that without thicker pipe in scanned CT')
@@ -872,7 +842,7 @@ if __name__ == '__main__':
         ps_x = dicom_dict['z'][z]['ps_x']
         ps_y = dicom_dict['z'][z]['ps_y']
 
-        print('z = {}'.format(z))
+        #print('z = {}'.format(z))
         # Step 6.3.1. Make contours variable as collecting of all contour in z-slice
         contours = []
         for algo_key in dicom_dict['z'][z]['output']['contours512'].keys():
@@ -887,7 +857,6 @@ if __name__ == '__main__':
         # Step 6.3.3
         # prev_info is like {'pt': (240, 226, -92.0), 'ps_x': "3.90625e-1", 'ps_y': "3.90625e-1"}
         # pt in cen_pts is like (240, 226)
-        most_closed_pt = None
         minimum_distance_mm = allowed_distance_mm + 1  # If minimum_distance_mm is finally large than allowed_distance_mm, it's mean there is no pt closed to prev_pt
         minimum_pt = (0, 0)
         for pt in cen_pts:
@@ -911,6 +880,36 @@ if __name__ == '__main__':
             prev_info['ps_x'] = ps_x
             prev_info['ps_y'] = ps_y
             print('tandem = {}'.format(tandem))
+
+
+    return (lt_ovoid, tandem, rt_ovoid)
+
+
+if __name__ == '__main__':
+    #example_dump_single_and_multiple_bytesfile()
+    #exit(0)
+
+    root_folder = r'RAL_plan_new_20190905'
+    print(os.listdir(root_folder))
+
+    folders = os.listdir(root_folder)
+    print('folders = {}'.format(folders))
+    folder = '24460566-ctdate20191015'
+    #folder = '35252020-2'
+    #folder = '29059811-2'
+
+    bytes_filepath = os.path.join('contours_bytes', r'{}.bytes'.format(folder))
+
+    #plot_with_contours(dicom_dict, z=sorted(dicom_dict['z'].keys())[10], algo_key='algo03')
+    dicom_dict = python_object_load(bytes_filepath)
+
+    for z_idx, z in enumerate(sorted(dicom_dict['z'].keys())):
+        #plot_with_contours(dicom_dict, z=sorted(dicom_dict['z'].keys())[z_idx], algo_key='algo01')
+        continue
+    (lt_ovoid, tandem, rt_ovoid) = algo(dicom_dict)
+
+
+    #exit(0)
 
 
 
