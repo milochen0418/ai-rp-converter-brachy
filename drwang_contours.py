@@ -645,8 +645,8 @@ if __name__ == '__main__':
 
     folders = os.listdir(root_folder)
     print('folders = {}'.format(folders))
-    #folder = '35252020-2'
-    folder = '29059811-2'
+    folder = '35252020-2'
+    #folder = '29059811-2'
 
     bytes_filepath = os.path.join('contours_bytes', r'{}.bytes'.format(folder))
 
@@ -832,7 +832,7 @@ if __name__ == '__main__':
         print('TODO tandem for the case that without thicker pipe in scanned CT')
 
     # Step 6. Trace tandem
-
+    print('Step 6. Trace tandem')
     # Step 6.1 Figure out [upper_half_z_idx_start, upper_half_z_idx_end) for upper-part of tandem
     z = sorted(dicom_dict['z'].keys())[0]
     last_z = tandem[-1][2]
@@ -840,9 +840,14 @@ if __name__ == '__main__':
     z_idx = sorted(dicom_dict['z'].keys()).index(last_z)
     upper_half_z_idx_start = z_idx + 1 # upper_half_z_idx_start is the next z of last_z in current tandem data.
     upper_half_z_idx_end = len(dicom_dict['z'].keys())
+    print('upper_half_z_idx [start,end) = [{},{})'.format(upper_half_z_idx_start, upper_half_z_idx_end))
+
 
     # Step 6.2 Setup first prev_info for loop to run and also set allowed_distnace to indicate the largest moving distance between two slice.
-    allowed_distance_mm = 8.5 # allowed distance when trace from bottom to tips of Tandem
+    # allowed_distance_mm = 8.5 # allowed distance when trace from bottom to tips of Tandem [ 8.5 mm is not ok for 35252020-2 ]
+    allowed_distance_mm = 10.95  # allowed distance when trace from bottom to tips of Tandem
+
+
     prev_info = {}
     prev_info['pt'] = tandem[-1]
     prev_info['ps_x'] = dicom_dict['z'][last_z]['ps_x']
