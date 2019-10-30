@@ -1068,6 +1068,52 @@ def plot_with_contours(dicom_dict, z, algo_key):
     plt.show()
     pass
 
+def generate_brachy_rp_file(RP_OperatorsName, dicom_dict, out_rp_filepath):
+    # Step 1. Get line of lt_ovoid, tandem, rt_ovoid by OpneCV contour material and innovated combination
+    (lt_ovoid, tandem, rt_ovoid) = algo_to_get_pixel_lines(dicom_dict)
+
+    # Step 2. Convert line into metric representation
+    # Original line is array of (x_px, y_px, z_mm) and we want to convert to (x_mm, y_mm, z_mm)
+    new_lines = []
+    for line in [lt_ovoid, tandem, rt_ovoid]:
+        new_line = []
+        for pt in line:
+            z = pt[2]
+            ct_obj = dicom_dict['z'][z]
+            x = pt[0] * ct_obj['ps_x'] + ct_obj['origin_x']
+            y = pt[1] * ct_obj['ps_y'] + ct_obj['origin_y']
+            new_line.append([x,y,z])
+        new_lines.append(new_line)
+    (metric_lt_ovoid, metric_tandem, metric_rt_ovoid) = (new_lines[0], new_lines[1], new_lines[2])
+    print('metric_lt_ovoid = {}'.format(metric_lt_ovoid))
+    print('metric_tandem = {}'.format(metric_tandem))
+    print('metric_rt_ovoid = {}'.format(metric_rt_ovoid))
+
+    # Step 3. Reverse Order, so that first element is TIPS [from most top (z maximum) to most bottom (z minimum) ]
+    metric_lt_ovoid.reverse()
+    metric_tandem.reverse()
+    metric_rt_ovoid.reverse()
+
+    # Step 4. Get Applicator RP line
+    tandem_rp_line = get_applicator_rp_line(metric_tandem, 4, 5)
+    lt_ovoid_rp_line = get_applicator_rp_line(metric_lt_ovoid, 0, 5)
+    rt_ovoid_rp_line = get_applicator_rp_line(metric_rt_ovoid, 0 ,5)
+    print('lt_ovoid_rp_line = {}'.format(lt_ovoid_rp_line))
+    print('tandem_rp_line = {}'.format(tandem_rp_line))
+    print('rt_ovoid_rp_line = {}'.format(rt_ovoid_rp_line))
+
+    # Step 5. Wrap to RP file
+
+    print(dicom_dict['pathinfo']['rs_filepath'])
+    print(dicom_dict['metadata'].keys())
+    #print(pydicom.read_file(dicom_dict['pathinfo']['rs_filepath']).keys())
+
+    rs_filepath = dicom_dict['pathinfo']['rs_filepath']
+
+    print('out_rp_filepath = {}'.format(out_rp_filepath))
+    wrap_to_rp_file(RP_OperatorsName=RP_OperatorsName, rs_filepath=rs_filepath, tandem_rp_line=tandem_rp_line, out_rp_filepath=out_rp_filepath, lt_ovoid_rp_line=lt_ovoid_rp_line, rt_ovoid_rp_line=rt_ovoid_rp_line)
+
+
 # FUNCTIONS - file dump function , so that you can accelerate develop speed
 def contours_python_object_dump(root_folder, filename):
     # Step 1. declare all_dicom_dict
@@ -1119,13 +1165,11 @@ if __name__ == '__main__':
 
     root_folder = r'RAL_plan_new_20190905'
     print(os.listdir(root_folder))
-
     folders = os.listdir(root_folder)
     print('folders = {}'.format(folders))
     folder = '24460566-ctdate20191015'
     #folder = '35252020-2'
     #folder = '29059811-2'
-
     bytes_filepath = os.path.join('contours_bytes', r'{}.bytes'.format(folder))
 
     #plot_with_contours(dicom_dict, z=sorted(dicom_dict['z'].keys())[10], algo_key='algo03')
@@ -1135,68 +1179,11 @@ if __name__ == '__main__':
         #plot_with_contours(dicom_dict, z=sorted(dicom_dict['z'].keys())[z_idx], algo_key='algo01')
         continue
 
-    # Step 1. Get line of lt_ovoid, tandem, rt_ovoid by OpneCV contour material and innovated combination
-    (lt_ovoid, tandem, rt_ovoid) = algo_to_get_pixel_lines(dicom_dict)
-
-    # Step 2. Convert line into metric representation
-    # Original line is array of (x_px, y_px, z_mm) and we want to convert to (x_mm, y_mm, z_mm)
-    new_lines = []
-    for line in [lt_ovoid, tandem, rt_ovoid]:
-        new_line = []
-        for pt in line:
-            z = pt[2]
-            ct_obj = dicom_dict['z'][z]
-            x = pt[0] * ct_obj['ps_x'] + ct_obj['origin_x']
-            y = pt[1] * ct_obj['ps_y'] + ct_obj['origin_y']
-            new_line.append([x,y,z])
-        new_lines.append(new_line)
-    (metric_lt_ovoid, metric_tandem, metric_rt_ovoid) = (new_lines[0], new_lines[1], new_lines[2])
-    print('metric_lt_ovoid = {}'.format(metric_lt_ovoid))
-    print('metric_tandem = {}'.format(metric_tandem))
-    print('metric_rt_ovoid = {}'.format(metric_rt_ovoid))
-
-    # Step 3. Reverse Order, so that first element is TIPS [from most top (z maximum) to most bottom (z minimum) ]
-    metric_lt_ovoid.reverse()
-    metric_tandem.reverse()
-    metric_rt_ovoid.reverse()
-
-    # Step 4. Get Applicator RP line
-    tandem_rp_line = get_applicator_rp_line(metric_tandem, 4, 5)
-    lt_ovoid_rp_line = get_applicator_rp_line(metric_lt_ovoid, 0, 5)
-    rt_ovoid_rp_line = get_applicator_rp_line(metric_rt_ovoid, 0 ,5)
-    print('lt_ovoid_rp_line = {}'.format(lt_ovoid_rp_line))
-    print('tandem_rp_line = {}'.format(tandem_rp_line))
-    print('rt_ovoid_rp_line = {}'.format(rt_ovoid_rp_line))
-
-
-    # Step 5. Wrap to RP file
-
-    print(dicom_dict['pathinfo']['rs_filepath'])
-    print(dicom_dict['metadata'].keys())
-    #print(pydicom.read_file(dicom_dict['pathinfo']['rs_filepath']).keys())
-    rs_fp = pydicom.read_file(dicom_dict['pathinfo']['rs_filepath'])
     metadata = dicom_dict['metadata']
     # out_rp_filepath format is PatientID, RS StudyDate  and the final is folder name processing by coding
-    out_rp_filepath = r'RP.{}.{}.f{}dcm'.format(  metadata['RS_PatientID'],  metadata['RS_StudyDate'],  os.path.basename(metadata['folder']) )
-    rs_filepath = dicom_dict['pathinfo']['rs_filepath']
-
-    print('out_rp_filepath = {}'.format(out_rp_filepath))
+    out_rp_filepath = r'RP.{}.{}.f{}.dcm'.format(  metadata['RS_PatientID'],  metadata['RS_StudyDate'],  os.path.basename(metadata['folder']) )
     out_rp_filepath = os.path.join('all_rp_output', out_rp_filepath)
-    wrap_to_rp_file(RP_OperatorsName='cylin', rs_filepath=rs_filepath, tandem_rp_line=tandem_rp_line, out_rp_filepath=out_rp_filepath, lt_ovoid_rp_line=lt_ovoid_rp_line, rt_ovoid_rp_line=rt_ovoid_rp_line)
-    #print('out_rp_filepath = {}'.format(out_rp_filepath))
-
-
-    # TODO:
-    # refer main_code.py : def convert_lines_in_metrics
-    # And write the code to transfer to metric space for all point in lt_ovoid, tandem and rt_ovoid
-    # Then continue refer the source code of main_code.py def generate_brachy_rp_file to see how the code do after call convert_lines_in_metrics.
-    # Then you can wrap data quickly
-
-
-    #exit(0)
-
-
-
+    generate_brachy_rp_file(RP_OperatorsName='cylin', dicom_dict=dicom_dict, out_rp_filepath=out_rp_filepath)
 
 
 
