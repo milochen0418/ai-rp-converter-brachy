@@ -1176,9 +1176,20 @@ def example_load_single_bytefile(): # example code of how to use contours_python
     print('time={}: {}'.format(datetime.datetime.now(),'Load done'))
     return all_dicom_dict
 def example_dump_single_and_multiple_bytesfile():
+    """
+    From basic root_folder, Create all bytes files that are corresponding to every dicom_dict. Output log should like following
+    Create contours_bytes\24460566-ctdate20191015.bytes
+    Create contours_bytes\29059811-1.bytes
+    Create contours_bytes\29059811-2.bytes
+    ...
+    Create contours_bytes\592697-1.bytes
+    Create contours_bytes\592697-2.bytes
+    Create contours_bytes\592697-3.bytes
+    Creating all_dicom_dict.bytes in very largest size
+    ...
+    """
     root_folder = r'RAL_plan_new_20190905'
     contours_python_object_dump(root_folder, 'all_dicom_dict.bytes')
-
 def example_create_all_rp_file():
     """
     ...
@@ -1228,11 +1239,11 @@ def example_create_all_rp_file():
 
 
 if __name__ == '__main__':
-    #example_dump_single_and_multiple_bytesfile()
-    #exit(0)
-
-    example_create_all_rp_file()
+    example_dump_single_and_multiple_bytesfile()
     exit(0)
+
+    #example_create_all_rp_file()
+    #exit(0)
 
     root_folder = r'RAL_plan_new_20190905'
     print(os.listdir(root_folder))
