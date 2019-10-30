@@ -1300,11 +1300,6 @@ def plot_n_xyz_px(dicom_dict, x_list_px, y_list_px, z_mm):
         #print('draw_target x={}, y={}'.format(pixel_x, pixel_y))
         draw_target_to_max(pixel_x, pixel_y, pixel_array)
         return
-        for i in range(-5, 6):
-            draw_target_to_max(pixel_x + i, pixel_y + i, pixel_array)
-            draw_target_to_max(pixel_x + i + 1, pixel_y + i, pixel_array)
-            draw_target_to_min(pixel_x - i, pixel_y + i, pixel_array)
-            draw_target_to_min(pixel_x - i + 1, pixel_y + i, pixel_array)
     z = z_mm
     pixel_array = copy.deepcopy(dicom_dict['z'][z]['pixel_array'])
     draw_array = np.zeros(pixel_array.shape)
@@ -1313,8 +1308,9 @@ def plot_n_xyz_px(dicom_dict, x_list_px, y_list_px, z_mm):
         draw_target(x_px, y_px, draw_array)
     #plt.imshow(pixel_array[150:-150], cmap=plt.cm.bone)
     #plt.imshow(draw_array[150:-150], alpha=0.5)
-    plt.imshow(pixel_array, cmap=plt.cm.bone)
-    plt.imshow(draw_array, alpha=0.5)
+    plt.imshow(pixel_array[190:-150, 190:-150], cmap=plt.cm.gray)
+    plt.imshow(draw_array[190:-150, 190: -150], alpha=0.7, cmap=plt.cm.gist_gray)
+
 
     print('z = {}, x_list = {}, y_list = {}'.format(z_mm, x_list_px, y_list_px))
     plt.show()
