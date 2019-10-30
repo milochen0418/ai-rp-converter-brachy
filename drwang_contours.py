@@ -410,7 +410,8 @@ def algo_to_get_pixel_lines(dicom_dict):
 
     # Step 4. Figure Tandem bottom-half (thicker pipe part of tandem)
     tandem = []
-    allowed_distance_mm = 4.5 # allowed distance when trace from bottom to tips
+    #allowed_distance_mm = 4.5 # allowed distance when trace from bottom to tips
+    allowed_distance_mm = 4.5  # allowed distance when trace from bottom to tips
     prev_info = {}
     prev_info['pt'] = None
     prev_info['ps_x'] = None
@@ -422,6 +423,7 @@ def algo_to_get_pixel_lines(dicom_dict):
             # It is possible that thicker pipe part of tandem is not scanned in CT file, so that only can detect two pipe in this case.
             # So that when center_pts_dict < 3 in following case after using algo03
             if (len(center_pts_dict[z]) < 3)  :
+                print('Bottom-half Tandem say break in loop with z = {}'.format(z))
                 break
             prev_pt = ( center_pts_dict[z][1][0], center_pts_dict[z][1][1], float(z))
             prev_info['pt'] = prev_pt
@@ -487,14 +489,23 @@ def algo_to_get_pixel_lines(dicom_dict):
     last_z = tandem[-1][2]
     print('last_z = {}'.format(last_z))
     z_idx = sorted(dicom_dict['z'].keys()).index(last_z)
-    upper_half_z_idx_start = z_idx + 1 # upper_half_z_idx_start is the next z of last_z in current tandem data.
+    print('z_idx of last_z={} is {}'.format(last_z, idx_z) )
+    upper_half_z_idx_start = (z_idx + 1 )# upper_half_z_idx_start is the next z of last_z in current tandem data.
+    print('upper_half_z_idx_start = {}'.format(upper_half_z_idx_start))
     upper_half_z_idx_end = len(dicom_dict['z'].keys())
-    print('upper_half_z_idx [start,end) = [{},{})'.format(upper_half_z_idx_start, upper_half_z_idx_end))
+    print('upper_half_z_idx_end = {}'.format(upper_half_z_idx_end))
+    print('upper_half_z_idx [start,end) = [{},{}) '.format(upper_half_z_idx_start, upper_half_z_idx_end))
+    z_start = sorted(dicom_dict['z'].keys())[upper_half_z_idx_start]
+    z_end = sorted(dicom_dict['z'].keys())[upper_half_z_idx_end-1]+0.001
+    print('and [start_z, end_z)  = [{},{})'.format(z_start,z_end))
+    #print('upper_half_z_idx [start,end) = [{},{}) and z = [{},{})'.format(upper_half_z_idx_start, upper_half_z_idx_end, sorted(dicom_dict['z'].keys())[upper_half_z_idx_start],  sorted(dicom_dict['z'].keys())[upper_half_z_idx_end]  ))
+
 
     # Step 6.2 Setup first prev_info for loop to run and also set allowed_distnace to indicate the largest moving distance between two slice.
     # allowed_distance_mm = 8.5 # allowed distance when trace from bottom to tips of Tandem [ 8.5 mm is not ok for 35252020-2 ]
     #allowed_distance_mm = 10.95  # allowed distance when trace from bottom to tips of Tandem
     allowed_distance_mm = 10.95  # allowed distance when trace from bottom to tips of Tandem
+
 
     prev_info = {}
     prev_info['pt'] = tandem[-1]
@@ -507,6 +518,8 @@ def algo_to_get_pixel_lines(dicom_dict):
     # Step 6.3. Start to trace tandem
     for z_idx in range(upper_half_z_idx_start, upper_half_z_idx_end):
         z = sorted(dicom_dict['z'].keys())[z_idx]
+        if (z == -34):
+            print('z is -34 arrive')
         ps_x = dicom_dict['z'][z]['ps_x']
         ps_y = dicom_dict['z'][z]['ps_y']
 
@@ -520,13 +533,14 @@ def algo_to_get_pixel_lines(dicom_dict):
         for c_idx, c in enumerate(contours):
             rect_info = get_rect_info_from_cv_contour(c)
             # [(x_min, x_max, y_min, y_max), (w, h), (x_mean, y_mean)]
-            cen_pt = (rect_info[2][0], rect_info[2][0])
+            cen_pt = (rect_info[2][0], rect_info[2][1])
             cen_pts.append(cen_pt)
         # Step 6.3.3
         # prev_info is like {'pt': (240, 226, -92.0), 'ps_x': "3.90625e-1", 'ps_y': "3.90625e-1"}
         # pt in cen_pts is like (240, 226)
         minimum_distance_mm = allowed_distance_mm + 1  # If minimum_distance_mm is finally large than allowed_distance_mm, it's mean there is no pt closed to prev_pt
         minimum_pt = (0, 0)
+        print('cen_pts = {}'.format(cen_pts ))
         for pt in cen_pts:
             prev_x_mm = prev_info['pt'][0] * prev_info['ps_x']
             prev_y_mm = prev_info['pt'][1] * prev_info['ps_y']
@@ -541,6 +555,7 @@ def algo_to_get_pixel_lines(dicom_dict):
 
         if (minimum_distance_mm > allowed_distance_mm):
             # This is case to say ending for the upper looper
+            print('more than tip ')
             break
         else:
             tandem.append( (minimum_pt[0], minimum_pt[1],float(z)) )
@@ -1258,6 +1273,19 @@ def plot_xyz_px(dicom_dict, x_px, y_px, z_mm):
     plt.imshow(pixel_array, cmap=plt.cm.bone)
     plt.imshow(draw_array, alpha=0.5)
     plt.show()
+def example_of_plot_xyz_px():
+    root_folder = r'RAL_plan_new_20190905'
+    print(os.listdir(root_folder))
+    folders = os.listdir(root_folder)
+    print('folders = {}'.format(folders))
+    folder = '24460566-ctdate20191015'
+    bytes_filepath = os.path.join('contours_bytes', r'{}.bytes'.format(folder))
+    dicom_dict = python_object_load(bytes_filepath)
+    for idx_z, z in enumerate( sorted(dicom_dict['z'].keys()) ):
+        if (idx_z > 10):
+            break
+        plot_xyz_px(dicom_dict, x_px = 256, y_px=256, z_mm=z)
+
 def plot_n_xyz_px(dicom_dict, x_list_px, y_list_px, z_mm):
     # Only plot in the same z_mm slice
     import matplotlib.pyplot as plt
@@ -1269,7 +1297,7 @@ def plot_n_xyz_px(dicom_dict, x_list_px, y_list_px, z_mm):
         min_value = 0
         pixel_array[pixel_y, pixel_x] = min_value
     def draw_target(pixel_x, pixel_y, pixel_array):
-        print('draw_target x={}, y={}'.format(pixel_x, pixel_y))
+        #print('draw_target x={}, y={}'.format(pixel_x, pixel_y))
         draw_target_to_max(pixel_x, pixel_y, pixel_array)
         return
         for i in range(-5, 6):
@@ -1283,25 +1311,15 @@ def plot_n_xyz_px(dicom_dict, x_list_px, y_list_px, z_mm):
     for idx, x_px in enumerate(x_list_px):
         y_px = y_list_px[idx]
         draw_target(x_px, y_px, draw_array)
+    #plt.imshow(pixel_array[150:-150], cmap=plt.cm.bone)
+    #plt.imshow(draw_array[150:-150], alpha=0.5)
     plt.imshow(pixel_array, cmap=plt.cm.bone)
     plt.imshow(draw_array, alpha=0.5)
+
+    print('z = {}, x_list = {}, y_list = {}'.format(z_mm, x_list_px, y_list_px))
     plt.show()
-def example_of_plot_xyz_px():
-    root_folder = r'RAL_plan_new_20190905'
-    print(os.listdir(root_folder))
-    folders = os.listdir(root_folder)
-    print('folders = {}'.format(folders))
-    folder = '24460566-ctdate20191015'
-    bytes_filepath = os.path.join('contours_bytes', r'{}.bytes'.format(folder))
-    #plot_with_contours(dicom_dict, z=sorted(dicom_dict['z'].keys())[10], algo_key='algo03')
-    dicom_dict = python_object_load(bytes_filepath)
-    for idx_z, z in enumerate( sorted(dicom_dict['z'].keys()) ):
-        if (idx_z > 10):
-            break
-        plot_xyz_px(dicom_dict, x_px = 256, y_px=256, z_mm=z)
 
 def plot_cen_pt(dicom_dict, lt_ovoid_ctpa, tandem_ctpa, rt_ovoid_ctpa):
-    #ctpa is mean CT pixel array. it mean the unit of element in array is (x_px, y_px, z_mm)
     z_lt_ovoid = [float(pt[2]) for pt in lt_ovoid_ctpa]
     z_rt_ovoid = [float(pt[2]) for pt in rt_ovoid_ctpa]
     z_tandem = [float(pt[2]) for pt in tandem_ctpa]
@@ -1320,9 +1338,18 @@ def example_of_plot_cen_pt():
     folders = os.listdir(root_folder)
     print('folders = {}'.format(folders))
     folder = '24460566-ctdate20191015'
+    folder = '29059811-1'
     bytes_filepath = os.path.join('contours_bytes', r'{}.bytes'.format(folder))
     #plot_with_contours(dicom_dict, z=sorted(dicom_dict['z'].keys())[10], algo_key='algo03')
     dicom_dict = python_object_load(bytes_filepath)
+    """
+    plot_with_contours(dicom_dict, z=-72, algo_key='algo01')
+    plot_with_contours(dicom_dict, z=-72, algo_key='algo03')
+    plot_with_contours(dicom_dict, z=-70, algo_key='algo01')
+    plot_with_contours(dicom_dict, z=-70, algo_key='algo02')
+    plot_with_contours(dicom_dict, z=-70, algo_key='algo03')
+    plot_with_contours(dicom_dict, z=-70, algo_key='algo04')
+    """
     (lt_ovoid, tandem, rt_ovoid) = algo_to_get_pixel_lines(dicom_dict)
     plot_cen_pt(dicom_dict, lt_ovoid_ctpa=lt_ovoid, tandem_ctpa=tandem, rt_ovoid_ctpa=rt_ovoid)
 
