@@ -541,10 +541,8 @@ def algo_to_get_pixel_lines(dicom_dict):
 
 # The CT data is the format with 512 x 512, but we want to transfer it into real metric space
 def convert_lines_in_metrics(lines, dicom_dict):
-
     #z_map, ct_filepath_map = get_maps_with_folder(ct_folder)
     z_map = dicom_dict['z']
-
     new_lines = []
     for i in range(len(lines)):
         new_lines.append([])
@@ -555,8 +553,8 @@ def convert_lines_in_metrics(lines, dicom_dict):
         for pt in line:
             pt_z = pt[2]
             z_dict = z_map[pt_z]
-            x_spacing = z_dict['x_spacing']
-            y_spacing = z_dict['y_spacing']
+            x_spacing = z_dict['ps_x']
+            y_spacing = z_dict['ps_y']
             origin_x = z_dict['origin_x']
             origin_y = z_dict['origin_y']
             pt_x = pt[0]
@@ -565,7 +563,7 @@ def convert_lines_in_metrics(lines, dicom_dict):
             tmp_y = pt_y * y_spacing + origin_y
             new_pt_x = float(Decimal(str(tmp_x)).quantize(Decimal('0.00')))  # Some format transfer stuff
             new_pt_y = float(Decimal(str(tmp_y)).quantize(Decimal('0.00')))  # Some format transfer stuff
-            new_pt = [new_pt_x, new_pt_y, pt_z]
+            new_pt = (new_pt_x, new_pt_y, pt_z)
             new_line.append(new_pt)
     return new_lines
 
@@ -625,11 +623,9 @@ def get_dicom_dict(folder):
         ct_obj["rescale_pixel_array"] = ct_fp.pixel_array * ct_fp.RescaleSlope + ct_fp.RescaleIntercept
         ct_obj['ps_x'] = ct_fp.PixelSpacing[0]
         ct_obj['ps_y'] = ct_fp.PixelSpacing[1]
-
         ct_obj['origin_x'] = ct_fp.ImagePositionPatient[0]
         ct_obj['origin_y'] = ct_fp.ImagePositionPatient[1]
         ct_obj['origin_z'] = ct_fp.ImagePositionPatient[2]
-
         ct_obj['SliceLocation'] = ct_fp.SliceLocation
         ct_obj['output'] = {} # put your output result in here
 
@@ -919,8 +915,6 @@ def example_dump_single_and_multiple_bytesfile():
     contours_python_object_dump(root_folder, 'all_dicom_dict.bytes')
 
 
-
-
 if __name__ == '__main__':
     #example_dump_single_and_multiple_bytesfile()
     #exit(0)
@@ -943,7 +937,28 @@ if __name__ == '__main__':
         #plot_with_contours(dicom_dict, z=sorted(dicom_dict['z'].keys())[z_idx], algo_key='algo01')
         continue
 
+    # Step 1. Get line of lt_ovoid, tandem, rt_ovoid by OpneCV contour material and innovated combination
     (lt_ovoid, tandem, rt_ovoid) = algo_to_get_pixel_lines(dicom_dict)
+
+    # Step 2. Convert line into metric representation
+    # Original line is array of (x_px, y_px, z_mm) and we want to convert to (x_mm, y_mm, z_mm)
+    new_lines = []
+    for line in [lt_ovoid, tandem, rt_ovoid]:
+        new_line = []
+        for pt in line:
+            z = pt[2]
+            ct_obj = dicom_dict['z'][z]
+            x = pt[0] * ct_obj['ps_x'] + ct_obj['origin_x']
+            y = pt[1] * ct_obj['ps_y'] + ct_obj['origin_y']
+            new_line.append((x,y,z))
+        new_lines.append(new_line)
+    (metric_lt_ovoid, metric_tandem, metric_rt_ovoid) = (new_lines[0], new_lines[1], new_lines[2])
+    print('metric_lt_ovoid = {}'.format(metric_lt_ovoid))
+    print('metric_tandem = {}'.format(metric_tandem))
+    print('metric_rt_ovoid = {}'.format(metric_rt_ovoid))
+
+    # Step 3.
+
 
     # TODO:
     # refer main_code.py : def convert_lines_in_metrics
