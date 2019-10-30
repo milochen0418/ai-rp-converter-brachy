@@ -539,33 +539,221 @@ def algo_to_get_pixel_lines(dicom_dict):
             print('tandem = {}'.format(tandem))
     return (lt_ovoid, tandem, rt_ovoid)
 
-# The CT data is the format with 512 x 512, but we want to transfer it into real metric space
-def convert_lines_in_metrics(lines, dicom_dict):
-    #z_map, ct_filepath_map = get_maps_with_folder(ct_folder)
-    z_map = dicom_dict['z']
-    new_lines = []
-    for i in range(len(lines)):
-        new_lines.append([])
+def get_applicator_rp_line(metric_line, first_purpose_distance_mm, each_purpose_distance_mm):
+    # REWRITE get_metric_pt_info_by_travel_distance, so the get_metric_pt, reduct_distance_step and get_metric_pt_info_travel_distance will not be USED
+    def get_metric_pt(metric_line, pt_idx, pt_idx_remainder):
+        # print('get_metric_pt(metric_line={}, pt_idx={}, pt_idx_remainder={})'.format(metric_line, pt_idx, pt_idx_remainder))
+        pt = metric_line[pt_idx].copy()
+        try:
+            if (pt_idx + 1 >= len(metric_line)):
+                end_pt = metric_line[pt_idx]
+            else:
+                end_pt = metric_line[pt_idx + 1]
 
-    for line_idx in range(len(lines)):
-        line = lines[line_idx]
-        new_line = new_lines[line_idx]
-        for pt in line:
-            pt_z = pt[2]
-            z_dict = z_map[pt_z]
-            x_spacing = z_dict['ps_x']
-            y_spacing = z_dict['ps_y']
-            origin_x = z_dict['origin_x']
-            origin_y = z_dict['origin_y']
-            pt_x = pt[0]
-            pt_y = pt[1]
-            tmp_x = pt_x * x_spacing + origin_x
-            tmp_y = pt_y * y_spacing + origin_y
-            new_pt_x = float(Decimal(str(tmp_x)).quantize(Decimal('0.00')))  # Some format transfer stuff
-            new_pt_y = float(Decimal(str(tmp_y)).quantize(Decimal('0.00')))  # Some format transfer stuff
-            new_pt = (new_pt_x, new_pt_y, pt_z)
-            new_line.append(new_pt)
-    return new_lines
+
+        except Exception as e:
+            print('EEEEEE')
+            print('pt_idx = {}'.format(pt_idx))
+            print('pt_idx_remainder = {}'.format(pt_idx_remainder))
+            print('metric_line[{}] = {}'.format(pt_idx, metric_line[pt_idx]))
+            raise
+
+        for axis_idx in range(3):
+            # diff = end_pt[axis_idx] - pt[axis_idx]
+            # diff_with_ratio = diff * pt_idx_remainder
+            # print('axis_idx = {} ->  diff_with_ratio = {}'.format(axis_idx, diff_with_ratio) )
+            pt[axis_idx] += ((end_pt[axis_idx] - pt[axis_idx]) * pt_idx_remainder)
+            # pt[axis_idx] = pt[axis_idx] + diff_with_ratio
+        return pt
+    def reduce_distance_step(metric_line, pt_idx, pt_idx_remainder, dist):
+        # reduce dist and move further more step for (pt_idx, pt_idx_remainder)
+        # ret_dist = ??  reduce dist into ret_dist
+        # Just implement code here , so that the data move a little distance. (mean reduce dist and move more)
+
+        start_pt_idx = pt_idx
+        start_pt_idx_remainder = pt_idx_remainder
+        start_pt = get_metric_pt(metric_line, start_pt_idx, start_pt_idx_remainder)
+
+        # To figure out what distance we perfer to reduce in this step
+        # And the idea is seperate int to two case
+        if start_pt_idx < len(metric_line) - 1:
+            # CASE: there is a next pt_idx for start_pt_idx
+            # In this case, we let end_pt_idx be the next pt_idx of start_pt_idx
+            # So it start_pt_idx +1. and don't forget to reset remainder in to zero
+            end_pt_idx = start_pt_idx + 1
+            end_pt_idx_remainder = 0
+
+        else:
+            # CASE there is no any next _pt_idx for start_pt_idx
+            # In this case, we let end_pt_idx point to end idx of line and let remainder be in maximum value (1.0)
+            # So the end_pt with idx and remainder can represent the most far point in the metric line.
+            end_pt_idx = start_pt_idx
+            end_pt_idx_remainder = 1
+
+        end_pt = get_metric_pt(metric_line, end_pt_idx, end_pt_idx_remainder)
+        max_reducable_dist = distance(start_pt, end_pt)  # max_reducable_dist in this iteration
+
+        # We have start_pt and end_pt , and we have the dist value
+        # So we can try to walk from start_pt to some point which belong to [start_pt, end_pt)
+        # There are two cases for this walking
+        # CASE 1: the end_pt is not enough to walking dist , so just walking to the end_pt
+        # CASE 2: the end_pt is enough and we just need to figure where to stop between [start_pt, end_pt)
+        # PS: 'is enough' is mean distance will be reduced to zero, so the end of travel is in  [start_pt, end_pt)
+        if dist > max_reducable_dist:  # CASE 1 the end_pt is not enough to walking dist
+            dist_after_walking = dist - max_reducable_dist
+            walking_stop_pt_idx = end_pt_idx
+            walking_stop_pt_idx_remainder = end_pt_idx_remainder
+            # return (dist, end_pt_idx, end_pt_idx_remainder)
+            return (dist_after_walking, walking_stop_pt_idx, walking_stop_pt_idx_remainder)
+        else:  # CASE 2 the end_pt is enough, so walking_stop_pt is between [start_pt, end_pt)
+            walking_stop_pt_idx = start_pt_idx
+            # Figure out walking_stop_pt_idx_remainder
+            segment_dist = distance(start_pt, end_pt)
+            if (segment_dist == 0):
+                # To solve bug of divide zero, Sometimes the segment_dist will be zero
+                segment_dist = 0.000000001
+            ratio = dist / segment_dist
+            walking_stop_pt_idx_remainder = start_pt_idx_remainder + (1 - start_pt_idx_remainder) * ratio
+            dist_after_walking = 0
+            return (dist_after_walking, walking_stop_pt_idx, walking_stop_pt_idx_remainder)
+
+        pass
+        # return (ret_dist, ret_pt_idx, ret_pt_idx_remainder)
+    def get_metric_pt_info_by_travel_distance(metric_line, pt_idx, pt_idx_remainder, travel_dist):
+        dist = travel_dist
+        count_max = len(metric_line)
+        count = 0
+
+        while (True):
+            (t_dist, t_pt_idx, t_pt_idx_remainder) = reduce_distance_step(metric_line, pt_idx, pt_idx_remainder, dist)
+
+            if pt_idx == len(metric_line) - 1 and pt_idx_remainder == 1:
+                # CASE 0: This is mean the distanced point will out of the line
+                print('out of line and remaind unproces distance = ', t_dist)
+                t_pt = metric_line[-1].copy()
+                return (t_pt, t_pt_idx, t_pt_idx_remainder, t_dist)
+                break
+            if t_dist == 0:
+                # CASE 1: All distance have been reduced
+                t_pt = get_metric_pt(metric_line, t_pt_idx, t_pt_idx_remainder)
+                return (t_pt, t_pt_idx, t_pt_idx_remainder, t_dist)
+
+            count += 1
+            if count > count_max:
+                # CASE 2: over looping of what we expect. This is case of bug in my source code
+                print('The out of counting in loop is happended. this is a bug')
+                t_pt = get_metric_pt(metric_line, t_pt_idx, t_pt_idx_remainder)
+                return (t_pt, t_pt_idx, t_pt_idx_remainder, t_dist)
+            pt_idx = t_pt_idx
+            pt_idx_remainder = t_pt_idx_remainder
+            dist = t_dist
+
+    tandem_rp_line = []
+    pt_idx = 0
+    pt_idx_remainder = 0
+    travel_dist = first_purpose_distance_mm
+    (t_pt, t_pt_idx, t_pt_idx_remainder, t_dist) = get_metric_pt_info_by_travel_distance(metric_line, pt_idx,pt_idx_remainder, travel_dist)
+    tandem_rp_line.append(t_pt)
+    for i in range(100):
+        travel_dist = each_purpose_distance_mm
+        (pt_idx, pt_idx_remainder) = (t_pt_idx, t_pt_idx_remainder)
+        (t_pt, t_pt_idx, t_pt_idx_remainder, t_dist) = get_metric_pt_info_by_travel_distance(metric_line, pt_idx,pt_idx_remainder,travel_dist)
+        if (t_pt == tandem_rp_line[-1]):
+            break
+        tandem_rp_line.append(t_pt)
+
+    return tandem_rp_line
+
+def wrap_to_rp_file(RP_OperatorsName, rs_filepath, tandem_rp_line, out_rp_filepath, lt_ovoid_rp_line, rt_ovoid_rp_line):
+    rp_template_filepath = r'RP_Template/Brachy_RP.1.2.246.352.71.5.417454940236.2063186.20191015164204.dcm'
+    def get_new_uid(old_uid='1.2.246.352.71.5.417454940236.2063186.20191015164204', study_date='20190923'):
+        uid = old_uid
+        def gen_6_random_digits():
+            ret_str = ""
+            for i in range(6):
+                ch = chr(random.randrange(ord('0'), ord('9') + 1))
+                ret_str += ch
+            return ret_str
+        theStudyDate = study_date
+        uid_list = uid.split('.')
+        uid_list[-1] = theStudyDate + gen_6_random_digits()
+        new_uid = '.'.join(uid_list)
+        return new_uid
+
+    # Read RS file as input
+    rs_fp = pydicom.read_file(rs_filepath)
+    # read RP tempalte into rp_fp
+    rp_fp = pydicom.read_file(rp_template_filepath)
+
+    rp_fp.OperatorsName = RP_OperatorsName
+    rp_fp.PhysiciansOfRecord = rs_fp.PhysiciansOfRecord
+    rp_fp.FrameOfReferenceUID = rs_fp.ReferencedFrameOfReferenceSequence[0].FrameOfReferenceUID
+    rp_fp.ReferencedStructureSetSequence[0].ReferencedSOPClassUID = rs_fp.SOPClassUID
+    rp_fp.ReferencedStructureSetSequence[0].ReferencedSOPInstanceUID = rs_fp.SOPInstanceUID
+
+    directAttrSet = [
+        'PhysiciansOfRecord', 'PatientName', 'PatientID',
+        'PatientBirthDate', 'PatientBirthTime', 'PatientSex',
+        'DeviceSerialNumber', 'SoftwareVersions', 'StudyID',
+        'StudyDate', 'StudyTime', 'StudyInstanceUID']
+    for attr in directAttrSet:
+        #rs_val = getattr(rs_fp, attr)
+        #rp_val = getattr(rp_fp, attr)
+        #print('attr={}, \n In RS->{} \n In RP->{}'.format(attr, rs_val, rp_val))
+        val = getattr(rs_fp, attr)
+        setattr(rp_fp, attr, val)
+        #new_rp_val = getattr(rp_fp, attr)
+        #print('after update, RP->{}\n'.format(new_rp_val))
+
+    newSeriesInstanceUID = get_new_uid(old_uid=rp_fp.SeriesInstanceUID, study_date=rp_fp.StudyDate)
+    newSOPInstanceUID = get_new_uid(old_uid=rp_fp.SOPInstanceUID, study_date=rp_fp.StudyDate)
+    rp_fp.SeriesInstanceUID = newSeriesInstanceUID
+    rp_fp.SOPInstanceUID = newSOPInstanceUID
+    rp_fp.InstanceCreationDate = rp_fp.RTPlanDate = rp_fp.StudyDate = rs_fp.StudyDate
+    rp_fp.RTPlanTime = str(float(rs_fp.StudyTime) + 0.001)
+    rp_fp.InstanceCreationTime = str(float(rs_fp.InstanceCreationTime) + 0.001)
+
+    # Clean Dose Reference
+    rp_fp.DoseReferenceSequence.clear()
+
+
+    # The template structure for applicator
+    # Tandem -> rp_fp.ApplicationSetupSequence[0].ChannelSequence[0]
+    # Rt Ovoid -> rp_fp.ApplicationSetupSequence[0].ChannelSequence[1]
+    # Lt OVoid -> rp_fp.ApplicationSetupSequence[0].ChannelSequence[2]
+    # For each applicator .NumberOfControlPoints is mean number of point
+    # For each applicator .BrachyControlPointSequence is mean the array of points
+
+
+    BCPItemTemplate = copy.deepcopy(rp_fp.ApplicationSetupSequence[0].ChannelSequence[0].BrachyControlPointSequence[0])
+    rp_lines = [tandem_rp_line, rt_ovoid_rp_line, lt_ovoid_rp_line]
+
+    #TODO rp_Ref_ROI_Numbers need to match to current RS's ROI number of three applicators
+    rp_Ref_ROI_Numbers = [16, 17, 18]
+    rp_ControlPointRelativePositions = [3.5, 3.5, 3.5]
+    for idx,rp_line in enumerate(rp_lines):
+        # Change ROINumber of RP_Template_TestData RS into output RP output file
+        # Do  I need to fit ROINumber in RS or not? I still have no answer
+        rp_fp.ApplicationSetupSequence[0].ChannelSequence[idx].ReferencedROINumber = rp_Ref_ROI_Numbers[idx]
+        rp_fp.ApplicationSetupSequence[0].ChannelSequence[idx].NumberOfControlPoints = len(rp_line)
+        rp_fp.ApplicationSetupSequence[0].ChannelSequence[idx].BrachyControlPointSequence.clear()
+        for pt_idx, pt in enumerate( rp_line ):
+            BCPPt = copy.deepcopy(BCPItemTemplate)
+            BCPPt.ControlPointRelativePosition = rp_ControlPointRelativePositions[idx] + pt_idx * 5
+            BCPPt.ControlPoint3DPosition[0] = pt[0]
+            BCPPt.ControlPoint3DPosition[1] = pt[1]
+            BCPPt.ControlPoint3DPosition[2] = pt[2]
+            BCPStartPt = copy.deepcopy(BCPPt)
+            BCPEndPt = copy.deepcopy(BCPPt)
+            BCPStartPt.ControlPointIndex = 2 * pt_idx
+            BCPEndPt.ControlPointIndex = 2 * pt_idx + 1
+            rp_fp.ApplicationSetupSequence[0].ChannelSequence[idx].BrachyControlPointSequence.append(BCPStartPt)
+            rp_fp.ApplicationSetupSequence[0].ChannelSequence[idx].BrachyControlPointSequence.append(BCPEndPt)
+
+    pydicom.write_file(out_rp_filepath, rp_fp)
+
+    pass
+
 
 
 # FUNCTIONS - DICOM data processing Functions
@@ -610,6 +798,7 @@ def get_dicom_dict(folder):
     out_dict['metadata'] = {}
     out_dict['metadata']['folder'] = folder
     pathinfo = get_dicom_folder_pathinfo(folder)
+    out_dict['pathinfo'] = pathinfo
     ct_filelist = pathinfo['ct_filelist']
     for ct_filepath in ct_filelist:
         # print('ct_filepath = ', ct_filepath)
@@ -950,14 +1139,32 @@ if __name__ == '__main__':
             ct_obj = dicom_dict['z'][z]
             x = pt[0] * ct_obj['ps_x'] + ct_obj['origin_x']
             y = pt[1] * ct_obj['ps_y'] + ct_obj['origin_y']
-            new_line.append((x,y,z))
+            new_line.append([x,y,z])
         new_lines.append(new_line)
     (metric_lt_ovoid, metric_tandem, metric_rt_ovoid) = (new_lines[0], new_lines[1], new_lines[2])
     print('metric_lt_ovoid = {}'.format(metric_lt_ovoid))
     print('metric_tandem = {}'.format(metric_tandem))
     print('metric_rt_ovoid = {}'.format(metric_rt_ovoid))
 
-    # Step 3.
+    # Step 3. Reverse Order, so that first element is TIPS [from most top (z maximum) to most bottom (z minimum) ]
+    metric_lt_ovoid.reverse()
+    metric_tandem.reverse()
+    metric_rt_ovoid.reverse()
+
+    # Step 4. Get Applicator RP line
+    tandem_rp_line = get_applicator_rp_line(metric_tandem, 4, 5)
+    lt_ovoid_rp_line = get_applicator_rp_line(metric_lt_ovoid, 0, 5)
+    rt_ovoid_rp_line = get_applicator_rp_line(metric_rt_ovoid, 0 ,5)
+    print('lt_ovoid_rp_line = {}'.format(lt_ovoid_rp_line))
+    print('tandem_rp_line = {}'.format(tandem_rp_line))
+    print('rt_ovoid_rp_line = {}'.format(rt_ovoid_rp_line))
+
+
+    # Step 5. Wrap to RP file
+
+    print(dicom_dict['pathinfo']['rs_filepath'])
+    #wrap_to_rp_file(RP_OperatorsName='cylin', rs_filepath=rs_filepath, tandem_rp_line, out_rp_filepath=out_rp_filepath, lt_ovoid_rp_line=lt_ovoid_rp_line, rt_ovoid_rp_line=rt_ovoid_rp_line)
+    #print('out_rp_filepath = {}'.format(out_rp_filepath))
 
 
     # TODO:
