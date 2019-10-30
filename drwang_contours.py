@@ -1322,78 +1322,97 @@ def plot_n_xyz_px(dicom_dict, x_list_px, y_list_px, z_mm):
 def plot_xyz_mm(dicom_dict,x_mm, y_mm, z_mm):
     folder_name = os.path.basename(dicom_dict['metadata']['folder'])
     print('for folder ={}, plot_xyz_mm(dicom_dict ,{},{},{})'.format(folder_name, x_mm,y_mm,z_mm))
+    def get_slice_in_any_z(dicom_dict, query_z):
+        folder = dicom_dict['metadata']['folder']
+        ret_dict = {}
+        ct_filelist = []
+        ct_z_dict = {}
+
+        sorted_z = sorted(dicom_dict['z'].keys())
+        max_z = max(sorted_z)
+        min_z = min(sorted_z)
+
+        ret_dict['folder'] = folder
+        ret_dict['z'] = query_z
+        ret_dict['max_z'] = max_z
+        ret_dict['min_z'] = min_z
+
+        # set PixelSpacing _x _y and ImagePositionPatient _x _y
+        ct_obj = dicom_dict['z'][sorted(dicom_dict['z'].keys())[0]]
+        ret_dict["PixelSpacing_x"] = ct_obj['ps_x']
+        ret_dict["PixelSpacing_y"] = ct_obj['ps_y']
+        ret_dict["ImagePositionPatient_x"] = ct_obj['origin_x']
+        ret_dict["ImagePositionPatient_y"] = ct_obj['origin_y']
+
+
+
+        if query_z >= max_z or query_z < min_z:
+            ret_dict['prev_pixel_array'] = None
+            ret_dict['next_pixel_array'] = None
+            ret_dict['pixel_array'] = None
+            ret_dict['slice_z'] = None
+            ret_dict['next_slice_z'] = None
+            ret_dict['proportion'] = None
+            return ret_dict
+
+        if query_z == max_z:
+            #ret_dict['pixel_array'] = copy.deepcopy(ct_z_dict[max_z])
+            ret_dict['pixel_array'] = copy.deepcopy(dicom_dict['z'][max_z]['pixel_array'])
+            #ret_dict['prev_pixel_array'] = copy.deepcopy(ct_z_dict[max_z])
+            ret_dict['prev_pixel_array'] = copy.deepcopy(dicom_dict['z'][max_z]['pixel_array'])
+            #ret_dict['next_pixel_array'] = copy.deepcopy(ct_z_dict[max_z])
+            ret_dict['next_pixel_array'] = copy.deepcopy(dicom_dict['z'][max_z]['pixel_array'])
+
+            ret_dict['slice_z'] = max_z
+            ret_dict['next_slice_z'] = max_z
+            ret_dict['proportion'] = 0
+            return ret_dict
+
+        for idx, z in enumerate(sorted_z):
+            next_idx = idx + 1
+            if next_idx >= len(sorted_z):
+                continue
+            next_z = sorted_z[next_idx]
+            if query_z < z or query_z > next_z:
+                continue
+            # For now,  z <= query_z < next_z
+
+            # Figure proportion
+            proportion = (query_z - z) / (next_z - z)
+
+            #print("L: z={} -> {}".format(z, ct_z_dict[z]['filepath']))
+            #print("L: z={} -> {}".format(z, dicom_dict['z'][z]['filepath']))
+            print("R: z={} -> {}".format(next_z, ct_z_dict[next_z]['filepath']))
+
+            # fig=plt.figure(figsize=(20, 5), dpi= 80, facecolor='w', edgecolor='k')
+            dicom_dict = ct_z_dict[z]
+            next_dicom_dict = ct_z_dict[next_z]
+
+            img = dicom_dict['pixel_array']
+            next_img = next_dicom_dict['pixel_array']
+            create_img = next_img * proportion + img * (1 - proportion)
+            # plt.subplot(1,4,1)
+            # plt.imshow(img, cmap=plt.cm.bone)
+            # plt.subplot(1,4,2)
+            # plt.imshow(create_img_1, cmap=plt.cm.bone)
+            # plt.subplot(1,4,3)
+            # plt.imshow(create_img_2, cmap=plt.cm.bone)
+            # plt.subplot(1,4,4)
+            # plt.imshow(next_img, cmap=plt.cm.bone)
+            # plt.show()
+            ret_dict['pixel_array'] = copy.deepcopy(create_img)
+            ret_dict['prev_pixel_array'] = copy.deepcopy(img)
+            ret_dict['next_pixel_array'] = copy.deepcopy(next_img)
+            ret_dict['slice_z'] = z
+            ret_dict['next_slice_z'] = next_z
+            ret_dict['proportion'] = proportion
+            return ret_dict
+
+
     # The code shoud support z_mm in any float value.
     # So that we can use it to check any ovoid or tandem that routing in 5mm travel
     # Because any pipe have different z value, so in each z slice , we only can show one point when we trace by the travel distance
     pass
-
-def example_of_plot_xyz_mm():
-    root_folder = r'RAL_plan_new_20190905'
-    print(os.listdir(root_folder))
-    folders = os.listdir(root_folder)
-    print('folders = {}'.format(folders))
-    folder = '24460566-ctdate20191015'
-    #folder = '29059811-1'
-    bytes_filepath = os.path.join('contours_bytes', r'{}.bytes'.format(folder))
-    #plot_with_contours(dicom_dict, z=sorted(dicom_dict['z'].keys())[10], algo_key='algo03')
-    dicom_dict = python_object_load(bytes_filepath)
-    (lt_ovoid, tandem, rt_ovoid) = algo_to_get_pixel_lines(dicom_dict)
-    (metric_lt_ovoid, metric_tandem, metric_rt_ovoid) = get_metric_lines_representation(dicom_dict, lt_ovoid, tandem, rt_ovoid)
-    print('\nmetric_tandem information for {}'.format(folder))
-    for pt_idx, pt in enumerate(metric_tandem):
-        print('[{}]->{}'.format(pt_idx, pt))
-
-    metric_lt_ovoid.reverse()
-    metric_tandem.reverse()
-    metric_rt_ovoid.reverse()
-
-    # Step 4. Get Applicator RP line
-    tandem_rp_line = get_applicator_rp_line(metric_tandem, 4, 5)
-    lt_ovoid_rp_line = get_applicator_rp_line(metric_lt_ovoid, 0, 5)
-    rt_ovoid_rp_line = get_applicator_rp_line(metric_rt_ovoid, 0 ,5)
-
-    #print('lt_ovoid_rp_line = {}'.format(lt_ovoid_rp_line))
-    #print('tandem_rp_line = {}'.format(tandem_rp_line))
-    #print('rt_ovoid_rp_line = {}'.format(rt_ovoid_rp_line))
-    print('\ntandem_rp_line information for {}'.format(folder))
-    for pt_idx, pt in enumerate(tandem_rp_line):
-        print('[{}]->{}'.format(pt_idx, pt))
-        x_mm = pt[0]
-        y_mm = pt[1]
-        z_mm = pt[2]
-        plot_xyz_mm(dicom_dict, x_mm, y_mm, z_mm)
-
-
-
-    #plot_cen_pt(dicom_dict, lt_ovoid_ctpa=lt_ovoid, tandem_ctpa=tandem, rt_ovoid_ctpa=rt_ovoid)
-
-
-
-def plot_cen_pt(dicom_dict, lt_ovoid_ctpa, tandem_ctpa, rt_ovoid_ctpa):
-    z_lt_ovoid = [float(pt[2]) for pt in lt_ovoid_ctpa]
-    z_rt_ovoid = [float(pt[2]) for pt in rt_ovoid_ctpa]
-    z_tandem = [float(pt[2]) for pt in tandem_ctpa]
-    z_sorted_list = sorted(list(set(z_tandem + z_lt_ovoid + z_rt_ovoid)))
-    for z_idx, z in enumerate(z_sorted_list):
-        all_pt_ctpa = lt_ovoid_ctpa + rt_ovoid_ctpa + tandem_ctpa
-        pts = [pt for pt in all_pt_ctpa if (pt[2] == z)]
-        x_list_px = [pt[0] for pt in pts]
-        y_list_px = [pt[1] for pt in pts]
-        z_mm = z
-        plot_n_xyz_px(dicom_dict, x_list_px, y_list_px, z_mm)
-
-def example_of_plot_cen_pt():
-    root_folder = r'RAL_plan_new_20190905'
-    print(os.listdir(root_folder))
-    folders = os.listdir(root_folder)
-    print('folders = {}'.format(folders))
-    folder = '24460566-ctdate20191015'
-    #folder = '29059811-1'
-    bytes_filepath = os.path.join('contours_bytes', r'{}.bytes'.format(folder))
-    #plot_with_contours(dicom_dict, z=sorted(dicom_dict['z'].keys())[10], algo_key='algo03')
-    dicom_dict = python_object_load(bytes_filepath)
-    (lt_ovoid, tandem, rt_ovoid) = algo_to_get_pixel_lines(dicom_dict)
-    plot_cen_pt(dicom_dict, lt_ovoid_ctpa=lt_ovoid, tandem_ctpa=tandem, rt_ovoid_ctpa=rt_ovoid)
 
 
 def plot_check_cen_pt_old():
@@ -1565,6 +1584,71 @@ def plot_check_cen_pt_old():
         plt.imshow(draw_array[100:400, 100:400], alpha=0.5)
         plt.show()
 
+
+
+def example_of_plot_xyz_mm():
+    root_folder = r'RAL_plan_new_20190905'
+    print(os.listdir(root_folder))
+    folders = os.listdir(root_folder)
+    print('folders = {}'.format(folders))
+    folder = '24460566-ctdate20191015'
+    #folder = '29059811-1'
+    bytes_filepath = os.path.join('contours_bytes', r'{}.bytes'.format(folder))
+    #plot_with_contours(dicom_dict, z=sorted(dicom_dict['z'].keys())[10], algo_key='algo03')
+    dicom_dict = python_object_load(bytes_filepath)
+    (lt_ovoid, tandem, rt_ovoid) = algo_to_get_pixel_lines(dicom_dict)
+    (metric_lt_ovoid, metric_tandem, metric_rt_ovoid) = get_metric_lines_representation(dicom_dict, lt_ovoid, tandem, rt_ovoid)
+    print('\nmetric_tandem information for {}'.format(folder))
+    for pt_idx, pt in enumerate(metric_tandem):
+        print('[{}]->{}'.format(pt_idx, pt))
+
+    metric_lt_ovoid.reverse()
+    metric_tandem.reverse()
+    metric_rt_ovoid.reverse()
+
+    # Step 4. Get Applicator RP line
+    tandem_rp_line = get_applicator_rp_line(metric_tandem, 4, 5)
+    lt_ovoid_rp_line = get_applicator_rp_line(metric_lt_ovoid, 0, 5)
+    rt_ovoid_rp_line = get_applicator_rp_line(metric_rt_ovoid, 0 ,5)
+
+    #print('lt_ovoid_rp_line = {}'.format(lt_ovoid_rp_line))
+    #print('tandem_rp_line = {}'.format(tandem_rp_line))
+    #print('rt_ovoid_rp_line = {}'.format(rt_ovoid_rp_line))
+    print('\ntandem_rp_line information for {}'.format(folder))
+    for pt_idx, pt in enumerate(tandem_rp_line):
+        print('[{}]->{}'.format(pt_idx, pt))
+        x_mm = pt[0]
+        y_mm = pt[1]
+        z_mm = pt[2]
+        plot_xyz_mm(dicom_dict, x_mm, y_mm, z_mm)
+
+
+
+    #plot_cen_pt(dicom_dict, lt_ovoid_ctpa=lt_ovoid, tandem_ctpa=tandem, rt_ovoid_ctpa=rt_ovoid)
+def plot_cen_pt(dicom_dict, lt_ovoid_ctpa, tandem_ctpa, rt_ovoid_ctpa):
+    z_lt_ovoid = [float(pt[2]) for pt in lt_ovoid_ctpa]
+    z_rt_ovoid = [float(pt[2]) for pt in rt_ovoid_ctpa]
+    z_tandem = [float(pt[2]) for pt in tandem_ctpa]
+    z_sorted_list = sorted(list(set(z_tandem + z_lt_ovoid + z_rt_ovoid)))
+    for z_idx, z in enumerate(z_sorted_list):
+        all_pt_ctpa = lt_ovoid_ctpa + rt_ovoid_ctpa + tandem_ctpa
+        pts = [pt for pt in all_pt_ctpa if (pt[2] == z)]
+        x_list_px = [pt[0] for pt in pts]
+        y_list_px = [pt[1] for pt in pts]
+        z_mm = z
+        plot_n_xyz_px(dicom_dict, x_list_px, y_list_px, z_mm)
+def example_of_plot_cen_pt():
+    root_folder = r'RAL_plan_new_20190905'
+    print(os.listdir(root_folder))
+    folders = os.listdir(root_folder)
+    print('folders = {}'.format(folders))
+    folder = '24460566-ctdate20191015'
+    #folder = '29059811-1'
+    bytes_filepath = os.path.join('contours_bytes', r'{}.bytes'.format(folder))
+    #plot_with_contours(dicom_dict, z=sorted(dicom_dict['z'].keys())[10], algo_key='algo03')
+    dicom_dict = python_object_load(bytes_filepath)
+    (lt_ovoid, tandem, rt_ovoid) = algo_to_get_pixel_lines(dicom_dict)
+    plot_cen_pt(dicom_dict, lt_ovoid_ctpa=lt_ovoid, tandem_ctpa=tandem, rt_ovoid_ctpa=rt_ovoid)
 
 if __name__ == '__main__':
     # Dump All data with contours into dicom_dict bytes files
