@@ -6,6 +6,7 @@ import cv2
 import copy
 import math
 from sys import exit
+import sys
 import datetime
 
 
@@ -16,6 +17,9 @@ import csv, codecs
 from decimal import Decimal
 import random
 import pickle
+
+
+# FUNCTIONS - Utility
 def python_object_dump(obj, filename):
     file_w = open(filename, "wb")
     pickle.dump(obj, file_w)
@@ -32,6 +36,15 @@ def python_object_load(filename):
         except:
             return None
     return obj2
+# enable / disable for print
+
+# Disable
+def blockPrint():
+    sys.stdout = open(os.devnull, 'w')
+# Restore
+def enablePrint():
+    sys.stdout = sys.__stdout__
+
 
 # FUNCTIONS - Algorithm processing Fucntions
 def distance(pt1, pt2):
@@ -1068,7 +1081,12 @@ def plot_with_contours(dicom_dict, z, algo_key):
     plt.show()
     pass
 
-def generate_brachy_rp_file(RP_OperatorsName, dicom_dict, out_rp_filepath):
+def generate_brachy_rp_file(RP_OperatorsName, dicom_dict, out_rp_filepath, is_enable_print=False):
+    if (is_enable_print == False):
+        blockPrint()
+    else:
+        enablePrint()
+
     # Step 1. Get line of lt_ovoid, tandem, rt_ovoid by OpneCV contour material and innovated combination
     (lt_ovoid, tandem, rt_ovoid) = algo_to_get_pixel_lines(dicom_dict)
 
@@ -1112,6 +1130,9 @@ def generate_brachy_rp_file(RP_OperatorsName, dicom_dict, out_rp_filepath):
 
     print('out_rp_filepath = {}'.format(out_rp_filepath))
     wrap_to_rp_file(RP_OperatorsName=RP_OperatorsName, rs_filepath=rs_filepath, tandem_rp_line=tandem_rp_line, out_rp_filepath=out_rp_filepath, lt_ovoid_rp_line=lt_ovoid_rp_line, rt_ovoid_rp_line=rt_ovoid_rp_line)
+    if (is_enable_print == False):
+        enablePrint()
+
 
 
 # FUNCTIONS - file dump function , so that you can accelerate develop speed
@@ -1158,10 +1179,60 @@ def example_dump_single_and_multiple_bytesfile():
     root_folder = r'RAL_plan_new_20190905'
     contours_python_object_dump(root_folder, 'all_dicom_dict.bytes')
 
+def example_create_all_rp_file():
+    """
+    ...
+    The Code should show report like this
+
+    [1/28]Create RP file -> all_rp_output\RP.24460566.20191015.f24460566-ctdate20191015.dcm -> 0:00:01.365078s [2019-10-30 10:05:43.507173-2019-10-30 10:05:44.872251]
+    [2/28]Create RP file -> all_rp_output\RP.29059811.20190903.f29059811-1.dcm -> 0:00:00.886051s [2019-10-30 10:05:45.031260-2019-10-30 10:05:45.917311]
+    ...
+    [24/28]Create RP file -> all_rp_output\RP.413382.20190124.f413382-3.dcm -> 0:00:01.419081s [2019-10-30 10:06:11.038748-2019-10-30 10:06:12.457829]
+    [25/28]Create RP file -> all_rp_output\RP.413382.20190122.f413382-4.dcm -> 0:00:01.343077s [2019-10-30 10:06:12.657840-2019-10-30 10:06:14.000917]
+    [26/28]Create RP file -> all_rp_output\RP.592697.20190115.f592697-1.dcm -> 0:00:01.885108s [2019-10-30 10:06:14.330936-2019-10-30 10:06:16.216044]
+    [27/28]Create RP file -> all_rp_output\RP.592697.20190110.f592697-2.dcm -> 0:00:01.592091s [2019-10-30 10:06:16.819078-2019-10-30 10:06:18.411169]
+    FOLDER SUMMARY REPORT
+    failed folders = ['34698361-3', '370648-3', '370648-4', '370648-5', '592697-2']
+    failed / total = 5/28
+    success /total = 23/28
+    """
+    root_folder = r'RAL_plan_new_20190905'
+    print(os.listdir(root_folder))
+    folders = os.listdir(root_folder)
+    print('folders = {}'.format(folders))
+    total_folders = []
+    failed_folders = []
+    success_folders = []
+    for folder_idx, folder in enumerate(folders):
+        total_folders.append(folder)
+        try:
+            bytes_filepath = os.path.join('contours_bytes', r'{}.bytes'.format(folder))
+            dicom_dict = python_object_load(bytes_filepath)
+            metadata = dicom_dict['metadata']
+            # out_rp_filepath format is PatientID, RS StudyDate  and the final is folder name processing by coding
+            out_rp_filepath = r'RP.{}.{}.f{}.dcm'.format(  metadata['RS_PatientID'],  metadata['RS_StudyDate'],  os.path.basename(metadata['folder']) )
+            out_rp_filepath = os.path.join('all_rp_output', out_rp_filepath)
+            time_start = datetime.datetime.now()
+            print('[{}/{}]Create RP file -> {}'.format(folder_idx+1,len(folders), out_rp_filepath) ,end=' -> ')
+            generate_brachy_rp_file(RP_OperatorsName='cylin', dicom_dict=dicom_dict, out_rp_filepath=out_rp_filepath, is_enable_print=False)
+            time_end = datetime.datetime.now()
+            print('{}s [{}-{}]'.format(time_end-time_start, time_start, time_end), end='\n')
+            success_folders.append(folder)
+        except Exception as ex:
+            print('Create Failed')
+            failed_folders.append(folder)
+    print('FOLDER SUMMARY REPORT')
+    print('failed folders = {}'.format(failed_folders))
+    print('failed / total = {}/{}'.format(len(failed_folders), len(total_folders) ))
+    print('success /total = {}/{}'.format(len(success_folders), len(total_folders) ))
+
 
 if __name__ == '__main__':
     #example_dump_single_and_multiple_bytesfile()
     #exit(0)
+
+    example_create_all_rp_file()
+    exit(0)
 
     root_folder = r'RAL_plan_new_20190905'
     print(os.listdir(root_folder))
@@ -1183,7 +1254,13 @@ if __name__ == '__main__':
     # out_rp_filepath format is PatientID, RS StudyDate  and the final is folder name processing by coding
     out_rp_filepath = r'RP.{}.{}.f{}.dcm'.format(  metadata['RS_PatientID'],  metadata['RS_StudyDate'],  os.path.basename(metadata['folder']) )
     out_rp_filepath = os.path.join('all_rp_output', out_rp_filepath)
-    generate_brachy_rp_file(RP_OperatorsName='cylin', dicom_dict=dicom_dict, out_rp_filepath=out_rp_filepath)
+    print('RP Create {}'.format(out_rp_filepath))
+    time_start = datetime.datetime.now()
+    print('Create RP file -> {}'.format(out_rp_filepath) ,end=' -> ')
+    generate_brachy_rp_file(RP_OperatorsName='cylin', dicom_dict=dicom_dict, out_rp_filepath=out_rp_filepath, is_enable_print=False)
+    time_end = datetime.datetime.now()
+    print('{}s [{}-{}]'.format(time_end-time_start, time_start, time_end), end='\n')
+
 
 
 
