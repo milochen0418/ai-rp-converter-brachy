@@ -1233,7 +1233,101 @@ def example_create_all_rp_file():
     print('success /total = {}/{}'.format(len(success_folders), len(total_folders) ))
 
 # FUNCTIONS - Some ploting utility functions support for you to check CT pictures with data
-def plot_check_cen_pt():
+def plot_xyz_px(dicom_dict, x_px, y_px, z_mm):
+    import matplotlib.pyplot as plt
+    def draw_target_to_max(pixel_x, pixel_y, pixel_array):
+        max_value = np.max(pixel_array)
+        max_value = max_value + 100
+        pixel_array[pixel_y, pixel_x] = max_value
+    def draw_target_to_min(pixel_x, pixel_y, pixel_array):
+        min_value = 0
+        pixel_array[pixel_y, pixel_x] = min_value
+    def draw_target(pixel_x, pixel_y, pixel_array):
+        print('draw_target x={}, y={}'.format(pixel_x, pixel_y))
+        draw_target_to_max(pixel_x, pixel_y, pixel_array)
+        return
+        for i in range(-5, 6):
+            draw_target_to_max(pixel_x + i, pixel_y + i, pixel_array)
+            draw_target_to_max(pixel_x + i + 1, pixel_y + i, pixel_array)
+            draw_target_to_min(pixel_x - i, pixel_y + i, pixel_array)
+            draw_target_to_min(pixel_x - i + 1, pixel_y + i, pixel_array)
+    z = z_mm
+    pixel_array = copy.deepcopy(dicom_dict['z'][z]['pixel_array'])
+    draw_array = np.zeros(pixel_array.shape)
+    draw_target(x_px, y_px, draw_array)
+    plt.imshow(pixel_array, cmap=plt.cm.bone)
+    plt.imshow(draw_array, alpha=0.5)
+    plt.show()
+def plot_n_xyz_px(dicom_dict, x_list_px, y_list_px, z_mm):
+    # Only plot in the same z_mm slice
+    import matplotlib.pyplot as plt
+    def draw_target_to_max(pixel_x, pixel_y, pixel_array):
+        max_value = np.max(pixel_array)
+        max_value = max_value + 100
+        pixel_array[pixel_y, pixel_x] = max_value
+    def draw_target_to_min(pixel_x, pixel_y, pixel_array):
+        min_value = 0
+        pixel_array[pixel_y, pixel_x] = min_value
+    def draw_target(pixel_x, pixel_y, pixel_array):
+        print('draw_target x={}, y={}'.format(pixel_x, pixel_y))
+        draw_target_to_max(pixel_x, pixel_y, pixel_array)
+        return
+        for i in range(-5, 6):
+            draw_target_to_max(pixel_x + i, pixel_y + i, pixel_array)
+            draw_target_to_max(pixel_x + i + 1, pixel_y + i, pixel_array)
+            draw_target_to_min(pixel_x - i, pixel_y + i, pixel_array)
+            draw_target_to_min(pixel_x - i + 1, pixel_y + i, pixel_array)
+    z = z_mm
+    pixel_array = copy.deepcopy(dicom_dict['z'][z]['pixel_array'])
+    draw_array = np.zeros(pixel_array.shape)
+    for idx, x_px in enumerate(x_list_px):
+        y_px = y_list_px[idx]
+        draw_target(x_px, y_px, draw_array)
+    plt.imshow(pixel_array, cmap=plt.cm.bone)
+    plt.imshow(draw_array, alpha=0.5)
+    plt.show()
+def example_of_plot_xyz_px():
+    root_folder = r'RAL_plan_new_20190905'
+    print(os.listdir(root_folder))
+    folders = os.listdir(root_folder)
+    print('folders = {}'.format(folders))
+    folder = '24460566-ctdate20191015'
+    bytes_filepath = os.path.join('contours_bytes', r'{}.bytes'.format(folder))
+    #plot_with_contours(dicom_dict, z=sorted(dicom_dict['z'].keys())[10], algo_key='algo03')
+    dicom_dict = python_object_load(bytes_filepath)
+    for idx_z, z in enumerate( sorted(dicom_dict['z'].keys()) ):
+        if (idx_z > 10):
+            break
+        plot_xyz_px(dicom_dict, x_px = 256, y_px=256, z_mm=z)
+
+def plot_cen_pt(dicom_dict, lt_ovoid_ctpa, tandem_ctpa, rt_ovoid_ctpa):
+    #ctpa is mean CT pixel array. it mean the unit of element in array is (x_px, y_px, z_mm)
+    z_lt_ovoid = [float(pt[2]) for pt in lt_ovoid_ctpa]
+    z_rt_ovoid = [float(pt[2]) for pt in rt_ovoid_ctpa]
+    z_tandem = [float(pt[2]) for pt in tandem_ctpa]
+    z_sorted_list = sorted(list(set(z_tandem + z_lt_ovoid + z_rt_ovoid)))
+    for z_idx, z in enumerate(z_sorted_list):
+        all_pt_ctpa = lt_ovoid_ctpa + rt_ovoid_ctpa + tandem_ctpa
+        pts = [pt for pt in all_pt_ctpa if (pt[2] == z)]
+        x_list_px = [pt[0] for pt in pts]
+        y_list_px = [pt[1] for pt in pts]
+        z_mm = z
+        plot_n_xyz_px(dicom_dict, x_list_px, y_list_px, z_mm)
+
+def example_of_plot_cen_pt():
+    root_folder = r'RAL_plan_new_20190905'
+    print(os.listdir(root_folder))
+    folders = os.listdir(root_folder)
+    print('folders = {}'.format(folders))
+    folder = '24460566-ctdate20191015'
+    bytes_filepath = os.path.join('contours_bytes', r'{}.bytes'.format(folder))
+    #plot_with_contours(dicom_dict, z=sorted(dicom_dict['z'].keys())[10], algo_key='algo03')
+    dicom_dict = python_object_load(bytes_filepath)
+    (lt_ovoid, tandem, rt_ovoid) = algo_to_get_pixel_lines(dicom_dict)
+    plot_cen_pt(dicom_dict, lt_ovoid_ctpa=lt_ovoid, tandem_ctpa=tandem, rt_ovoid_ctpa=rt_ovoid)
+
+
+def plot_check_cen_pt_old():
     # Code is refer from CTImageInterpolation.ipynb
     # TODO: to implement the function by refer old code
     import matplotlib.pyplot as plt
@@ -1409,7 +1503,15 @@ if __name__ == '__main__':
     #exit(0)
 
     # Dump all rp file from all dicom_dict bytes file
-    example_create_all_rp_file()
+    #example_create_all_rp_file()
+    #exit(0)
+
+    # example to use plot_xyz_px
+    #example_of_plot_xyz_px()
+    #exit(0)
+
+    # example of check cen_pt by pictures
+    example_of_plot_cen_pt()
     exit(0)
 
     root_folder = r'RAL_plan_new_20190905'
