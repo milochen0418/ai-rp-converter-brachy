@@ -1117,22 +1117,6 @@ def generate_brachy_rp_file(RP_OperatorsName, dicom_dict, out_rp_filepath, is_en
     # Step 2. Convert line into metric representation
     # Original line is array of (x_px, y_px, z_mm) and we want to convert to (x_mm, y_mm, z_mm)
     (metric_lt_ovoid, metric_tandem, metric_rt_ovoid) = get_metric_lines_representation(dicom_dict, lt_ovoid, tandem, rt_ovoid)
-
-    """
-    new_lines = []
-    for line in [lt_ovoid, tandem, rt_ovoid]:
-        new_line = []
-        for pt in line:
-            z = pt[2]
-            ct_obj = dicom_dict['z'][z]
-            x = pt[0] * ct_obj['ps_x'] + ct_obj['origin_x']
-            y = pt[1] * ct_obj['ps_y'] + ct_obj['origin_y']
-            new_line.append([x,y,z])
-        new_lines.append(new_line)
-    (metric_lt_ovoid, metric_tandem, metric_rt_ovoid) = (new_lines[0], new_lines[1], new_lines[2])        
-    """
-
-
     print('metric_lt_ovoid = {}'.format(metric_lt_ovoid))
     print('metric_tandem = {}'.format(metric_tandem))
     print('metric_rt_ovoid = {}'.format(metric_rt_ovoid))
@@ -1335,7 +1319,9 @@ def plot_n_xyz_px(dicom_dict, x_list_px, y_list_px, z_mm):
     print('z = {}, x_list = {}, y_list = {}'.format(z_mm, x_list_px, y_list_px))
     plt.show()
 
-def plot_xyz_mm(dicom_dict,x_px, y_px, z_mm):
+def plot_xyz_mm(dicom_dict,x_mm, y_mm, z_mm):
+    folder_name = os.path.basename(dicom_dict['metadata']['folder'])
+    print('for folder ={}, plot_xyz_mm(dicom_dict ,{},{},{})'.format(folder_name, x_mm,y_mm,z_mm))
     # The code shoud support z_mm in any float value.
     # So that we can use it to check any ovoid or tandem that routing in 5mm travel
     # Because any pipe have different z value, so in each z slice , we only can show one point when we trace by the travel distance
@@ -1352,7 +1338,34 @@ def example_of_plot_xyz_mm():
     #plot_with_contours(dicom_dict, z=sorted(dicom_dict['z'].keys())[10], algo_key='algo03')
     dicom_dict = python_object_load(bytes_filepath)
     (lt_ovoid, tandem, rt_ovoid) = algo_to_get_pixel_lines(dicom_dict)
-    plot_cen_pt(dicom_dict, lt_ovoid_ctpa=lt_ovoid, tandem_ctpa=tandem, rt_ovoid_ctpa=rt_ovoid)
+    (metric_lt_ovoid, metric_tandem, metric_rt_ovoid) = get_metric_lines_representation(dicom_dict, lt_ovoid, tandem, rt_ovoid)
+    print('\nmetric_tandem information for {}'.format(folder))
+    for pt_idx, pt in enumerate(metric_tandem):
+        print('[{}]->{}'.format(pt_idx, pt))
+
+    metric_lt_ovoid.reverse()
+    metric_tandem.reverse()
+    metric_rt_ovoid.reverse()
+
+    # Step 4. Get Applicator RP line
+    tandem_rp_line = get_applicator_rp_line(metric_tandem, 4, 5)
+    lt_ovoid_rp_line = get_applicator_rp_line(metric_lt_ovoid, 0, 5)
+    rt_ovoid_rp_line = get_applicator_rp_line(metric_rt_ovoid, 0 ,5)
+
+    #print('lt_ovoid_rp_line = {}'.format(lt_ovoid_rp_line))
+    #print('tandem_rp_line = {}'.format(tandem_rp_line))
+    #print('rt_ovoid_rp_line = {}'.format(rt_ovoid_rp_line))
+    print('\ntandem_rp_line information for {}'.format(folder))
+    for pt_idx, pt in enumerate(tandem_rp_line):
+        print('[{}]->{}'.format(pt_idx, pt))
+        x_mm = pt[0]
+        y_mm = pt[1]
+        z_mm = pt[2]
+        plot_xyz_mm(dicom_dict, x_mm, y_mm, z_mm)
+
+
+
+    #plot_cen_pt(dicom_dict, lt_ovoid_ctpa=lt_ovoid, tandem_ctpa=tandem, rt_ovoid_ctpa=rt_ovoid)
 
 
 
@@ -1559,16 +1572,19 @@ if __name__ == '__main__':
     #exit(0)
 
     # Dump all rp file from all dicom_dict bytes file
-    example_create_all_rp_file()
-    exit(0)
+    #example_create_all_rp_file()
+    #exit(0)
 
     # example to use plot_xyz_px
     #example_of_plot_xyz_px()
     #exit(0)
 
-    # example of check cen_pt by pictures
-    example_of_plot_cen_pt()
+    example_of_plot_xyz_mm()
     exit(0)
+
+    # example of check cen_pt by pictures
+    #example_of_plot_cen_pt()
+    #exit(0)
 
     root_folder = r'RAL_plan_new_20190905'
     print(os.listdir(root_folder))
