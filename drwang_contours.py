@@ -1135,7 +1135,7 @@ def generate_brachy_rp_file(RP_OperatorsName, dicom_dict, out_rp_filepath, is_en
 
 
 
-# FUNCTIONS - file dump function , so that you can accelerate develop speed
+# FUNCTIONS - Some file batch processing function , so that you can accelerate develop speed
 def contours_python_object_dump(root_folder, filename):
     # Step 1. declare all_dicom_dict
     all_dicom_dict = {}
@@ -1185,8 +1185,9 @@ def example_dump_single_and_multiple_bytesfile():
     Create contours_bytes\592697-1.bytes
     Create contours_bytes\592697-2.bytes
     Create contours_bytes\592697-3.bytes
+    Create contours_bytes\592697-3.bytes
     Creating all_dicom_dict.bytes in very largest size
-    ...
+    Created all_dicom_dict.bytes
     """
     root_folder = r'RAL_plan_new_20190905'
     contours_python_object_dump(root_folder, 'all_dicom_dict.bytes')
@@ -1236,6 +1237,84 @@ def example_create_all_rp_file():
     print('failed folders = {}'.format(failed_folders))
     print('failed / total = {}/{}'.format(len(failed_folders), len(total_folders) ))
     print('success /total = {}/{}'.format(len(success_folders), len(total_folders) ))
+
+# FUNCTIONS - Some ploting utility functions support for you to check CT pictures with data
+def plot_check_cen_pt():
+    # Code is refer from CTImageInterpolation.ipynb
+    # TODO: to implement the function by refer old code
+    import matplotlib.pyplot as plt
+    def show_slice_any_z(d):
+        print('query_z = {} , folder = {}\n'.format(d['z'], d['folder']))
+        print('slice_z = {}, next_slice_z = {}, max_z = {}, min_z = {}'.format(d['slice_z'], d['next_slice_z'],d['max_z'], d['min_z']))
+        print('proportion = {}'.format(d['proportion']))
+        prev_pixel_array = d['prev_pixel_array']
+        pixel_array = d['pixel_array']
+        next_pixel_array = d['next_pixel_array']
+
+        if d['proportion'] == None:
+            print('pixel_array is None. Cannot be show, please check data \n d = {}'.format(d))
+            return
+
+        fig = plt.figure(figsize=(20, 6), dpi=80, facecolor='w', edgecolor='k')
+        plt.subplot(1, 3, 1)
+        plt.imshow(prev_pixel_array, cmap=plt.cm.bone)
+        plt.subplot(1, 3, 2)
+        plt.imshow(pixel_array, cmap=plt.cm.bone)
+        plt.subplot(1, 3, 3)
+        plt.imshow(next_pixel_array, cmap=plt.cm.bone)
+        plt.show()
+    def draw_target_to_max(pixel_x, pixel_y, pixel_array):
+        max_value = np.max(pixel_array)
+        max_value = max_value + 100
+        pixel_array[pixel_y, pixel_x] = max_value
+    def draw_target_to_min(pixel_x, pixel_y, pixel_array):
+        min_value = 0
+        pixel_array[pixel_y, pixel_x] = min_value
+    def draw_target(pixel_x, pixel_y, pixel_array):
+        print('draw_target x={}, y={}'.format(pixel_x, pixel_y))
+        draw_target_to_max(pixel_x, pixel_y, pixel_array)
+        return
+        for i in range(-5, 6):
+            draw_target_to_max(pixel_x + i, pixel_y + i, pixel_array)
+            draw_target_to_max(pixel_x + i + 1, pixel_y + i, pixel_array)
+            draw_target_to_min(pixel_x - i, pixel_y + i, pixel_array)
+            draw_target_to_min(pixel_x - i + 1, pixel_y + i, pixel_array)
+
+    # Then, show manual points
+    data = python_object_load('ai_man_points.bytes')
+    # folder = 'RAL_plan_new_20190905/34698361-1' # 9mm but fixed bug into 4.73mm done
+    # folder = 'RAL_plan_new_20190905/370648-2' # 7.695mm but ai tips is correct.
+    folder = 'RAL_plan_new_20190905/370648-1'  # 6.531 mm still check
+
+    ai_points = data[folder]['ai_points']
+    man_points = data[folder]['man_points']
+
+    for pt in man_points:
+        pt_x = pt[0]
+        pt_y = pt[1]
+        pt_z = pt[2]
+        d_dict = get_slice_in_any_z(folder, query_z=pt_z)
+        ps_x = d_dict['PixelSpacing_x']
+        ps_y = d_dict['PixelSpacing_y']
+        origin_x = d_dict['ImagePositionPatient_x']
+        origin_y = d_dict['ImagePositionPatient_y']
+        print(origin_x)
+        print(origin_y)
+        print("ps_x={}, ps_y={}, origin_x={}, origin_y={}".format(ps_x, ps_y, origin_x, origin_y))
+        pixel_array = copy.deepcopy(d_dict['pixel_array'])
+        draw_array = np.zeros(pixel_array.shape)
+
+        pixel_x = int((pt_x - origin_x) / ps_x)
+        pixel_y = int((pt_y - origin_y) / ps_y)
+
+        draw_target(pixel_x, pixel_y, draw_array)
+
+        fig = plt.figure(figsize=(20, 10), dpi=80, facecolor='w', edgecolor='k')
+
+        plt.subplot(1, 1, 1)
+        plt.imshow(pixel_array[100:400, 100:400], cmap=plt.cm.bone)
+        plt.imshow(draw_array[100:400, 100:400], alpha=0.5)
+        plt.show()
 
 
 if __name__ == '__main__':
