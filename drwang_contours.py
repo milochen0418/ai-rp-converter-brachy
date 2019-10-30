@@ -1338,7 +1338,7 @@ def example_of_plot_cen_pt():
     folders = os.listdir(root_folder)
     print('folders = {}'.format(folders))
     folder = '24460566-ctdate20191015'
-    folder = '29059811-1'
+    #folder = '29059811-1'
     bytes_filepath = os.path.join('contours_bytes', r'{}.bytes'.format(folder))
     #plot_with_contours(dicom_dict, z=sorted(dicom_dict['z'].keys())[10], algo_key='algo03')
     dicom_dict = python_object_load(bytes_filepath)
