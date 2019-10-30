@@ -36,13 +36,9 @@ def python_object_load(filename):
         except:
             return None
     return obj2
-# enable / disable for print
-
-# Disable
-def blockPrint():
+def blockPrint(): # Disable printing
     sys.stdout = open(os.devnull, 'w')
-# Restore
-def enablePrint():
+def enablePrint(): # Restore for printing
     sys.stdout = sys.__stdout__
 
 
@@ -553,7 +549,6 @@ def algo_to_get_pixel_lines(dicom_dict):
             prev_info['ps_y'] = ps_y
             print('tandem = {}'.format(tandem))
     return (lt_ovoid, tandem, rt_ovoid)
-
 def get_applicator_rp_line(metric_line, first_purpose_distance_mm, each_purpose_distance_mm):
     # REWRITE get_metric_pt_info_by_travel_distance, so the get_metric_pt, reduct_distance_step and get_metric_pt_info_travel_distance will not be USED
     def get_metric_pt(metric_line, pt_idx, pt_idx_remainder):
@@ -678,7 +673,6 @@ def get_applicator_rp_line(metric_line, first_purpose_distance_mm, each_purpose_
         tandem_rp_line.append(t_pt)
 
     return tandem_rp_line
-
 def wrap_to_rp_file(RP_OperatorsName, rs_filepath, tandem_rp_line, out_rp_filepath, lt_ovoid_rp_line, rt_ovoid_rp_line):
     rp_template_filepath = r'RP_Template/Brachy_RP.1.2.246.352.71.5.417454940236.2063186.20191015164204.dcm'
     def get_new_uid(old_uid='1.2.246.352.71.5.417454940236.2063186.20191015164204', study_date='20190923'):
@@ -1243,6 +1237,98 @@ def plot_check_cen_pt():
     # Code is refer from CTImageInterpolation.ipynb
     # TODO: to implement the function by refer old code
     import matplotlib.pyplot as plt
+    def get_slice_in_any_z(folder, query_z):
+        ret_dict = {}
+        ct_filelist = []
+        ct_z_dict = {}
+        for file in os.listdir(folder):
+            ct_filepath = os.path.join(folder, file)
+            ct_dcm = pydicom.read_file(ct_filepath)
+            if ct_dcm.Modality == 'CT':
+                z = ct_dcm.SliceLocation
+                ct_filelist.append(ct_filepath)
+                dicom_dict = {}
+                dicom_dict['filepath'] = ct_filepath
+                dicom_dict['pixel_array'] = copy.deepcopy(ct_dcm.pixel_array)
+                ct_z_dict[z] = dicom_dict
+
+        sorted_z = sorted(ct_z_dict.keys())
+
+        max_z = max(sorted_z)
+        min_z = min(sorted_z)
+
+        ret_dict['folder'] = folder
+        ret_dict['z'] = query_z
+        ret_dict['max_z'] = max_z
+        ret_dict['min_z'] = min_z
+
+        # set PixelSpacing _x _y and ImagePositionPatient _x _y
+        for file in os.listdir(folder):
+            ct_filepath = os.path.join(folder, file)
+            ct_dcm = pydicom.read_file(ct_filepath)
+            if ct_dcm.Modality == 'CT':
+                ret_dict["PixelSpacing_x"] = ct_dcm.PixelSpacing[0]
+                ret_dict["PixelSpacing_y"] = ct_dcm.PixelSpacing[1]
+                ret_dict["ImagePositionPatient_x"] = ct_dcm.ImagePositionPatient[0]
+                ret_dict["ImagePositionPatient_y"] = ct_dcm.ImagePositionPatient[1]
+                break
+
+        if query_z >= max_z or query_z < min_z:
+            ret_dict['prev_pixel_array'] = None
+            ret_dict['next_pixel_array'] = None
+            ret_dict['pixel_array'] = None
+            ret_dict['slice_z'] = None
+            ret_dict['next_slice_z'] = None
+            ret_dict['proportion'] = None
+            return ret_dict
+        if query_z == max_z:
+            ret_dict['pixel_array'] = copy.deepcopy(ct_z_dict[max_z])
+            ret_dict['prev_pixel_array'] = copy.deepcopy(ct_z_dict[max_z])
+            ret_dict['next_pixel_array'] = copy.deepcopy(ct_z_dict[max_z])
+
+            ret_dict['slice_z'] = max_z
+            ret_dict['next_slice_z'] = max_z
+            ret_dict['proportion'] = 0
+            return ret_dict
+
+        for idx, z in enumerate(sorted_z):
+            next_idx = idx + 1
+            if next_idx >= len(sorted_z):
+                continue
+            next_z = sorted_z[next_idx]
+            if query_z < z or query_z > next_z:
+                continue
+            # For now,  z <= query_z < next_z
+
+            # Figure proportion
+            proportion = (query_z - z) / (next_z - z)
+
+            print("L: z={} -> {}".format(z, ct_z_dict[z]['filepath']))
+            print("R: z={} -> {}".format(next_z, ct_z_dict[next_z]['filepath']))
+
+            # fig=plt.figure(figsize=(20, 5), dpi= 80, facecolor='w', edgecolor='k')
+            dicom_dict = ct_z_dict[z]
+            next_dicom_dict = ct_z_dict[next_z]
+
+            img = dicom_dict['pixel_array']
+            next_img = next_dicom_dict['pixel_array']
+            create_img = next_img * proportion + img * (1 - proportion)
+            # plt.subplot(1,4,1)
+            # plt.imshow(img, cmap=plt.cm.bone)
+            # plt.subplot(1,4,2)
+            # plt.imshow(create_img_1, cmap=plt.cm.bone)
+            # plt.subplot(1,4,3)
+            # plt.imshow(create_img_2, cmap=plt.cm.bone)
+            # plt.subplot(1,4,4)
+            # plt.imshow(next_img, cmap=plt.cm.bone)
+            # plt.show()
+            ret_dict['pixel_array'] = copy.deepcopy(create_img)
+            ret_dict['prev_pixel_array'] = copy.deepcopy(img)
+            ret_dict['next_pixel_array'] = copy.deepcopy(next_img)
+            ret_dict['slice_z'] = z
+            ret_dict['next_slice_z'] = next_z
+            ret_dict['proportion'] = proportion
+            return ret_dict
     def show_slice_any_z(d):
         print('query_z = {} , folder = {}\n'.format(d['z'], d['folder']))
         print('slice_z = {}, next_slice_z = {}, max_z = {}, min_z = {}'.format(d['slice_z'], d['next_slice_z'],d['max_z'], d['min_z']))
@@ -1318,11 +1404,13 @@ def plot_check_cen_pt():
 
 
 if __name__ == '__main__':
-    example_dump_single_and_multiple_bytesfile()
-    exit(0)
-
-    #example_create_all_rp_file()
+    # Dump All data with contours into dicom_dict bytes files
+    #example_dump_single_and_multiple_bytes file()
     #exit(0)
+
+    # Dump all rp file from all dicom_dict bytes file
+    example_create_all_rp_file()
+    exit(0)
 
     root_folder = r'RAL_plan_new_20190905'
     print(os.listdir(root_folder))
