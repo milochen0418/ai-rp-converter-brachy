@@ -9,6 +9,8 @@ from sys import exit
 import datetime
 
 
+from IPython.display import display, HTML
+
 import openpyxl
 import csv, codecs
 from decimal import Decimal
@@ -799,6 +801,13 @@ def get_dicom_dict(folder):
     out_dict['metadata']['folder'] = folder
     pathinfo = get_dicom_folder_pathinfo(folder)
     out_dict['pathinfo'] = pathinfo
+
+    rs_filepath = out_dict['pathinfo']['rs_filepath']
+    rs_fp = pydicom.read_file(rs_filepath)
+    out_dict['metadata']['RS_StudyDate'] = rs_fp.StudyDate
+    out_dict['metadata']['RS_PatientID'] = rs_fp.PatientID
+    out_dict['metadata']['RS_SOPInstanceUID'] = rs_fp.SOPInstanceUID
+
     ct_filelist = pathinfo['ct_filelist']
     for ct_filepath in ct_filelist:
         # print('ct_filepath = ', ct_filepath)
@@ -1163,7 +1172,17 @@ if __name__ == '__main__':
     # Step 5. Wrap to RP file
 
     print(dicom_dict['pathinfo']['rs_filepath'])
-    #wrap_to_rp_file(RP_OperatorsName='cylin', rs_filepath=rs_filepath, tandem_rp_line, out_rp_filepath=out_rp_filepath, lt_ovoid_rp_line=lt_ovoid_rp_line, rt_ovoid_rp_line=rt_ovoid_rp_line)
+    print(dicom_dict['metadata'].keys())
+    #print(pydicom.read_file(dicom_dict['pathinfo']['rs_filepath']).keys())
+    rs_fp = pydicom.read_file(dicom_dict['pathinfo']['rs_filepath'])
+    metadata = dicom_dict['metadata']
+    # out_rp_filepath format is PatientID, RS StudyDate  and the final is folder name processing by coding
+    out_rp_filepath = r'RP.{}.{}.f{}dcm'.format(  metadata['RS_PatientID'],  metadata['RS_StudyDate'],  os.path.basename(metadata['folder']) )
+    rs_filepath = dicom_dict['pathinfo']['rs_filepath']
+
+    print('out_rp_filepath = {}'.format(out_rp_filepath))
+    out_rp_filepath = os.path.join('all_rp_output', out_rp_filepath)
+    wrap_to_rp_file(RP_OperatorsName='cylin', rs_filepath=rs_filepath, tandem_rp_line=tandem_rp_line, out_rp_filepath=out_rp_filepath, lt_ovoid_rp_line=lt_ovoid_rp_line, rt_ovoid_rp_line=rt_ovoid_rp_line)
     #print('out_rp_filepath = {}'.format(out_rp_filepath))
 
 
