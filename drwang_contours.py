@@ -183,6 +183,7 @@ def get_view_scope_by_dicom_dict(dicom_dict):
     #(view_min_y, view_max_y, view_min_x, view_max_x) = (0,0,0,0)
     # fake answer
     return (156, 356, 156, 356)
+    #return (50, 50, 462, 462)
     #return (view_min_y=156, view_max_y=356, view_min_x=156, view_max_x=356)
     return (view_min_y, view_max_y, view_min_x, view_max_x)
 def get_contours_from_edge_detection_algo_01(img, filter_img):
@@ -689,7 +690,7 @@ def get_applicator_rp_line(metric_line, first_purpose_distance_mm, each_purpose_
         tandem_rp_line.append(t_pt)
 
     return tandem_rp_line
-def wrap_to_rp_file(RP_OperatorsName, rs_filepath, tandem_rp_line, out_rp_filepath, lt_ovoid_rp_line, rt_ovoid_rp_line):
+def wrap_to_rp_file(RP_OperatorsName, rs_filepath, tandem_rp_line, out_rp_filepath, lt_ovoid_rp_line, rt_ovoid_rp_line, app_roi_num_list=[16, 17, 18]):
     rp_template_filepath = r'RP_Template/Brachy_RP.1.2.246.352.71.5.417454940236.2063186.20191015164204.dcm'
     def get_new_uid(old_uid='1.2.246.352.71.5.417454940236.2063186.20191015164204', study_date='20190923'):
         uid = old_uid
@@ -754,7 +755,8 @@ def wrap_to_rp_file(RP_OperatorsName, rs_filepath, tandem_rp_line, out_rp_filepa
     rp_lines = [tandem_rp_line, rt_ovoid_rp_line, lt_ovoid_rp_line]
 
     #TODO rp_Ref_ROI_Numbers need to match to current RS's ROI number of three applicators
-    rp_Ref_ROI_Numbers = [16, 17, 18]
+    #rp_Ref_ROI_Numbers = [17, 18, 19]
+    rp_Ref_ROI_Numbers = app_roi_num_list
     rp_ControlPointRelativePositions = [3.5, 3.5, 3.5]
     for idx,rp_line in enumerate(rp_lines):
         # Change ROINumber of RP_Template_TestData RS into output RP output file
@@ -845,6 +847,22 @@ def get_dicom_dict(folder):
     out_dict['metadata']['RS_StudyDate'] = rs_fp.StudyDate
     out_dict['metadata']['RS_PatientID'] = rs_fp.PatientID
     out_dict['metadata']['RS_SOPInstanceUID'] = rs_fp.SOPInstanceUID
+
+    # Set metadata for ROINumber list (for wrap rp data)
+    rs_fp = pydicom.read_file(rs_filepath)
+    if (rs_fp != None):
+        applicator_target_list = ['Applicator1', 'Applicator2', 'Applicator3']
+        applicator_roi_dict = {}
+        for app_name in applicator_target_list:
+            for item in rs_fp.StructureSetROISequence:
+                if (item.ROIName == app_name):
+                    applicator_roi_dict[app_name] = item.ROINumber
+                    break
+        #display(applicator_roi_dict)
+        #print(applicator_roi_dict.values())
+        roi_num_list = [int(num) for num in applicator_roi_dict.values()]
+        #print(roi_num_list)
+        out_dict['metadata']['applicator123_roi_numbers'] = roi_num_list.copy()
 
     ct_filelist = pathinfo['ct_filelist']
     for ct_filepath in ct_filelist:
@@ -1144,7 +1162,8 @@ def generate_brachy_rp_file(RP_OperatorsName, dicom_dict, out_rp_filepath, is_en
     rs_filepath = dicom_dict['pathinfo']['rs_filepath']
 
     print('out_rp_filepath = {}'.format(out_rp_filepath))
-    wrap_to_rp_file(RP_OperatorsName=RP_OperatorsName, rs_filepath=rs_filepath, tandem_rp_line=tandem_rp_line, out_rp_filepath=out_rp_filepath, lt_ovoid_rp_line=lt_ovoid_rp_line, rt_ovoid_rp_line=rt_ovoid_rp_line)
+    app_roi_num_list = dicom_dict['metadata']['applicator123_roi_numbers']
+    wrap_to_rp_file(RP_OperatorsName=RP_OperatorsName, rs_filepath=rs_filepath, tandem_rp_line=tandem_rp_line, out_rp_filepath=out_rp_filepath, lt_ovoid_rp_line=lt_ovoid_rp_line, rt_ovoid_rp_line=rt_ovoid_rp_line, app_roi_num_list=app_roi_num_list)
     if (is_enable_print == False):
         enablePrint()
 
@@ -1225,12 +1244,12 @@ def example_create_all_rp_file():
     """
     root_folder = r'RAL_plan_new_20190905'
     print(os.listdir(root_folder))
-    #folders = os.listdir(root_folder)
+    folders = os.listdir(root_folder)
     #folders = ['34698361-3', '370648-3', '370648-4', '370648-5', '592697-2']
     #folders = [ '370648-3', '370648-4', '370648-5', '592697-2']
     #folders = ['370648-4', '370648-5', '592697-2']
     #folders = [ '370648-5', '592697-2']
-    folders = ['592697-2']
+    #folders = ['592697-2']
 
     print('folders = {}'.format(folders))
     total_folders = []
@@ -1254,7 +1273,7 @@ def example_create_all_rp_file():
         except Exception as ex:
             print('Create Failed')
             failed_folders.append(folder)
-            raise(ex)
+            #raise(ex)
     print('FOLDER SUMMARY REPORT')
     print('failed folders = {}'.format(failed_folders))
     print('failed / total = {}/{}'.format(len(failed_folders), len(total_folders) ))
@@ -1444,8 +1463,9 @@ def example_of_plot_xyz_mm():
     print(os.listdir(root_folder))
     folders = os.listdir(root_folder)
     print('folders = {}'.format(folders))
-    folder = '24460566-ctdate20191015'
+    #folder = '24460566-ctdate20191015'
     #folder = '29059811-1'
+    folder = '24460566-new01'
     bytes_filepath = os.path.join('contours_bytes', r'{}.bytes'.format(folder))
     #plot_with_contours(dicom_dict, z=sorted(dicom_dict['z'].keys())[10], algo_key='algo03')
     dicom_dict = python_object_load(bytes_filepath)
@@ -1507,8 +1527,10 @@ def example_of_plot_rp_lines():
     print(os.listdir(root_folder))
     folders = os.listdir(root_folder)
     print('folders = {}'.format(folders))
-    folder = '24460566-ctdate20191015'
+    #folder = '24460566-ctdate20191015'
+    #folder = '24460566-new01'
     #folder = '29059811-1'
+    folder = '23616019'
     bytes_filepath = os.path.join('contours_bytes', r'{}.bytes'.format(folder))
     #plot_with_contours(dicom_dict, z=sorted(dicom_dict['z'].keys())[10], algo_key='algo03')
     dicom_dict = python_object_load(bytes_filepath)
@@ -1540,13 +1562,37 @@ def example_of_plot_cen_pt():
     plot_cen_pt(dicom_dict, lt_ovoid_ctpa=lt_ovoid, tandem_ctpa=tandem, rt_ovoid_ctpa=rt_ovoid)
 
 if __name__ == '__main__':
+    example_create_all_rp_file()
+    exit()
+    #example_of_plot_rp_lines()
+    #exit()
+
     # Dump All data with contours into dicom_dict bytes files
-    #example_dump_single_and_multiple_bytes file()
+    #example_dump_single_and_multiple_bytesfile()
+    #exit()
+
+
+
+    # Debug to check data
+    root_folder = r'RAL_plan_new_20190905'
+    print(os.listdir(root_folder))
+    folders = os.listdir(root_folder)
+    print('folders = {}'.format(folders))
+    #folder = '592697-2'
+    folder = '34698361-3'
+    bytes_filepath = os.path.join('contours_bytes', r'{}.bytes'.format(folder))
+    #plot_with_contours(dicom_dict, z=sorted(dicom_dict['z'].keys())[10], algo_key='algo03')
+    dicom_dict = python_object_load(bytes_filepath)
+
+
+    #for z in sorted(dicom_dict['z'].keys()):
+    #    #plot_with_contours(dicom_dict, z=-3.5, algo_key='algo03')
+    #    plot_with_contours(dicom_dict, z=z, algo_key='algo03')
     #exit(0)
 
     # Dump all rp file from all dicom_dict bytes file
-    example_create_all_rp_file()
-    exit(0)
+    #example_create_all_rp_file()
+    #exit(0)
 
     # example to use plot_xyz_px
     #example_of_plot_xyz_px()
@@ -1560,16 +1606,17 @@ if __name__ == '__main__':
     #exit(0)
 
     # example of plot_rp_lines()
-    example_of_plot_rp_lines()
-    exit(0)
+    #example_of_plot_rp_lines()
+    #exit(0)
 
     root_folder = r'RAL_plan_new_20190905'
     print(os.listdir(root_folder))
     folders = os.listdir(root_folder)
     print('folders = {}'.format(folders))
-    folder = '24460566-ctdate20191015'
+    #folder = '24460566-ctdate20191015'
     #folder = '35252020-2'
     #folder = '29059811-2'
+    folder = '24460566-new01'
     bytes_filepath = os.path.join('contours_bytes', r'{}.bytes'.format(folder))
 
     #plot_with_contours(dicom_dict, z=sorted(dicom_dict['z'].keys())[10], algo_key='algo03')
