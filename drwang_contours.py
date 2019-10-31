@@ -1253,6 +1253,8 @@ def example_create_all_rp_file():
     print('success /total = {}/{}'.format(len(success_folders), len(total_folders) ))
 
 # FUNCTIONS - Some ploting utility functions support for you to check CT pictures with data
+
+
 def plot_xyz_px(dicom_dict, x_px, y_px, z_mm):
     import matplotlib.pyplot as plt
     def draw_target_to_max(pixel_x, pixel_y, pixel_array):
@@ -1290,7 +1292,6 @@ def example_of_plot_xyz_px():
         if (idx_z > 10):
             break
         plot_xyz_px(dicom_dict, x_px = 256, y_px=256, z_mm=z)
-
 def plot_n_xyz_px(dicom_dict, x_list_px, y_list_px, z_mm):
     # Only plot in the same z_mm slice
     import matplotlib.pyplot as plt
@@ -1318,98 +1319,6 @@ def plot_n_xyz_px(dicom_dict, x_list_px, y_list_px, z_mm):
 
     print('z = {}, x_list = {}, y_list = {}'.format(z_mm, x_list_px, y_list_px))
     plt.show()
-
-def plot_xyz_mm(dicom_dict,x_mm, y_mm, z_mm):
-    import matplotlib.pyplot as plt
-    folder_name = os.path.basename(dicom_dict['metadata']['folder'])
-    print('for folder ={}, plot_xyz_mm(dicom_dict ,{},{},{})'.format(folder_name, x_mm,y_mm,z_mm))
-    def get_slice_in_any_z(dicom_dict, query_z):
-        folder = dicom_dict['metadata']['folder']
-        ret_dict = {}
-        sorted_z = sorted(dicom_dict['z'].keys())
-        max_z = max(sorted_z)
-        min_z = min(sorted_z)
-
-        ret_dict['folder'] = folder
-        ret_dict['z'] = query_z
-        ret_dict['max_z'] = max_z
-        ret_dict['min_z'] = min_z
-
-        # set PixelSpacing _x _y and ImagePositionPatient _x _y
-        ct_obj = dicom_dict['z'][sorted(dicom_dict['z'].keys())[0]]
-        ret_dict["PixelSpacing_x"] = ct_obj['ps_x']
-        ret_dict["PixelSpacing_y"] = ct_obj['ps_y']
-        ret_dict["ImagePositionPatient_x"] = ct_obj['origin_x']
-        ret_dict["ImagePositionPatient_y"] = ct_obj['origin_y']
-
-        if query_z >= max_z or query_z < min_z:
-            ret_dict['prev_pixel_array'] = None
-            ret_dict['next_pixel_array'] = None
-            ret_dict['pixel_array'] = None
-            ret_dict['slice_z'] = None
-            ret_dict['next_slice_z'] = None
-            ret_dict['proportion'] = None
-            return ret_dict
-        if query_z == max_z:
-            #ret_dict['pixel_array'] = copy.deepcopy(ct_z_dict[max_z])
-            ret_dict['pixel_array'] = copy.deepcopy(dicom_dict['z'][max_z]['pixel_array'])
-            #ret_dict['prev_pixel_array'] = copy.deepcopy(ct_z_dict[max_z])
-            ret_dict['prev_pixel_array'] = copy.deepcopy(dicom_dict['z'][max_z]['pixel_array'])
-            #ret_dict['next_pixel_array'] = copy.deepcopy(ct_z_dict[max_z])
-            ret_dict['next_pixel_array'] = copy.deepcopy(dicom_dict['z'][max_z]['pixel_array'])
-
-            ret_dict['slice_z'] = max_z
-            ret_dict['next_slice_z'] = max_z
-            ret_dict['proportion'] = 0
-            return ret_dict
-        for idx, z in enumerate(sorted_z):
-            next_idx = idx + 1
-            if next_idx >= len(sorted_z):
-                continue
-            next_z = sorted_z[next_idx]
-            if query_z < z or query_z > next_z:
-                continue
-            # For now,  z <= query_z < next_z
-            # Figure proportion
-            proportion = (query_z - z) / (next_z - z)
-            print("L: z={} -> {}".format(z, dicom_dict['z'][z]['filepath']))
-            print("R: z={} -> {}".format(next_z, dicom_dict['z'][next_z]['filepath']))
-            ct_obj = dicom_dict['z'][z]
-            next_ct_obj = dicom_dict['z'][next_z]
-
-            img = ct_obj['pixel_array']
-            next_img = next_ct_obj['pixel_array']
-            create_img = next_img * proportion + img * (1 - proportion)
-            ret_dict['pixel_array'] = copy.deepcopy(create_img)
-            ret_dict['prev_pixel_array'] = copy.deepcopy(img)
-            ret_dict['next_pixel_array'] = copy.deepcopy(next_img)
-            ret_dict['slice_z'] = z
-            ret_dict['next_slice_z'] = next_z
-            ret_dict['proportion'] = proportion
-            return ret_dict
-    def show_slice_any_z(d):
-        print('query_z = {} , folder = {}\n'.format(d['z'], d['folder']))
-        print('slice_z = {}, next_slice_z = {}, max_z = {}, min_z = {}'.format(d['slice_z'], d['next_slice_z'],d['max_z'], d['min_z']))
-        print('proportion = {}'.format(d['proportion']))
-        prev_pixel_array = d['prev_pixel_array']
-        pixel_array = d['pixel_array']
-        next_pixel_array = d['next_pixel_array']
-        if d['proportion'] == None:
-            print('pixel_array is None. Cannot be show, please check data \n d = {}'.format(d))
-            return
-        plt.imshow(pixel_array, cmap=plt.cm.bone)
-        plt.show()
-
-
-    d_dict = get_slice_in_any_z(dicom_dict, query_z=0.1)
-    print(d_dict.keys())
-    show_slice_any_z(d_dict)
-    # The code shoud support z_mm in any float value.
-    # So that we can use it to check any ovoid or tandem that routing in 5mm travel
-    # Because any pipe have different z value, so in each z slice , we only can show one point when we trace by the travel distance
-    pass
-
-
 def plot_check_cen_pt_old():
     # Code is refer from CTImageInterpolation.ipynb
     # TODO: to implement the function by refer old code
@@ -1570,8 +1479,105 @@ def plot_check_cen_pt_old():
         plt.imshow(draw_array[100:400, 100:400], alpha=0.5)
         plt.show()
 
+def plot_xyz_mm(dicom_dict,x_mm, y_mm, z_mm):
+    import matplotlib.pyplot as plt
+    folder_name = os.path.basename(dicom_dict['metadata']['folder'])
+    print('for folder ={}, plot_xyz_mm(dicom_dict ,{},{},{})'.format(folder_name, x_mm,y_mm,z_mm))
+    def get_slice_in_any_z(dicom_dict, query_z):
+        folder = dicom_dict['metadata']['folder']
+        ret_dict = {}
+        sorted_z = sorted(dicom_dict['z'].keys())
+        max_z = max(sorted_z)
+        min_z = min(sorted_z)
 
+        ret_dict['folder'] = folder
+        ret_dict['z'] = query_z
+        ret_dict['max_z'] = max_z
+        ret_dict['min_z'] = min_z
 
+        # set PixelSpacing _x _y and ImagePositionPatient _x _y
+        ct_obj = dicom_dict['z'][sorted(dicom_dict['z'].keys())[0]]
+        ret_dict["PixelSpacing_x"] = ct_obj['ps_x']
+        ret_dict["PixelSpacing_y"] = ct_obj['ps_y']
+        ret_dict["ImagePositionPatient_x"] = ct_obj['origin_x']
+        ret_dict["ImagePositionPatient_y"] = ct_obj['origin_y']
+
+        if query_z >= max_z or query_z < min_z:
+            ret_dict['prev_pixel_array'] = None
+            ret_dict['next_pixel_array'] = None
+            ret_dict['pixel_array'] = None
+            ret_dict['slice_z'] = None
+            ret_dict['next_slice_z'] = None
+            ret_dict['proportion'] = None
+            return ret_dict
+        if query_z == max_z:
+            #ret_dict['pixel_array'] = copy.deepcopy(ct_z_dict[max_z])
+            ret_dict['pixel_array'] = copy.deepcopy(dicom_dict['z'][max_z]['pixel_array'])
+            #ret_dict['prev_pixel_array'] = copy.deepcopy(ct_z_dict[max_z])
+            ret_dict['prev_pixel_array'] = copy.deepcopy(dicom_dict['z'][max_z]['pixel_array'])
+            #ret_dict['next_pixel_array'] = copy.deepcopy(ct_z_dict[max_z])
+            ret_dict['next_pixel_array'] = copy.deepcopy(dicom_dict['z'][max_z]['pixel_array'])
+
+            ret_dict['slice_z'] = max_z
+            ret_dict['next_slice_z'] = max_z
+            ret_dict['proportion'] = 0
+            return ret_dict
+        for idx, z in enumerate(sorted_z):
+            next_idx = idx + 1
+            if next_idx >= len(sorted_z):
+                continue
+            next_z = sorted_z[next_idx]
+            if query_z < z or query_z > next_z:
+                continue
+            # For now,  z <= query_z < next_z
+            # Figure proportion
+            proportion = (query_z - z) / (next_z - z)
+            print("L: z={} -> {}".format(z, dicom_dict['z'][z]['filepath']))
+            print("R: z={} -> {}".format(next_z, dicom_dict['z'][next_z]['filepath']))
+            ct_obj = dicom_dict['z'][z]
+            next_ct_obj = dicom_dict['z'][next_z]
+
+            img = ct_obj['pixel_array']
+            next_img = next_ct_obj['pixel_array']
+            create_img = next_img * proportion + img * (1 - proportion)
+            ret_dict['pixel_array'] = copy.deepcopy(create_img)
+            ret_dict['prev_pixel_array'] = copy.deepcopy(img)
+            ret_dict['next_pixel_array'] = copy.deepcopy(next_img)
+            ret_dict['slice_z'] = z
+            ret_dict['next_slice_z'] = next_z
+            ret_dict['proportion'] = proportion
+            return ret_dict
+    def show_slice_any_z(d):
+        print('query_z = {} , folder = {}\n'.format(d['z'], d['folder']))
+        print('slice_z = {}, next_slice_z = {}, max_z = {}, min_z = {}'.format(d['slice_z'], d['next_slice_z'],d['max_z'], d['min_z']))
+        print('proportion = {}'.format(d['proportion']))
+        prev_pixel_array = d['prev_pixel_array']
+        pixel_array = d['pixel_array']
+        next_pixel_array = d['next_pixel_array']
+        if d['proportion'] == None:
+            print('pixel_array is None. Cannot be show, please check data \n d = {}'.format(d))
+            return
+        plt.imshow(pixel_array, cmap=plt.cm.bone)
+        plt.show()
+
+    z_keys = sorted(dicom_dict['z'].keys())
+    max_z = max(z_keys)
+    min_z = min(z_keys)
+    if (z_mm < min_z or z_mm  > max_z) :
+        print('cannot plot becuse z_mm is out of range (max_z,min_z)=({},{})'.format(max_z, min_z))
+        return
+
+    d = get_slice_in_any_z(dicom_dict, query_z=z_mm)
+    pixel_array = d['pixel_array']
+    #print(d_dict.keys())
+    #show_slice_any_z(d_dict)
+    plt.imshow(pixel_array, cmap=plt.cm.bone)
+    plt.show()
+
+    # The code shoud support z_mm in any float value.
+    # So that we can use it to check any ovoid or tandem that routing in 5mm travel
+    # Because any pipe have different z value, so in each z slice , we only can show one point when we trace by the travel distance
+    pass
 def example_of_plot_xyz_mm():
     root_folder = r'RAL_plan_new_20190905'
     print(os.listdir(root_folder))
@@ -1607,7 +1613,7 @@ def example_of_plot_xyz_mm():
         y_mm = pt[1]
         z_mm = pt[2]
         plot_xyz_mm(dicom_dict, x_mm, y_mm, z_mm)
-        break
+
 
 
 
