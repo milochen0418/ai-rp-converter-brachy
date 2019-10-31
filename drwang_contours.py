@@ -1253,8 +1253,6 @@ def example_create_all_rp_file():
     print('success /total = {}/{}'.format(len(success_folders), len(total_folders) ))
 
 # FUNCTIONS - Some ploting utility functions support for you to check CT pictures with data
-
-
 def plot_xyz_px(dicom_dict, x_px, y_px, z_mm):
     import matplotlib.pyplot as plt
     def draw_target_to_max(pixel_x, pixel_y, pixel_array):
@@ -1320,7 +1318,7 @@ def plot_n_xyz_px(dicom_dict, x_list_px, y_list_px, z_mm):
     print('z = {}, x_list = {}, y_list = {}'.format(z_mm, x_list_px, y_list_px))
     plt.show()
 
-def plot_xyz_mm(dicom_dict,x_mm, y_mm, z_mm):
+def plot_xyz_mm(dicom_dict,x_mm, y_mm, z_mm, label_text=''):
     import matplotlib.pyplot as plt
     folder_name = os.path.basename(dicom_dict['metadata']['folder'])
     print('for folder ={}, plot_xyz_mm(dicom_dict ,{},{},{})'.format(folder_name, x_mm,y_mm,z_mm))
@@ -1429,6 +1427,8 @@ def plot_xyz_mm(dicom_dict,x_mm, y_mm, z_mm):
     #plt.imshow(draw_array[190:-150, 190: -150], alpha=0.7, cmap=plt.cm.gist_gray)
     plt.imshow(pixel_array, cmap=plt.cm.gray)
     plt.imshow(draw_array, alpha=0.7, cmap=plt.cm.gist_gray)
+    plt.text(0,-20, '{}'.format(label_text), fontsize = 8)
+    plt.text(0, -2, 'draw ({},{}) px '.format(x_px,y_px), fontsize=8)
     plt.show()
     pass
 def example_of_plot_xyz_mm():
@@ -1465,12 +1465,14 @@ def example_of_plot_xyz_mm():
         x_mm = pt[0]
         y_mm = pt[1]
         z_mm = pt[2]
-        plot_xyz_mm(dicom_dict, x_mm, y_mm, z_mm)
+        label_text='tandem_rp_line[{}]\n(x, y, z)mm = ({},{},{})'.format(pt_idx, round(x_mm,2), round(y_mm,2), round(z_mm,2))
+        plot_xyz_mm(dicom_dict, x_mm, y_mm, z_mm, label_text=label_text)
 
 
 
 
     #plot_cen_pt(dicom_dict, lt_ovoid_ctpa=lt_ovoid, tandem_ctpa=tandem, rt_ovoid_ctpa=rt_ovoid)
+
 def plot_cen_pt(dicom_dict, lt_ovoid_ctpa, tandem_ctpa, rt_ovoid_ctpa):
     z_lt_ovoid = [float(pt[2]) for pt in lt_ovoid_ctpa]
     z_rt_ovoid = [float(pt[2]) for pt in rt_ovoid_ctpa]
