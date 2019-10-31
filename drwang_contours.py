@@ -1506,8 +1506,6 @@ def example_of_plot_rp_lines():
     dicom_dict = python_object_load(bytes_filepath)
     plot_rp_lines(dicom_dict)
 
-
-
 def plot_cen_pt(dicom_dict, lt_ovoid_ctpa, tandem_ctpa, rt_ovoid_ctpa):
     z_lt_ovoid = [float(pt[2]) for pt in lt_ovoid_ctpa]
     z_rt_ovoid = [float(pt[2]) for pt in rt_ovoid_ctpa]
@@ -1539,8 +1537,8 @@ if __name__ == '__main__':
     #exit(0)
 
     # Dump all rp file from all dicom_dict bytes file
-    #example_create_all_rp_file()
-    #exit(0)
+    example_create_all_rp_file()
+    exit(0)
 
     # example to use plot_xyz_px
     #example_of_plot_xyz_px()
