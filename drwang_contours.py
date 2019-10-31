@@ -302,7 +302,7 @@ def get_most_closed_pt(src_pt, pts, allowed_distance=100):
     return dst_pt
 def algo_to_get_pixel_lines(dicom_dict):
     # type: (dicom_dict) -> (lt_ovoid, tandem, rt_ovoid)
-    # Step 1. Use algo01 to get center point of inner contour
+    # Step 1. Use algo03 to get center point of inner contour
     last_z_in_step1 = sorted(dicom_dict['z'].keys())[0]
     center_pts_dict = {} # The following loop will use algo03 to figure L't Ovoid, R't Ovoid and half tandem
     for z in sorted(dicom_dict['z'].keys()):
@@ -433,6 +433,7 @@ def algo_to_get_pixel_lines(dicom_dict):
             continue
         prev_x_mm = prev_info['pt'][0] * prev_info['ps_x']
         prev_y_mm = prev_info['pt'][1] * prev_info['ps_y']
+        print('aa')
         x_mm = center_pts_dict[z][1][0] * ps_x
         y_mm = center_pts_dict[z][1][1] * ps_y
         #print('x_mm = {}, y_mm ={}'.format(x_mm, y_mm))
@@ -535,7 +536,7 @@ def algo_to_get_pixel_lines(dicom_dict):
             # [(x_min, x_max, y_min, y_max), (w, h), (x_mean, y_mean)]
             cen_pt = (rect_info[2][0], rect_info[2][1])
             cen_pts.append(cen_pt)
-        # Step 6.3.3
+        # Step 6.3.3. Find closed center point for these center pt. And append it into tandem line. But leave looping if there is no center pt
         # prev_info is like {'pt': (240, 226, -92.0), 'ps_x': "3.90625e-1", 'ps_y': "3.90625e-1"}
         # pt in cen_pts is like (240, 226)
         minimum_distance_mm = allowed_distance_mm + 1  # If minimum_distance_mm is finally large than allowed_distance_mm, it's mean there is no pt closed to prev_pt
@@ -1224,7 +1225,13 @@ def example_create_all_rp_file():
     """
     root_folder = r'RAL_plan_new_20190905'
     print(os.listdir(root_folder))
-    folders = os.listdir(root_folder)
+    #folders = os.listdir(root_folder)
+    #folders = ['34698361-3', '370648-3', '370648-4', '370648-5', '592697-2']
+    #folders = [ '370648-3', '370648-4', '370648-5', '592697-2']
+    #folders = ['370648-4', '370648-5', '592697-2']
+    #folders = [ '370648-5', '592697-2']
+    folders = ['592697-2']
+
     print('folders = {}'.format(folders))
     total_folders = []
     failed_folders = []
@@ -1247,6 +1254,7 @@ def example_create_all_rp_file():
         except Exception as ex:
             print('Create Failed')
             failed_folders.append(folder)
+            raise(ex)
     print('FOLDER SUMMARY REPORT')
     print('failed folders = {}'.format(failed_folders))
     print('failed / total = {}/{}'.format(len(failed_folders), len(total_folders) ))
