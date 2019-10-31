@@ -1324,6 +1324,25 @@ def plot_xyz_mm(dicom_dict,x_mm, y_mm, z_mm):
     import matplotlib.pyplot as plt
     folder_name = os.path.basename(dicom_dict['metadata']['folder'])
     print('for folder ={}, plot_xyz_mm(dicom_dict ,{},{},{})'.format(folder_name, x_mm,y_mm,z_mm))
+    def draw_target_to_max(pixel_x, pixel_y, pixel_array):
+        #max_value = np.max(pixel_array)
+        #max_value = max_value + 100
+        pixel_array[pixel_y, pixel_x] = 255
+    def draw_target_to_min(pixel_x, pixel_y, pixel_array):
+        #min_value = np.min(pixel_array)
+        pixel_array[pixel_y, pixel_x] = 0
+    def draw_target(pixel_x, pixel_y, pixel_array):
+        draw_target_to_max(pixel_x, pixel_y-1, pixel_array)
+        draw_target_to_max(pixel_x, pixel_y+1, pixel_array)
+        draw_target_to_max(pixel_x-1, pixel_y, pixel_array)
+        draw_target_to_max(pixel_x+1, pixel_y, pixel_array)
+        draw_target_to_max(pixel_x-1, pixel_y-1, pixel_array)
+        draw_target_to_max(pixel_x+1, pixel_y+1, pixel_array)
+        draw_target_to_max(pixel_x-1, pixel_y+1, pixel_array)
+        draw_target_to_max(pixel_x+1, pixel_y-1, pixel_array)
+
+
+        return
     def get_slice_in_any_z(dicom_dict, query_z):
         folder = dicom_dict['metadata']['folder']
         ret_dict = {}
@@ -1396,8 +1415,20 @@ def plot_xyz_mm(dicom_dict,x_mm, y_mm, z_mm):
         return
 
     d = get_slice_in_any_z(dicom_dict, query_z=z_mm)
-    pixel_array = d['pixel_array']
-    plt.imshow(pixel_array, cmap=plt.cm.bone)
+    ct_obj = dicom_dict['z'][d['slice_z']]
+    pixel_array = copy.deepcopy(d['pixel_array'])
+    draw_array = np.zeros(pixel_array.shape, dtype=pixel_array.dtype)
+    print('pixel_array.shape = {}'.format(pixel_array.shape))
+
+    x_px =int(  (x_mm-ct_obj['origin_x']) / ct_obj['ps_x'])
+    y_px =int( (y_mm- ct_obj['origin_y']) / ct_obj['ps_y'])
+    print('(x,y) = ({},{})'.format(x_px, y_px))
+    draw_target(x_px, y_px, draw_array)
+
+    #plt.imshow(pixel_array[190:-150, 190:-150], cmap=plt.cm.gray)
+    #plt.imshow(draw_array[190:-150, 190: -150], alpha=0.7, cmap=plt.cm.gist_gray)
+    plt.imshow(pixel_array, cmap=plt.cm.gray)
+    plt.imshow(draw_array, alpha=0.7, cmap=plt.cm.gist_gray)
     plt.show()
     pass
 def example_of_plot_xyz_mm():
