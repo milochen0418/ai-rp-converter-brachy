@@ -1320,14 +1320,12 @@ def plot_n_xyz_px(dicom_dict, x_list_px, y_list_px, z_mm):
     plt.show()
 
 def plot_xyz_mm(dicom_dict,x_mm, y_mm, z_mm):
+    import matplotlib.pyplot as plt
     folder_name = os.path.basename(dicom_dict['metadata']['folder'])
     print('for folder ={}, plot_xyz_mm(dicom_dict ,{},{},{})'.format(folder_name, x_mm,y_mm,z_mm))
     def get_slice_in_any_z(dicom_dict, query_z):
         folder = dicom_dict['metadata']['folder']
         ret_dict = {}
-        ct_filelist = []
-        ct_z_dict = {}
-
         sorted_z = sorted(dicom_dict['z'].keys())
         max_z = max(sorted_z)
         min_z = min(sorted_z)
@@ -1344,8 +1342,6 @@ def plot_xyz_mm(dicom_dict,x_mm, y_mm, z_mm):
         ret_dict["ImagePositionPatient_x"] = ct_obj['origin_x']
         ret_dict["ImagePositionPatient_y"] = ct_obj['origin_y']
 
-
-
         if query_z >= max_z or query_z < min_z:
             ret_dict['prev_pixel_array'] = None
             ret_dict['next_pixel_array'] = None
@@ -1354,7 +1350,6 @@ def plot_xyz_mm(dicom_dict,x_mm, y_mm, z_mm):
             ret_dict['next_slice_z'] = None
             ret_dict['proportion'] = None
             return ret_dict
-
         if query_z == max_z:
             #ret_dict['pixel_array'] = copy.deepcopy(ct_z_dict[max_z])
             ret_dict['pixel_array'] = copy.deepcopy(dicom_dict['z'][max_z]['pixel_array'])
@@ -1367,7 +1362,6 @@ def plot_xyz_mm(dicom_dict,x_mm, y_mm, z_mm):
             ret_dict['next_slice_z'] = max_z
             ret_dict['proportion'] = 0
             return ret_dict
-
         for idx, z in enumerate(sorted_z):
             next_idx = idx + 1
             if next_idx >= len(sorted_z):
@@ -1376,30 +1370,16 @@ def plot_xyz_mm(dicom_dict,x_mm, y_mm, z_mm):
             if query_z < z or query_z > next_z:
                 continue
             # For now,  z <= query_z < next_z
-
             # Figure proportion
             proportion = (query_z - z) / (next_z - z)
+            print("L: z={} -> {}".format(z, dicom_dict['z'][z]['filepath']))
+            print("R: z={} -> {}".format(next_z, dicom_dict['z'][next_z]['filepath']))
+            ct_obj = dicom_dict['z'][z]
+            next_ct_obj = dicom_dict['z'][next_z]
 
-            #print("L: z={} -> {}".format(z, ct_z_dict[z]['filepath']))
-            #print("L: z={} -> {}".format(z, dicom_dict['z'][z]['filepath']))
-            print("R: z={} -> {}".format(next_z, ct_z_dict[next_z]['filepath']))
-
-            # fig=plt.figure(figsize=(20, 5), dpi= 80, facecolor='w', edgecolor='k')
-            dicom_dict = ct_z_dict[z]
-            next_dicom_dict = ct_z_dict[next_z]
-
-            img = dicom_dict['pixel_array']
-            next_img = next_dicom_dict['pixel_array']
+            img = ct_obj['pixel_array']
+            next_img = next_ct_obj['pixel_array']
             create_img = next_img * proportion + img * (1 - proportion)
-            # plt.subplot(1,4,1)
-            # plt.imshow(img, cmap=plt.cm.bone)
-            # plt.subplot(1,4,2)
-            # plt.imshow(create_img_1, cmap=plt.cm.bone)
-            # plt.subplot(1,4,3)
-            # plt.imshow(create_img_2, cmap=plt.cm.bone)
-            # plt.subplot(1,4,4)
-            # plt.imshow(next_img, cmap=plt.cm.bone)
-            # plt.show()
             ret_dict['pixel_array'] = copy.deepcopy(create_img)
             ret_dict['prev_pixel_array'] = copy.deepcopy(img)
             ret_dict['next_pixel_array'] = copy.deepcopy(next_img)
@@ -1407,8 +1387,23 @@ def plot_xyz_mm(dicom_dict,x_mm, y_mm, z_mm):
             ret_dict['next_slice_z'] = next_z
             ret_dict['proportion'] = proportion
             return ret_dict
+    def show_slice_any_z(d):
+        print('query_z = {} , folder = {}\n'.format(d['z'], d['folder']))
+        print('slice_z = {}, next_slice_z = {}, max_z = {}, min_z = {}'.format(d['slice_z'], d['next_slice_z'],d['max_z'], d['min_z']))
+        print('proportion = {}'.format(d['proportion']))
+        prev_pixel_array = d['prev_pixel_array']
+        pixel_array = d['pixel_array']
+        next_pixel_array = d['next_pixel_array']
+        if d['proportion'] == None:
+            print('pixel_array is None. Cannot be show, please check data \n d = {}'.format(d))
+            return
+        plt.imshow(pixel_array, cmap=plt.cm.bone)
+        plt.show()
 
 
+    d_dict = get_slice_in_any_z(dicom_dict, query_z=0.1)
+    print(d_dict.keys())
+    show_slice_any_z(d_dict)
     # The code shoud support z_mm in any float value.
     # So that we can use it to check any ovoid or tandem that routing in 5mm travel
     # Because any pipe have different z value, so in each z slice , we only can show one point when we trace by the travel distance
@@ -1495,15 +1490,6 @@ def plot_check_cen_pt_old():
             img = dicom_dict['pixel_array']
             next_img = next_dicom_dict['pixel_array']
             create_img = next_img * proportion + img * (1 - proportion)
-            # plt.subplot(1,4,1)
-            # plt.imshow(img, cmap=plt.cm.bone)
-            # plt.subplot(1,4,2)
-            # plt.imshow(create_img_1, cmap=plt.cm.bone)
-            # plt.subplot(1,4,3)
-            # plt.imshow(create_img_2, cmap=plt.cm.bone)
-            # plt.subplot(1,4,4)
-            # plt.imshow(next_img, cmap=plt.cm.bone)
-            # plt.show()
             ret_dict['pixel_array'] = copy.deepcopy(create_img)
             ret_dict['prev_pixel_array'] = copy.deepcopy(img)
             ret_dict['next_pixel_array'] = copy.deepcopy(next_img)
@@ -1621,6 +1607,7 @@ def example_of_plot_xyz_mm():
         y_mm = pt[1]
         z_mm = pt[2]
         plot_xyz_mm(dicom_dict, x_mm, y_mm, z_mm)
+        break
 
 
 
