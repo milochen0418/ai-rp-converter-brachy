@@ -1468,10 +1468,45 @@ def example_of_plot_xyz_mm():
         label_text='tandem_rp_line[{}]\n(x, y, z)mm = ({},{},{})'.format(pt_idx, round(x_mm,2), round(y_mm,2), round(z_mm,2))
         plot_xyz_mm(dicom_dict, x_mm, y_mm, z_mm, label_text=label_text)
 
+def plot_rp_lines(dicom_dict):
+    (lt_ovoid, tandem, rt_ovoid) = algo_to_get_pixel_lines(dicom_dict)
+    (metric_lt_ovoid, metric_tandem, metric_rt_ovoid) = get_metric_lines_representation(dicom_dict, lt_ovoid, tandem, rt_ovoid)
+    metric_lt_ovoid.reverse()
+    metric_tandem.reverse()
+    metric_rt_ovoid.reverse()
+    tandem_rp_line = get_applicator_rp_line(metric_tandem, 4, 5)
+    lt_ovoid_rp_line = get_applicator_rp_line(metric_lt_ovoid, 0, 5)
+    rt_ovoid_rp_line = get_applicator_rp_line(metric_rt_ovoid, 0 ,5)
+    print('lt_ovoid_rp_line = {}'.format(lt_ovoid_rp_line))
+    print('tandem_rp_line = {}'.format(tandem_rp_line))
+    print('rt_ovoid_rp_line = {}'.format(rt_ovoid_rp_line))
+    #print('\ntandem_rp_line information for {}'.format(folder))
+    metadata = dicom_dict['metadata']
+    out_rp_filepath = r'RP.{}.{}.f{}.dcm'.format(metadata['RS_PatientID'], metadata['RS_StudyDate'],os.path.basename(metadata['folder']))
+    lines_dict = {'lt_ovoid_rp_line':lt_ovoid_rp_line, 'tandem_rp_line':tandem_rp_line, 'rt_ovoid_rp_line':rt_ovoid_rp_line}
+    rp_file_name = out_rp_filepath
+    for rp_line_name in lines_dict.keys():
+        rp_line = lines_dict[rp_line_name]
+        for pt_idx, pt in enumerate(rp_line):
+            print('{}[{}]->{}'.format(rp_line_name, pt_idx, pt))
+            x_mm = pt[0]
+            y_mm = pt[1]
+            z_mm = pt[2]
+            label_text = '{}\n{}[{}/{}]\n(x, y, z)mm = ({},{},{})'.format(rp_file_name, rp_line_name, pt_idx, (len(rp_line)-1), round(x_mm, 1), round(y_mm, 1),round(z_mm, 1))
+            plot_xyz_mm(dicom_dict, x_mm, y_mm, z_mm, label_text=label_text)
+def example_of_plot_rp_lines():
+    root_folder = r'RAL_plan_new_20190905'
+    print(os.listdir(root_folder))
+    folders = os.listdir(root_folder)
+    print('folders = {}'.format(folders))
+    folder = '24460566-ctdate20191015'
+    #folder = '29059811-1'
+    bytes_filepath = os.path.join('contours_bytes', r'{}.bytes'.format(folder))
+    #plot_with_contours(dicom_dict, z=sorted(dicom_dict['z'].keys())[10], algo_key='algo03')
+    dicom_dict = python_object_load(bytes_filepath)
+    plot_rp_lines(dicom_dict)
 
 
-
-    #plot_cen_pt(dicom_dict, lt_ovoid_ctpa=lt_ovoid, tandem_ctpa=tandem, rt_ovoid_ctpa=rt_ovoid)
 
 def plot_cen_pt(dicom_dict, lt_ovoid_ctpa, tandem_ctpa, rt_ovoid_ctpa):
     z_lt_ovoid = [float(pt[2]) for pt in lt_ovoid_ctpa]
@@ -1511,12 +1546,16 @@ if __name__ == '__main__':
     #example_of_plot_xyz_px()
     #exit(0)
 
-    example_of_plot_xyz_mm()
-    exit(0)
+    #example_of_plot_xyz_mm()
+    #exit(0)
 
     # example of check cen_pt by pictures
     #example_of_plot_cen_pt()
     #exit(0)
+
+    # example of plot_rp_lines()
+    example_of_plot_rp_lines()
+    exit(0)
 
     root_folder = r'RAL_plan_new_20190905'
     print(os.listdir(root_folder))
