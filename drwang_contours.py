@@ -797,7 +797,6 @@ def get_metric_lines_representation(dicom_dict, lt_ovoid, tandem, rt_ovoid):
 
 
 
-
 # FUNCTIONS - DICOM data processing Functions
 def get_dicom_folder_pathinfo(folder):
     dicom_folder = {}
@@ -1093,17 +1092,18 @@ def generate_patient_mean_area_csv_report(folder, algo_key='algo01', csv_filepat
         #csv_writter.writerow(out_dict['header'])
         for rowlist in sheet:
             csv_writter.writerow(rowlist)
+    #print('Time to lookup sheet variable')
 
-    print('Time to lookup sheet variable')
-def generate_all_patient_mean_area_csv_report(root_folder): # generate for each patient's data and put in more-infos folder
-    root_folder = r'RAL_plan_new_20190905'
+def generate_all_patient_mean_area_csv_report(root_folder = r'RAL_plan_new_20190905'): # generate for each patient's data and put in more-infos folder
     f_list = [ os.path.join(root_folder, file) for file in os.listdir(root_folder) ]
-    for folder in f_list:
-        print(os.path.basename(folder))
+    for folder_idx, folder in enumerate(f_list):
+        print( r'[{}/{}] {}'.format(folder_idx+1, len(f_list), os.path.basename(folder)) , end='\t', flush=True)
         algo_keys = ['algo01', 'algo02', 'algo03', 'algo04']
         for algo_key in algo_keys:
+            print(algo_key, end='\t', flush=True)
             csv_filepath = r'more_infos/{}-{}.csv'.format(os.path.basename(folder), algo_key)
             generate_patient_mean_area_csv_report(folder, algo_key=algo_key, csv_filepath=csv_filepath)
+        print('', end='\n', flush=True)
     pass
 def plot_with_contours(dicom_dict, z, algo_key):
     import matplotlib.pyplot as plt
@@ -1123,7 +1123,6 @@ def plot_with_contours(dicom_dict, z, algo_key):
     plt.imshow(img, cmap=plt.cm.bone)
     plt.show()
     pass
-
 def generate_brachy_rp_file(RP_OperatorsName, dicom_dict, out_rp_filepath, is_enable_print=False):
     if (is_enable_print == False):
         blockPrint()
@@ -1166,8 +1165,6 @@ def generate_brachy_rp_file(RP_OperatorsName, dicom_dict, out_rp_filepath, is_en
     wrap_to_rp_file(RP_OperatorsName=RP_OperatorsName, rs_filepath=rs_filepath, tandem_rp_line=tandem_rp_line, out_rp_filepath=out_rp_filepath, lt_ovoid_rp_line=lt_ovoid_rp_line, rt_ovoid_rp_line=rt_ovoid_rp_line, app_roi_num_list=app_roi_num_list)
     if (is_enable_print == False):
         enablePrint()
-
-
 
 # FUNCTIONS - Some file batch processing function , so that you can accelerate develop speed
 def contours_python_object_dump(root_folder, filename):
@@ -1530,7 +1527,8 @@ def example_of_plot_rp_lines():
     #folder = '24460566-ctdate20191015'
     #folder = '24460566-new01'
     #folder = '29059811-1'
-    folder = '23616019'
+    #folder = '23616019'
+    folder = '34982640'
     bytes_filepath = os.path.join('contours_bytes', r'{}.bytes'.format(folder))
     #plot_with_contours(dicom_dict, z=sorted(dicom_dict['z'].keys())[10], algo_key='algo03')
     dicom_dict = python_object_load(bytes_filepath)
@@ -1562,16 +1560,17 @@ def example_of_plot_cen_pt():
     plot_cen_pt(dicom_dict, lt_ovoid_ctpa=lt_ovoid, tandem_ctpa=tandem, rt_ovoid_ctpa=rt_ovoid)
 
 if __name__ == '__main__':
-    example_create_all_rp_file()
-    exit()
-    #example_of_plot_rp_lines()
-    #exit()
 
+    root_folder = r'RAL_plan_new_20190905'
+    generate_all_patient_mean_area_csv_report(root_folder)
+    exit()
+    #example_create_all_rp_file()
+    #exit()
+    example_of_plot_rp_lines()
+    exit()
     # Dump All data with contours into dicom_dict bytes files
     #example_dump_single_and_multiple_bytesfile()
     #exit()
-
-
 
     # Debug to check data
     root_folder = r'RAL_plan_new_20190905'
@@ -1636,8 +1635,6 @@ if __name__ == '__main__':
     generate_brachy_rp_file(RP_OperatorsName='cylin', dicom_dict=dicom_dict, out_rp_filepath=out_rp_filepath, is_enable_print=False)
     time_end = datetime.datetime.now()
     print('{}s [{}-{}]'.format(time_end-time_start, time_start, time_end), end='\n')
-
-
 
 
     exit(0)
