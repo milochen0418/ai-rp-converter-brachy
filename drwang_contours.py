@@ -1210,25 +1210,6 @@ def generate_all_patient_needle_csv_report(root_folder = r'RAL_plan_new_20190905
         print('', end='\n', flush=True)
     pass
 
-
-def plot_with_contours(dicom_dict, z, algo_key):
-    import matplotlib.pyplot as plt
-    z_map = dicom_dict['z']
-    ct_obj = z_map[z]
-    print(ct_obj.keys())
-    pixel_array = ct_obj['rescale_pixel_array']
-    metadata = dicom_dict['metadata']
-    contours = ct_obj['output']['contours512'][algo_key]
-    img = copy.deepcopy(pixel_array)
-    for contour in contours:
-        cv2.drawContours(img, contour, -1, (0, 0, 255), 1)
-    #plt.imshow(pixel_array, cmap=plt.cm.bone)
-    folder_name = os.path.basename(dicom_dict['metadata']['folder'])
-    plt.text(0, -2, 'z = {}, folder = {}, algo={}'.format(z, folder_name,algo_key), fontsize=10)
-
-    plt.imshow(img, cmap=plt.cm.bone)
-    plt.show()
-    pass
 def generate_brachy_rp_file(RP_OperatorsName, dicom_dict, out_rp_filepath, is_enable_print=False):
     if (is_enable_print == False):
         blockPrint()
@@ -1381,6 +1362,7 @@ def example_create_all_rp_file():
     print('failed folders = {}'.format(failed_folders))
     print('failed / total = {}/{}'.format(len(failed_folders), len(total_folders) ))
     print('success /total = {}/{}'.format(len(success_folders), len(total_folders) ))
+
 
 # FUNCTIONS - Some ploting utility functions support for you to check CT pictures with data
 def plot_xyz_px(dicom_dict, x_px, y_px, z_mm):
@@ -1665,11 +1647,113 @@ def example_of_plot_cen_pt():
     (lt_ovoid, tandem, rt_ovoid) = algo_to_get_pixel_lines(dicom_dict)
     plot_cen_pt(dicom_dict, lt_ovoid_ctpa=lt_ovoid, tandem_ctpa=tandem, rt_ovoid_ctpa=rt_ovoid)
 
-if __name__ == '__main__':
+
+def plot_with_contours(dicom_dict, z, algo_key):
+    import matplotlib.pyplot as plt
+    z_map = dicom_dict['z']
+    ct_obj = z_map[z]
+    print(ct_obj.keys())
+    pixel_array = ct_obj['rescale_pixel_array']
+    metadata = dicom_dict['metadata']
+    contours = ct_obj['output']['contours512'][algo_key]
+    img = copy.deepcopy(pixel_array)
+    for contour in contours:
+        cv2.drawContours(img, contour, -1, (0, 0, 255), 1)
+    #plt.imshow(pixel_array, cmap=plt.cm.bone)
+    folder_name = os.path.basename(dicom_dict['metadata']['folder'])
+    plt.text(0, -2, 'z = {}, folder = {}, algo={}'.format(z, folder_name,algo_key), fontsize=10)
+    plt.imshow(img, cmap=plt.cm.bone)
+    plt.show()
+    pass
+def example_of_plot_contours():
+    root_folder = r'RAL_plan_new_20190905'
+    print(os.listdir(root_folder))
+    folders = os.listdir(root_folder)
+    print('folders = {}'.format(folders))
+    folder = '592697-2'
+    bytes_filepath = os.path.join('contours_bytes', r'{}.bytes'.format(folder))
+    dicom_dict = python_object_load(bytes_filepath)
+
+    for z_idx, z in enumerate(sorted(dicom_dict['z'].keys())):
+        #plot_with_contours(dicom_dict, z=sorted(dicom_dict['z'].keys())[z_idx], algo_key='algo01')
+        plot_with_contours(dicom_dict, z=z, algo_key='algo01')
+        continue
+
+def plot_with_needle_contours(dicom_dict, z):
+    algo_key = 'algo04'
+    import matplotlib.pyplot as plt
+    z_map = dicom_dict['z']
+    ct_obj = z_map[z]
+    #print(ct_obj.keys())
+    pixel_array = ct_obj['rescale_pixel_array']
+    metadata = dicom_dict['metadata']
+    # TODO
+    # translate
+
+
+    #needle_contours_infos = [info for info in ct_obj['output']['contours_infos']['algo04'] if (info['area_mm2'] < 10)]
+    #needle_contours512 = [ct_obj['output']['contours512'][algo_key][info_idx] for info_idx, info in enumerate(ct_obj['output']['contours_infos']['algo04']) if (info['area_mm2'] < 10))]
+    needle_contours512 = []
+    for info_idx, info in enumerate(ct_obj['output']['contours_infos']['algo04']):
+        if (info['area_mm2'] < 10):
+            needle_contours512.append(ct_obj['output']['contours512'][algo_key][info_idx])
+
+
+    contours = copy.deepcopy(needle_contours512)
+
+    img = copy.deepcopy(pixel_array)
+    for contour in contours:
+        cv2.drawContours(img, contour, -1, (0, 0, 255), 1)
+    #plt.imshow(pixel_array, cmap=plt.cm.bone)
+    folder_name = os.path.basename(dicom_dict['metadata']['folder'])
+    plt.text(0, -2, 'z = {}, folder = {}, algo={}-needle'.format(z, folder_name,algo_key), fontsize=10)
+    #plt.imshow(img, cmap=plt.cm.bone)
+    plt.imshow(img[150:-150,150:-150], cmap=plt.cm.bone)
+    plt.show()
+    pass
+def example_of_plot_with_needle_contours():
 
     root_folder = r'RAL_plan_new_20190905'
+    print(os.listdir(root_folder))
+    folders = os.listdir(root_folder)
+    print('folders = {}'.format(folders))
+    folder = '592697-2'
+    bytes_filepath = os.path.join('contours_bytes', r'{}.bytes'.format(folder))
+    dicom_dict = python_object_load(bytes_filepath)
 
-    generate_all_patient_needle_csv_report(root_folder)
+    """
+    algo_key = 'algo04'
+    dicom_dict = get_dicom_dict(folder)
+    generate_metadata_to_dicom_dict(dicom_dict)
+    generate_output_to_dicom_dict(dicom_dict)
+    """
+
+    # Process to make needle_contours_infos
+    """
+    for z in sorted(dicom_dict['z'].keys()):
+        ct_obj = dicom_dict['z'][z]
+        needle_contours_infos = [info for info in ct_obj['output']['contours_infos']['algo04'] if (info['area_mm2'] < 10) ]
+        ct_obj['output']['needle_contours_infos'] = copy.deepcopy(needle_contours_infos)
+        print('len(dicom_dict["z"][{}]["output"]["needle_contours_infos"]) = {}'.format(z, len(dicom_dict['z'][z]['output']['needle_contours_infos'])))
+    """
+
+    for z_idx, z in enumerate(sorted(dicom_dict['z'].keys())):
+        #plot_with_contours(dicom_dict, z=sorted(dicom_dict['z'].keys())[z_idx], algo_key='algo01')
+        plot_with_needle_contours(dicom_dict, z=z)
+        continue
+
+    pass
+
+if __name__ == '__main__':
+
+    example_of_plot_with_needle_contours()
+    exit()
+
+    #example_of_plot_contours()
+    #exit()
+
+    #root_folder = r'RAL_plan_new_20190905'
+    #generate_all_patient_needle_csv_report(root_folder)
     #generate_all_patient_mean_area_csv_report(root_folder)
     exit()
     #example_create_all_rp_file()
