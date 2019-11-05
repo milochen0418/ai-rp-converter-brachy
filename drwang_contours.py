@@ -1708,7 +1708,9 @@ def plot_with_needle_contours(dicom_dict, z):
     folder_name = os.path.basename(dicom_dict['metadata']['folder'])
     plt.text(0, -2, 'z = {}, folder = {}, algo={}-needle'.format(z, folder_name,algo_key), fontsize=10)
     #plt.imshow(img, cmap=plt.cm.bone)
-    plt.imshow(img[150:-150,150:-150], cmap=plt.cm.bone)
+    #plt.imshow(img[150:-150,150:-150], cmap=plt.cm.bone)
+    #plt.imshow(img[150:-150, 150:-150], cmap=plt.cm.gray)
+    plt.imshow(img[50:-50, 50:-50], cmap=plt.cm.gray)
     plt.show()
     pass
 def example_of_plot_with_needle_contours():
