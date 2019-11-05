@@ -1106,20 +1106,32 @@ def generate_all_patient_mean_area_csv_report(root_folder = r'RAL_plan_new_20190
         print('', end='\n', flush=True)
     pass
 
-def generate_patient_needle_mean_area_csv_report(folder, algo_key='algo01', csv_filepath = '29059811-1-algo01.csv'):
+def generate_patient_needle_mean_area_csv_report(folder, csv_filepath = '29059811-1-algo01.csv'):
     algo_key = 'algo04'
     output_csv_filepath = csv_filepath
     dicom_dict = get_dicom_dict(folder)
     generate_metadata_to_dicom_dict(dicom_dict)
     generate_output_to_dicom_dict(dicom_dict)
+
+    # Process to make needle_contours_infos
+    for z in sorted(dicom_dict['z'].keys()):
+        ct_obj = dicom_dict['z'][z]
+        needle_contours_infos = [info for info in ct_obj['output']['contours_infos']['algo04'] if (info['area_mm2'] < 10) ]
+        ct_obj['output']['needle_contours_infos'] = copy.deepcopy(needle_contours_infos)
+        print('len(dicom_dict["z"][{}]["output"]["needle_contours_infos"]) = {}'.format(z, len(dicom_dict['z'][z]['output']['needle_contours_infos'])))
+
+
+
+
     sheet_width = 0
     sheet_height = 0
     z_map = dicom_dict['z']
+
     max_of_contours = 0
     for z in sorted(z_map.keys()):
         ct_obj = z_map[z]
-        contours_infos = ct_obj['output']['contours_infos'][algo_key]
-
+        #contours_infos = ct_obj['output']['contours_infos'][algo_key]
+        contours_infos = ct_obj['output']['needle_contours_infos']
         len_contours = len(contours_infos)
         if len_contours > max_of_contours:
             max_of_contours = len_contours
@@ -1137,7 +1149,8 @@ def generate_patient_needle_mean_area_csv_report(folder, algo_key='algo01', csv_
     # fill first 2 columns
     for z in sorted(z_map.keys()):
         ct_obj = z_map[z]
-        contours_infos = ct_obj['output']['contours_infos'][algo_key]
+        #contours_infos = ct_obj['output']['contours_infos'][algo_key]
+        contours_infos = ct_obj['output']['needle_contours_infos']
         contour_num = len(contours_infos)
         row = [z, contour_num]
         sheet.append(row)
@@ -1158,7 +1171,8 @@ def generate_patient_needle_mean_area_csv_report(folder, algo_key='algo01', csv_
     for z_idx, z in enumerate(sorted(z_map.keys())):
         ct_obj = z_map[z]
         write_infos = []
-        infos = copy.deepcopy(ct_obj['output']['contours_infos'][algo_key])
+        #infos = copy.deepcopy(ct_obj['output']['contours_infos'][algo_key])
+        infos = copy.deepcopy(ct_obj['output']['needle_contours_infos'])
         infos.sort(key=lambda info: info['mean'][0]) # sorting infos by mean x
         for info_idx, info in enumerate(infos):
             mean_x = info['mean'][0]
@@ -1190,7 +1204,8 @@ def generate_all_patient_needle_csv_report(root_folder = r'RAL_plan_new_20190905
         algo_keys = ['algo04']
         for algo_key in algo_keys:
             print(algo_key, end='\t', flush=True)
-            csv_filepath = r'needle_more_infos/{}-{}.csv'.format(os.path.basename(folder), algo_key)
+            #csv_filepath = r'needle_more_infos/{}-{}.csv'.format(os.path.basename(folder), algo_key)
+            csv_filepath = r'pure_needle_more_infos/{}-{}.csv'.format(os.path.basename(folder), algo_key)
             generate_patient_needle_mean_area_csv_report(folder, csv_filepath=csv_filepath)
         print('', end='\n', flush=True)
     pass
