@@ -89,6 +89,7 @@ def get_max_contours_by_filter_img(A, filter_img, ContourRetrievalMode=cv2.RETR_
     _, contours, _ = cv2.findContours(gray_image, ContourRetrievalMode, cv2.CHAIN_APPROX_NONE)
     return contours
 def get_view_scope_by_dicom_dict(dicom_dict):
+    return (156, 356, 156, 356)
     def get_rect_info_from_cv_contour(cv_contour):
         i = cv_contour
         con = i.reshape(i.shape[0], i.shape[2])
@@ -1308,7 +1309,9 @@ def example_dump_single_and_multiple_bytesfile():
     Created all_dicom_dict.bytes
     """
     root_folder = r'RAL_plan_new_20190905'
+    #root_folder = r'Study-RAL-20191105'
     contours_python_object_dump(root_folder, 'all_dicom_dict.bytes')
+
 def example_create_all_rp_file():
     """
     ...
@@ -1327,6 +1330,7 @@ def example_create_all_rp_file():
     success /total = 23/28
     """
     root_folder = r'RAL_plan_new_20190905'
+    #root_folder = r'Study-RAL-20191105'
     print(os.listdir(root_folder))
     folders = os.listdir(root_folder)
     #folders = ['34698361-3', '370648-3', '370648-4', '370648-5', '592697-2']
@@ -1690,7 +1694,6 @@ def plot_with_needle_contours(dicom_dict, z):
     # TODO
     # translate
 
-
     #needle_contours_infos = [info for info in ct_obj['output']['contours_infos']['algo04'] if (info['area_mm2'] < 10)]
     #needle_contours512 = [ct_obj['output']['contours512'][algo_key][info_idx] for info_idx, info in enumerate(ct_obj['output']['contours_infos']['algo04']) if (info['area_mm2'] < 10))]
     needle_contours512 = []
@@ -1764,11 +1767,14 @@ if __name__ == '__main__':
     #root_folder = r'RAL_plan_new_20190905'
     #generate_all_patient_needle_csv_report(root_folder)
     #generate_all_patient_mean_area_csv_report(root_folder)
-    exit()
+    #exit()
+
     #example_create_all_rp_file()
     #exit()
-    example_of_plot_rp_lines()
-    exit()
+
+    #example_of_plot_rp_lines()
+    #exit()
+
     # Dump All data with contours into dicom_dict bytes files
     #example_dump_single_and_multiple_bytesfile()
     #exit()
