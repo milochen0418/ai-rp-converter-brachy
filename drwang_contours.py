@@ -1717,7 +1717,14 @@ def example_of_plot_with_needle_contours():
     print(os.listdir(root_folder))
     folders = os.listdir(root_folder)
     print('folders = {}'.format(folders))
-    folder = '592697-2'
+    # folder = '592697-2' # case of two needle
+    # folder = '370648-1'  # case of one line in air??
+    # folder = '413382-1'  # case of one needle
+    # folder = '23616019' # case of two needle
+    # folder = '24460566-new01' # case of two needle but one needle connect with Ovoid
+    folder = '34982640' # Case of three needle
+
+
     bytes_filepath = os.path.join('contours_bytes', r'{}.bytes'.format(folder))
     dicom_dict = python_object_load(bytes_filepath)
 
