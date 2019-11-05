@@ -1107,6 +1107,7 @@ def generate_all_patient_mean_area_csv_report(root_folder = r'RAL_plan_new_20190
     pass
 
 def generate_patient_needle_mean_area_csv_report(folder, algo_key='algo01', csv_filepath = '29059811-1-algo01.csv'):
+    algo_key = 'algo04'
     output_csv_filepath = csv_filepath
     dicom_dict = get_dicom_dict(folder)
     generate_metadata_to_dicom_dict(dicom_dict)
@@ -1190,7 +1191,7 @@ def generate_all_patient_needle_csv_report(root_folder = r'RAL_plan_new_20190905
         for algo_key in algo_keys:
             print(algo_key, end='\t', flush=True)
             csv_filepath = r'needle_more_infos/{}-{}.csv'.format(os.path.basename(folder), algo_key)
-            generate_patient_needle_mean_area_csv_report(folder, algo_key=algo_key, csv_filepath=csv_filepath)
+            generate_patient_needle_mean_area_csv_report(folder, csv_filepath=csv_filepath)
         print('', end='\n', flush=True)
     pass
 
