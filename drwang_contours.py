@@ -1163,7 +1163,9 @@ def generate_patient_needle_mean_area_csv_report(folder, csv_filepath = '2905981
     # write done for 3rd row
     header = sheet[2]
     for c_idx in range(sheet_width - 2):
-        header.append('contour {}'.format(c_idx+1))
+        header.append('X[{}](px)'.format(c_idx+1))
+        header.append('Y[{}](px)'.format(c_idx + 1))
+        header.append('A[{}](mm2)'.format(c_idx+1))
 
     # Now, 1,2,3 th row are finished. 1,2 th col are finished too.
     # another (row,col) is the cell to show contour's info
@@ -1184,7 +1186,12 @@ def generate_patient_needle_mean_area_csv_report(folder, csv_filepath = '2905981
             write_info_mean = '223,221'
             write_info_area = '23.1'
 
-            write_infos.append(write_info)
+            #write_infos.append(write_info)
+            #write_infos.append('({},{})'.format(mean_x, mean_y))
+            write_infos.append('{}'.format(mean_x))
+            write_infos.append('{}'.format(mean_y))
+            write_infos.append('{}'.format(round(area_mm2,2)))
+
         # Write infos into correct row_sheet
         sheet_row = copy.deepcopy(sheet[z_idx+3])
         sheet_row = sheet_row + write_infos
@@ -1727,7 +1734,10 @@ def example_of_plot_with_needle_contours():
     # folder = '413382-1'  # case of one needle
     # folder = '23616019' # case of two needle
     # folder = '24460566-new01' # case of two needle but one needle connect with Ovoid
-    folder = '34982640' # Case of three needle
+    #folder = '34982640' # Case of three needle
+    # folder = '370648-3' # Case of No Needle but data is so messy from first slice, because scaned CT DATA is too on bottom-side
+
+
 
 
     bytes_filepath = os.path.join('contours_bytes', r'{}.bytes'.format(folder))
@@ -1758,14 +1768,14 @@ def example_of_plot_with_needle_contours():
 
 if __name__ == '__main__':
 
-    example_of_plot_with_needle_contours()
-    exit()
+    #example_of_plot_with_needle_contours()
+    #exit()
 
     #example_of_plot_contours()
     #exit()
 
-    #root_folder = r'RAL_plan_new_20190905'
-    #generate_all_patient_needle_csv_report(root_folder)
+    root_folder = r'RAL_plan_new_20190905'
+    generate_all_patient_needle_csv_report(root_folder)
     #generate_all_patient_mean_area_csv_report(root_folder)
     #exit()
 
