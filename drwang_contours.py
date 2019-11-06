@@ -64,6 +64,7 @@ def convert_to_gray_image(pixel_array):
     # Convert to uint
     img_2d_scaled = np.uint8(img_2d_scaled)
     return img_2d_scaled
+
 def get_max_contours(A, constant_value=None, ContourRetrievalMode=cv2.RETR_EXTERNAL):
     constant = None
     if constant_value == None:
@@ -201,6 +202,16 @@ def get_contours_from_edge_detection_algo_04(img):
     (contours_without_filter, constant) = get_max_contours(img, ContourRetrievalMode=cv2.RETR_EXTERNAL)
     contours = contours_without_filter
     return contours
+def get_contours_from_edge_detection_algo_05(img, contour_constant_value):
+    (contours_without_filter, constant) = get_max_contours(img, constant_value=contour_constant_value, ContourRetrievalMode=cv2.RETR_TREE)
+    contours = contours_without_filter
+    return contours
+def get_contours_from_edge_detection_algo_06(img, contour_constant_value):
+    (contours_without_filter, constant) = get_max_contours(img, constant_value=contour_constant_value, ContourRetrievalMode=cv2.RETR_EXTERNAL)
+    contours = contours_without_filter
+    return contours
+
+
 def get_rect_info_from_cv_contour(cv_contour):
     i = cv_contour
     con = i.reshape(i.shape[0], i.shape[2])
@@ -892,7 +903,17 @@ def generate_metadata_to_dicom_dict(dicom_dict):
     (view_min_y, view_max_y, view_min_x, view_max_x) = get_view_scope_by_dicom_dict(dicom_dict)
     metadata = dicom_dict['metadata']
     metadata['view_scope'] = (view_min_y, view_max_y, view_min_x, view_max_x)
+
+    # Figure out global_max_contour_constant_value
+    A = dicom_dict['z'][ sorted(dicom_dict['z'].keys())[0] ]['rescale_pixel_array']
+    data = A.ravel()
+    sorted_data = np.copy(data)
+    sorted_data.sort()
+    global_max_contour_constant_value = sorted_data[-20] - 100
+    metadata['global_max_contour_constant_value'] = global_max_contour_constant_value
+
     # metadata['view_scope'] = (view_min_y, view_max_y, view_min_x, view_max_x)
+    (contours_without_filter, constant) = get_max_contours(img, ContourRetrievalMode=cv2.RETR_TREE)
 def print_info_by_folder(folder):
     out_dict = get_dicom_dict(folder)
     #print('aaa')
@@ -914,6 +935,8 @@ def generate_output_to_ct_obj(ct_obj):
     out = ct_obj['output']
     rescale_pixel_array = ct_obj['rescale_pixel_array']
     (view_min_y, view_max_y, view_min_x, view_max_x) = ct_obj['dicom_dict']['metadata']['view_scope']
+    global_max_contour_constant_value = ct_obj['dicom_dict']['metadata']['global_max_contour_constant_value']
+
     #view_pixel_array = rescale_pixel_array[view_min_y:view_max_y, view_min_x:view_max_x]
     img = ct_obj['rescale_pixel_array']
     gray_img = convert_to_gray_image(img)
@@ -925,6 +948,9 @@ def generate_output_to_ct_obj(ct_obj):
     ct_obj['output']['contours']['algo02'] = get_contours_from_edge_detection_algo_02(img, filter_img)
     ct_obj['output']['contours']['algo03'] = get_contours_from_edge_detection_algo_03(img)
     ct_obj['output']['contours']['algo04'] = get_contours_from_edge_detection_algo_04(img)
+    ct_obj['output']['contours']['algo05'] = get_contours_from_edge_detection_algo_05(img, contour_constant_vlaue = global_max_contour_constant_value)
+    ct_obj['output']['contours']['algo06'] = get_contours_from_edge_detection_algo_06(img, contour_constant_value = global_max_contour_constant_value)
+
 
     # Process to contours to fit global pixel img
     ct_obj['output']['contours512'] = {}
@@ -1163,9 +1189,9 @@ def generate_patient_needle_mean_area_csv_report(folder, csv_filepath = '2905981
     # write done for 3rd row
     header = sheet[2]
     for c_idx in range(sheet_width - 2):
-        header.append('X[{}](px)'.format(c_idx+1))
+        header.append('X[{}](px)'.format(c_idx + 1))
         header.append('Y[{}](px)'.format(c_idx + 1))
-        header.append('A[{}](mm2)'.format(c_idx+1))
+        header.append('A[{}](mm2)'.format(c_idx + 1))
 
     # Now, 1,2,3 th row are finished. 1,2 th col are finished too.
     # another (row,col) is the cell to show contour's info
@@ -1191,6 +1217,7 @@ def generate_patient_needle_mean_area_csv_report(folder, csv_filepath = '2905981
             write_infos.append('{}'.format(mean_x))
             write_infos.append('{}'.format(mean_y))
             write_infos.append('{}'.format(round(area_mm2,2)))
+
 
         # Write infos into correct row_sheet
         sheet_row = copy.deepcopy(sheet[z_idx+3])
@@ -1734,10 +1761,17 @@ def example_of_plot_with_needle_contours():
     # folder = '413382-1'  # case of one needle
     # folder = '23616019' # case of two needle
     # folder = '24460566-new01' # case of two needle but one needle connect with Ovoid
-    #folder = '34982640' # Case of three needle
+    # folder = '34982640' # Case of three needle
     # folder = '370648-3' # Case of No Needle but data is so messy from first slice, because scaned CT DATA is too on bottom-side
-
-
+    # folder = '413382-4'
+    # folder = '592697-1' # Case of 2 needles
+    # folder = '592697-2'  # Case of 2 needles
+    # folder = '592697-3' # Case of 2 needles
+    # folder = '29059811-1' # Case no needle
+    # folder = '29059811-2' # Case no needle
+    # folder = '29059811-3' # Case no needle
+    # folder = '34698361-1' # Case no needle
+    folder = '34698361-2'  # Case no needle
 
 
     bytes_filepath = os.path.join('contours_bytes', r'{}.bytes'.format(folder))
@@ -1768,14 +1802,14 @@ def example_of_plot_with_needle_contours():
 
 if __name__ == '__main__':
 
-    #example_of_plot_with_needle_contours()
-    #exit()
+    example_of_plot_with_needle_contours()
+    exit()
 
     #example_of_plot_contours()
     #exit()
 
-    root_folder = r'RAL_plan_new_20190905'
-    generate_all_patient_needle_csv_report(root_folder)
+    #root_folder = r'RAL_plan_new_20190905'
+    #generate_all_patient_needle_csv_report(root_folder)
     #generate_all_patient_mean_area_csv_report(root_folder)
     #exit()
 
