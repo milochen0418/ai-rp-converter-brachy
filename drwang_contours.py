@@ -1728,7 +1728,8 @@ def example_of_plot_contours():
         continue
 
 def plot_with_needle_contours(dicom_dict, z):
-    algo_key = 'algo04'
+    #algo_key = 'algo04'
+    algo_key = 'algo06'
     import matplotlib.pyplot as plt
     z_map = dicom_dict['z']
     ct_obj = z_map[z]
@@ -1776,12 +1777,13 @@ def example_of_plot_with_needle_contours():
     # folder = '413382-4'
     # folder = '592697-1' # Case of 2 needles
     # folder = '592697-2'  # Case of 2 needles
-    # folder = '592697-3' # Case of 2 needles
+    # folder = '592697-3' # Case of 2 needles nmnbnb  m
     # folder = '29059811-1' # Case no needle
     # folder = '29059811-2' # Case no needle
     # folder = '29059811-3' # Case no needle
     # folder = '34698361-1' # Case no needle
-    folder = '34698361-2'  # Case no needle
+    #folder = '34698361-2'  # Case no needle
+    folder = '34982640'  # Case no needle
 
 
     bytes_filepath = os.path.join('contours_bytes', r'{}.bytes'.format(folder))
@@ -1812,8 +1814,8 @@ def example_of_plot_with_needle_contours():
 
 if __name__ == '__main__':
 
-    #example_of_plot_with_needle_contours()
-    #exit()
+    example_of_plot_with_needle_contours()
+    exit()
 
     #example_of_plot_contours()
     #exit()
