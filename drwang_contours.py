@@ -90,7 +90,8 @@ def get_max_contours_by_filter_img(A, filter_img, ContourRetrievalMode=cv2.RETR_
     _, contours, _ = cv2.findContours(gray_image, ContourRetrievalMode, cv2.CHAIN_APPROX_NONE)
     return contours
 def get_view_scope_by_dicom_dict(dicom_dict):
-    return (156, 356, 156, 356)
+    #return (156, 356, 156, 356)
+    return (0, 512, 0, 512)
     def get_rect_info_from_cv_contour(cv_contour):
         i = cv_contour
         con = i.reshape(i.shape[0], i.shape[2])
@@ -207,6 +208,7 @@ def get_contours_from_edge_detection_algo_05(img, contour_constant_value):
     contours = contours_without_filter
     return contours
 def get_contours_from_edge_detection_algo_06(img, contour_constant_value):
+    # the img should be rescale_pixel_array
     (contours_without_filter, constant) = get_max_contours(img, constant_value=contour_constant_value, ContourRetrievalMode=cv2.RETR_EXTERNAL)
     contours = contours_without_filter
     return contours
@@ -319,7 +321,8 @@ def algo_to_get_pixel_lines(dicom_dict):
     last_z_in_step1 = sorted(dicom_dict['z'].keys())[0]
     center_pts_dict = {} # The following loop will use algo03 to figure L't Ovoid, R't Ovoid and half tandem
     for z in sorted(dicom_dict['z'].keys()):
-        contours = dicom_dict['z'][z]['output']['contours512']['algo03']
+        #contours = dicom_dict['z'][z]['output']['contours512']['algo03']
+        contours = dicom_dict['z'][z]['output']['contours512']['algo05']
         #plot_with_contours(dicom_dict, z=z, algo_key='algo03')
         # Step 1.1 The process to collect the contour which is inner of some contour into inner_contours[]
         inner_contours = []
@@ -913,7 +916,7 @@ def generate_metadata_to_dicom_dict(dicom_dict):
     metadata['global_max_contour_constant_value'] = global_max_contour_constant_value
 
     # metadata['view_scope'] = (view_min_y, view_max_y, view_min_x, view_max_x)
-    (contours_without_filter, constant) = get_max_contours(img, ContourRetrievalMode=cv2.RETR_TREE)
+    #(contours_without_filter, constant) = get_max_contours(img, ContourRetrievalMode=cv2.RETR_TREE)
 def print_info_by_folder(folder):
     out_dict = get_dicom_dict(folder)
     #print('aaa')
@@ -942,14 +945,19 @@ def generate_output_to_ct_obj(ct_obj):
     gray_img = convert_to_gray_image(img)
     gray_img = gray_img[view_min_y: view_max_y, view_min_x:view_max_x]
     img = img[view_min_y: view_max_y, view_min_x:view_max_x]
+    rescale_pixel_array = ct_obj['rescale_pixel_array']
+    rescale_pixel_array = rescale_pixel_array[view_min_y: view_max_y, view_min_x:view_max_x]
     filter_img = cv2.adaptiveThreshold(gray_img, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 15, -22)
     ct_obj['output']['contours'] = {}
     ct_obj['output']['contours']['algo01'] = get_contours_from_edge_detection_algo_01(img, filter_img)
     ct_obj['output']['contours']['algo02'] = get_contours_from_edge_detection_algo_02(img, filter_img)
     ct_obj['output']['contours']['algo03'] = get_contours_from_edge_detection_algo_03(img)
     ct_obj['output']['contours']['algo04'] = get_contours_from_edge_detection_algo_04(img)
-    ct_obj['output']['contours']['algo05'] = get_contours_from_edge_detection_algo_05(img, contour_constant_vlaue = global_max_contour_constant_value)
-    ct_obj['output']['contours']['algo06'] = get_contours_from_edge_detection_algo_06(img, contour_constant_value = global_max_contour_constant_value)
+    contour_constant_value = ct_obj['dicom_dict']['metadata']['global_max_contour_constant_value']
+    ct_obj['output']['contours']['algo05'] = get_contours_from_edge_detection_algo_05(rescale_pixel_array, contour_constant_value)
+    ct_obj['output']['contours']['algo06'] = get_contours_from_edge_detection_algo_06(rescale_pixel_array, contour_constant_value)
+    #ct_obj['output']['contours']['algo05'] = get_contours_from_edge_detection_algo_05(img, contour_constant_vlaue = global_max_contour_constant_value)
+    #ct_obj['output']['contours']['algo06'] = get_contours_from_edge_detection_algo_06(img, contour_constant_value = global_max_contour_constant_value)
 
 
     # Process to contours to fit global pixel img
@@ -1134,7 +1142,8 @@ def generate_all_patient_mean_area_csv_report(root_folder = r'RAL_plan_new_20190
     pass
 
 def generate_patient_needle_mean_area_csv_report(folder, csv_filepath = '29059811-1-algo01.csv'):
-    algo_key = 'algo04'
+    #algo_key = 'algo04'
+    algo_key = 'algo06'
     output_csv_filepath = csv_filepath
     dicom_dict = get_dicom_dict(folder)
     generate_metadata_to_dicom_dict(dicom_dict)
@@ -1143,7 +1152,8 @@ def generate_patient_needle_mean_area_csv_report(folder, csv_filepath = '2905981
     # Process to make needle_contours_infos
     for z in sorted(dicom_dict['z'].keys()):
         ct_obj = dicom_dict['z'][z]
-        needle_contours_infos = [info for info in ct_obj['output']['contours_infos']['algo04'] if (info['area_mm2'] < 10) ]
+        #needle_contours_infos = [info for info in ct_obj['output']['contours_infos']['algo04'] if (info['area_mm2'] < 10) ]
+        needle_contours_infos = [info for info in ct_obj['output']['contours_infos']['algo06'] if(info['area_mm2'] < 10)]
         ct_obj['output']['needle_contours_infos'] = copy.deepcopy(needle_contours_infos)
         print('len(dicom_dict["z"][{}]["output"]["needle_contours_infos"]) = {}'.format(z, len(dicom_dict['z'][z]['output']['needle_contours_infos'])))
 
@@ -1236,7 +1246,7 @@ def generate_all_patient_needle_csv_report(root_folder = r'RAL_plan_new_20190905
     for folder_idx, folder in enumerate(f_list):
         print( r'[{}/{}] {}'.format(folder_idx+1, len(f_list), os.path.basename(folder)) , end='\t', flush=True)
         #algo_keys = ['algo01', 'algo02', 'algo03', 'algo04']
-        algo_keys = ['algo04']
+        algo_keys = ['algo06']
         for algo_key in algo_keys:
             print(algo_key, end='\t', flush=True)
             #csv_filepath = r'needle_more_infos/{}-{}.csv'.format(os.path.basename(folder), algo_key)
@@ -1650,11 +1660,11 @@ def example_of_plot_rp_lines():
     print(os.listdir(root_folder))
     folders = os.listdir(root_folder)
     print('folders = {}'.format(folders))
-    #folder = '24460566-ctdate20191015'
+    folder = '24460566-ctdate20191015'
     #folder = '24460566-new01'
     #folder = '29059811-1'
     #folder = '23616019'
-    folder = '34982640'
+    #folder = '34982640'
     bytes_filepath = os.path.join('contours_bytes', r'{}.bytes'.format(folder))
     #plot_with_contours(dicom_dict, z=sorted(dicom_dict['z'].keys())[10], algo_key='algo03')
     dicom_dict = python_object_load(bytes_filepath)
@@ -1802,22 +1812,22 @@ def example_of_plot_with_needle_contours():
 
 if __name__ == '__main__':
 
-    example_of_plot_with_needle_contours()
-    exit()
+    #example_of_plot_with_needle_contours()
+    #exit()
 
     #example_of_plot_contours()
     #exit()
 
-    #root_folder = r'RAL_plan_new_20190905'
-    #generate_all_patient_needle_csv_report(root_folder)
+    root_folder = r'RAL_plan_new_20190905'
+    generate_all_patient_needle_csv_report(root_folder)
     #generate_all_patient_mean_area_csv_report(root_folder)
     #exit()
 
     #example_create_all_rp_file()
     #exit()
 
-    #example_of_plot_rp_lines()
-    #exit()
+    example_of_plot_rp_lines()
+    exit()
 
     # Dump All data with contours into dicom_dict bytes files
     #example_dump_single_and_multiple_bytesfile()
@@ -1833,6 +1843,7 @@ if __name__ == '__main__':
     bytes_filepath = os.path.join('contours_bytes', r'{}.bytes'.format(folder))
     #plot_with_contours(dicom_dict, z=sorted(dicom_dict['z'].keys())[10], algo_key='algo03')
     dicom_dict = python_object_load(bytes_filepath)
+    print('Show dicom_dict')
 
 
     #for z in sorted(dicom_dict['z'].keys()):
