@@ -1149,6 +1149,8 @@ def generate_patient_needle_mean_area_csv_report(folder, csv_filepath = '2905981
     generate_metadata_to_dicom_dict(dicom_dict)
     generate_output_to_dicom_dict(dicom_dict)
 
+    generate_patient_needle_info(dicom_dict)
+    return
     # Process to make needle_contours_infos
     for z in sorted(dicom_dict['z'].keys()):
         ct_obj = dicom_dict['z'][z]
@@ -1157,6 +1159,14 @@ def generate_patient_needle_mean_area_csv_report(folder, csv_filepath = '2905981
         ct_obj['output']['needle_contours_infos'] = copy.deepcopy(needle_contours_infos)
         print('len(dicom_dict["z"][{}]["output"]["needle_contours_infos"]) = {}'.format(z, len(dicom_dict['z'][z]['output']['needle_contours_infos'])))
 
+def generate_patient_needle_info(dicom_dict):
+    # The process to make needle_contours_infos in output
+    for z in sorted(dicom_dict['z'].keys()):
+        ct_obj = dicom_dict['z'][z]
+        #needle_contours_infos = [info for info in ct_obj['output']['contours_infos']['algo04'] if (info['area_mm2'] < 10) ]
+        needle_contours_infos = [info for info in ct_obj['output']['contours_infos']['algo06'] if(info['area_mm2'] < 10)]
+        ct_obj['output']['needle_contours_infos'] = copy.deepcopy(needle_contours_infos)
+        print('len(dicom_dict["z"][{}]["output"]["needle_contours_infos"]) = {}'.format(z, len(dicom_dict['z'][z]['output']['needle_contours_infos'])))
 
 
 
