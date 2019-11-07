@@ -1451,7 +1451,7 @@ def example_create_all_rp_file():
     print('failed / total = {}/{}'.format(len(failed_folders), len(total_folders) ))
     print('success /total = {}/{}'.format(len(success_folders), len(total_folders) ))
 
-def example_of_make_algo07():
+def example_of_plot_15x15_needle_picture():
     import matplotlib.pyplot as plt
     root_folder = r'RAL_plan_new_20190905'
     folder = r'34982640' # Case of three needle
@@ -1882,7 +1882,7 @@ def example_of_plot_with_needle_contours():
 
 if __name__ == '__main__':
 
-    example_of_make_algo07()
+    example_of_plot_15x15_needle_picture()
 
     exit()
     #example_of_plot_with_needle_contours()
