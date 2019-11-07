@@ -985,7 +985,7 @@ def generate_output_to_ct_obj(ct_obj):
         ct_obj['output']['contours_infos'][algo_key] = contours_infos
     pass
 
-# FUNCTIONS - main function
+# FUNCTIONS - main genearte function
 def generate_contour_number_csv_report(f_list, csv_filepath = 'contours.csv'):
     output_csv_filepath = csv_filepath
     all_dicom_dict = {}
@@ -1424,7 +1424,7 @@ def generate_brachy_rp_file(RP_OperatorsName, dicom_dict, out_rp_filepath, is_en
     if (is_enable_print == False):
         enablePrint()
 
-# FUNCTIONS - Some file batch processing function , so that you can accelerate develop speed
+# FUNCTIONS - Some file batch processing function
 def contours_python_object_dump(root_folder, filename):
     # Step 1. declare all_dicom_dict
     all_dicom_dict = {}
@@ -1982,6 +1982,9 @@ if __name__ == '__main__':
     #example_dump_single_and_multiple_bytesfile()
     #exit()
 
+    # Code START
+    # Code END
+
     # Debug to check data
     root_folder = r'RAL_plan_new_20190905'
     print(os.listdir(root_folder))
@@ -1992,6 +1995,7 @@ if __name__ == '__main__':
     bytes_filepath = os.path.join('contours_bytes', r'{}.bytes'.format(folder))
     #plot_with_contours(dicom_dict, z=sorted(dicom_dict['z'].keys())[10], algo_key='algo03')
     dicom_dict = python_object_load(bytes_filepath)
+
     print('Show dicom_dict')
 
 
