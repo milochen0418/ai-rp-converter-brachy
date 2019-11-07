@@ -1310,6 +1310,7 @@ def generate_patient_needle_fixed_area_csv_report(folder, csv_filepath = '290598
     generate_output_to_dicom_dict(dicom_dict)
     generate_needle_contours_infos_to_dicom_dict(dicom_dict)
 
+
     sheet_width = 0
     sheet_height = 0
     z_map = dicom_dict['z']
@@ -1366,16 +1367,13 @@ def generate_patient_needle_fixed_area_csv_report(folder, csv_filepath = '290598
             mean_x = info['mean'][0]
             mean_y = info['mean'][1]
             area_mm2 = info['area_mm2']
-            #write_info = '({},{})px - {}'.format(mean_x, mean_y, area_mm2)
-            write_info = '({},{})-{}'.format(mean_x, mean_y, round(area_mm2,1))
-            write_info_mean = '223,221'
-            write_info_area = '23.1'
-
-            #write_infos.append(write_info)
-            #write_infos.append('({},{})'.format(mean_x, mean_y))
+            area_mm2s = info['pick_picture_contour_area_mm2s']
+            area_mm2s_list = [ round(float(area_mm2),2) for area_mm2 in area_mm2s]
+            area_mm2s_str = str(area_mm2s_list).strip('[]')
             write_infos.append('{}'.format(mean_x))
             write_infos.append('{}'.format(mean_y))
-            write_infos.append('{}'.format(round(area_mm2,2)))
+            #write_infos.append('{}'.format(round(area_mm2,2)))
+            write_infos.append('{}'.format(area_mm2s_str))
 
 
         # Write infos into correct row_sheet
@@ -1400,7 +1398,7 @@ def generate_all_patient_needle_fixed_area_csv_report(root_folder = r'RAL_plan_n
             print(algo_key, end='\t', flush=True)
             #csv_filepath = r'needle_more_infos/{}-{}.csv'.format(os.path.basename(folder), algo_key)
             #csv_filepath = r'pure_needle_more_infos/{}-{}.csv'.format(os.path.basename(folder), algo_key)
-            csv_filepath = r'pure_needle_more_infos_fixed_area/{}-{}.csv'.format(os.path.basename(folder), algo_key)
+            csv_filepath = r'pure_needle_more_infos_fixed_area/{}-{}.csv'.format(os.path.basename(folder), 'fixed_area')
             #generate_patient_needle_mean_area_csv_report(folder, csv_filepath=csv_filepath)
             generate_patient_needle_fixed_area_csv_report(folder, csv_filepath=csv_filepath)
         print('', end='\n', flush=True)
@@ -1589,7 +1587,6 @@ def example_of_plot_15x15_needle_picture():
                 cv2.drawContours(pick_picture, contour, -1, (0, 0, 255), 1)
                 plt.imshow(pick_picture, cmap=plt.cm.gray)
                 plt.show()
-
 
 
 
