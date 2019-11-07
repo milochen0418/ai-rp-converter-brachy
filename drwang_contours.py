@@ -1143,12 +1143,40 @@ def generate_all_patient_mean_area_csv_report(root_folder = r'RAL_plan_new_20190
 
 def generate_needle_contours_infos_to_dicom_dict(dicom_dict):
     # Process to make needle_contours_infos
+    # Step 1. find out the needle contour that focus on most light part
     for z in sorted(dicom_dict['z'].keys()):
         ct_obj = dicom_dict['z'][z]
         #needle_contours_infos = [info for info in ct_obj['output']['contours_infos']['algo04'] if (info['area_mm2'] < 10) ]
         needle_contours_infos = [info for info in ct_obj['output']['contours_infos']['algo06'] if(info['area_mm2'] < 10)]
         ct_obj['output']['needle_contours_infos'] = copy.deepcopy(needle_contours_infos)
         print('len(dicom_dict["z"][{}]["output"]["needle_contours_infos"]) = {}'.format(z, len(dicom_dict['z'][z]['output']['needle_contours_infos'])))
+
+    # Step 2. pick up  15px * 15 px picture for each light point
+    for z in sorted(dicom_dict['z'].keys()):
+        ct_obj = dicom_dict['z'][z]
+        for info in ct_obj['output']['needle_contours_infos']:
+            print('({}, {}, {})'.format(info['mean'][0], info['mean'][1], z))
+            mean_x = info['mean'][0]
+            mean_y = info['mean'][1]
+            rescale_pixel_array = ct_obj['rescale_pixel_array']
+            x_min = mean_x - 7
+            x_max = mean_x + 7
+            y_min = mean_y - 7
+            y_max = mean_y + 7
+            if x_min < 0:
+                x_min = 0
+            if x_max >= 512:
+                x_max = 512
+            if y_min < 0:
+                y_min = 0
+            if y_max >= 512:
+                y_max = 512
+            pick_picture = rescale_pixel_array[x_min:x_max, y_min:y_max]
+            info['pick_picture'] = pick_picture
+
+
+
+
 
 def generate_patient_needle_mean_area_csv_report(folder, csv_filepath = '29059811-1-algo01.csv'):
     #algo_key = 'algo04'
@@ -1238,7 +1266,6 @@ def generate_patient_needle_mean_area_csv_report(folder, csv_filepath = '2905981
         for rowlist in sheet:
             csv_writter.writerow(rowlist)
     #print('Time to lookup sheet variable')
-
 def generate_all_patient_needle_csv_report(root_folder = r'RAL_plan_new_20190905'): # generate for each patient's data and put in more-infos folder
     f_list = [ os.path.join(root_folder, file) for file in os.listdir(root_folder) ]
     for folder_idx, folder in enumerate(f_list):
@@ -1252,7 +1279,6 @@ def generate_all_patient_needle_csv_report(root_folder = r'RAL_plan_new_20190905
             generate_patient_needle_mean_area_csv_report(folder, csv_filepath=csv_filepath)
         print('', end='\n', flush=True)
     pass
-
 def generate_brachy_rp_file(RP_OperatorsName, dicom_dict, out_rp_filepath, is_enable_print=False):
     if (is_enable_print == False):
         blockPrint()
@@ -1408,6 +1434,17 @@ def example_create_all_rp_file():
     print('failed folders = {}'.format(failed_folders))
     print('failed / total = {}/{}'.format(len(failed_folders), len(total_folders) ))
     print('success /total = {}/{}'.format(len(success_folders), len(total_folders) ))
+
+
+def example_of_make_algo07():
+    root_folder = r'RAL_plan_new_20190905'
+    folder = r'34982640' # Case of three needle
+    folder = os.path.join(root_folder, folder)
+    dicom_dict = get_dicom_dict(folder)
+    generate_metadata_to_dicom_dict(dicom_dict)
+    generate_output_to_dicom_dict(dicom_dict)
+    generate_needle_contours_infos_to_dicom_dict(dicom_dict)
+
 
 
 # FUNCTIONS - Some ploting utility functions support for you to check CT pictures with data
@@ -1693,7 +1730,6 @@ def example_of_plot_cen_pt():
     (lt_ovoid, tandem, rt_ovoid) = algo_to_get_pixel_lines(dicom_dict)
     plot_cen_pt(dicom_dict, lt_ovoid_ctpa=lt_ovoid, tandem_ctpa=tandem, rt_ovoid_ctpa=rt_ovoid)
 
-
 def plot_with_contours(dicom_dict, z, algo_key):
     import matplotlib.pyplot as plt
     z_map = dicom_dict['z']
@@ -1811,6 +1847,8 @@ def example_of_plot_with_needle_contours():
 
 if __name__ == '__main__':
 
+    example_of_make_algo07()
+    exit()
     #example_of_plot_with_needle_contours()
     #exit()
 
