@@ -41,7 +41,6 @@ def blockPrint(): # Disable printing
 def enablePrint(): # Restore for printing
     sys.stdout = sys.__stdout__
 
-
 # FUNCTIONS - Algorithm processing Fucntions
 def distance(pt1, pt2):
     axis_num = len(pt1)
@@ -64,7 +63,6 @@ def convert_to_gray_image(pixel_array):
     # Convert to uint
     img_2d_scaled = np.uint8(img_2d_scaled)
     return img_2d_scaled
-
 def get_max_contours(A, constant_value=None, ContourRetrievalMode=cv2.RETR_EXTERNAL):
     constant = None
     if constant_value == None:
@@ -212,8 +210,6 @@ def get_contours_from_edge_detection_algo_06(img, contour_constant_value):
     (contours_without_filter, constant) = get_max_contours(img, constant_value=contour_constant_value, ContourRetrievalMode=cv2.RETR_EXTERNAL)
     contours = contours_without_filter
     return contours
-
-
 def get_rect_info_from_cv_contour(cv_contour):
     i = cv_contour
     con = i.reshape(i.shape[0], i.shape[2])
@@ -810,8 +806,6 @@ def get_metric_lines_representation(dicom_dict, lt_ovoid, tandem, rt_ovoid):
     (metric_lt_ovoid, metric_tandem, metric_rt_ovoid) = (new_lines[0], new_lines[1], new_lines[2])
     return (metric_lt_ovoid, metric_tandem, metric_rt_ovoid)
 
-
-
 # FUNCTIONS - DICOM data processing Functions
 def get_dicom_folder_pathinfo(folder):
     dicom_folder = {}
@@ -1128,7 +1122,6 @@ def generate_patient_mean_area_csv_report(folder, algo_key='algo01', csv_filepat
         for rowlist in sheet:
             csv_writter.writerow(rowlist)
     #print('Time to lookup sheet variable')
-
 def generate_all_patient_mean_area_csv_report(root_folder = r'RAL_plan_new_20190905'): # generate for each patient's data and put in more-infos folder
     f_list = [ os.path.join(root_folder, file) for file in os.listdir(root_folder) ]
     for folder_idx, folder in enumerate(f_list):
@@ -1140,7 +1133,6 @@ def generate_all_patient_mean_area_csv_report(root_folder = r'RAL_plan_new_20190
             generate_patient_mean_area_csv_report(folder, algo_key=algo_key, csv_filepath=csv_filepath)
         print('', end='\n', flush=True)
     pass
-
 def generate_needle_contours_infos_to_dicom_dict(dicom_dict):
     # Process to make needle_contours_infos
     # Step 1. find out the needle contour that focus on most light part
@@ -1187,14 +1179,6 @@ def generate_needle_contours_infos_to_dicom_dict(dicom_dict):
 
 
             #pick_area_mm2 = cv2.contourArea(contour) * ps_x * ps_y
-
-
-
-
-
-
-
-
 def generate_patient_needle_mean_area_csv_report(folder, csv_filepath = '29059811-1-algo01.csv'):
     #algo_key = 'algo04'
     algo_key = 'algo06'
@@ -1283,7 +1267,6 @@ def generate_patient_needle_mean_area_csv_report(folder, csv_filepath = '2905981
         for rowlist in sheet:
             csv_writter.writerow(rowlist)
     #print('Time to lookup sheet variable')
-
 def generate_all_patient_needle_csv_report(root_folder = r'RAL_plan_new_20190905'): # generate for each patient's data and put in more-infos folder
     f_list = [ os.path.join(root_folder, file) for file in os.listdir(root_folder) ]
     for folder_idx, folder in enumerate(f_list):
@@ -1297,10 +1280,6 @@ def generate_all_patient_needle_csv_report(root_folder = r'RAL_plan_new_20190905
             generate_patient_needle_mean_area_csv_report(folder, csv_filepath=csv_filepath)
         print('', end='\n', flush=True)
     pass
-
-
-
-
 def generate_patient_needle_fixed_area_csv_report(folder, csv_filepath = '29059811-1-algo01.csv'):
     #algo_key = 'algo04'
     algo_key = 'algo06'
@@ -1387,7 +1366,6 @@ def generate_patient_needle_fixed_area_csv_report(folder, csv_filepath = '290598
         for rowlist in sheet:
             csv_writter.writerow(rowlist)
     #print('Time to lookup sheet variable')
-
 def generate_all_patient_needle_fixed_area_csv_report(root_folder = r'RAL_plan_new_20190905'): # generate for each patient's data and put in more-infos folder
     f_list = [ os.path.join(root_folder, file) for file in os.listdir(root_folder) ]
     for folder_idx, folder in enumerate(f_list):
@@ -1403,8 +1381,6 @@ def generate_all_patient_needle_fixed_area_csv_report(root_folder = r'RAL_plan_n
             generate_patient_needle_fixed_area_csv_report(folder, csv_filepath=csv_filepath)
         print('', end='\n', flush=True)
     pass
-
-
 def generate_brachy_rp_file(RP_OperatorsName, dicom_dict, out_rp_filepath, is_enable_print=False):
     if (is_enable_print == False):
         blockPrint()
@@ -1559,7 +1535,6 @@ def example_create_all_rp_file():
     print('failed folders = {}'.format(failed_folders))
     print('failed / total = {}/{}'.format(len(failed_folders), len(total_folders) ))
     print('success /total = {}/{}'.format(len(success_folders), len(total_folders) ))
-
 def example_of_plot_15x15_needle_picture():
     import matplotlib.pyplot as plt
     root_folder = r'RAL_plan_new_20190905'
@@ -1587,8 +1562,6 @@ def example_of_plot_15x15_needle_picture():
                 cv2.drawContours(pick_picture, contour, -1, (0, 0, 255), 1)
                 plt.imshow(pick_picture, cmap=plt.cm.gray)
                 plt.show()
-
-
 
 # FUNCTIONS - Some ploting utility functions support for you to check CT pictures with data
 def plot_xyz_px(dicom_dict, x_px, y_px, z_mm):
@@ -1655,7 +1628,6 @@ def plot_n_xyz_px(dicom_dict, x_list_px, y_list_px, z_mm):
 
     print('z = {}, x_list = {}, y_list = {}'.format(z_mm, x_list_px, y_list_px))
     plt.show()
-
 def plot_xyz_mm(dicom_dict,x_mm, y_mm, z_mm, label_text=''):
     import matplotlib.pyplot as plt
     folder_name = os.path.basename(dicom_dict['metadata']['folder'])
@@ -1806,7 +1778,6 @@ def example_of_plot_xyz_mm():
         z_mm = pt[2]
         label_text='tandem_rp_line[{}]\n(x, y, z)mm = ({},{},{})'.format(pt_idx, round(x_mm,2), round(y_mm,2), round(z_mm,2))
         plot_xyz_mm(dicom_dict, x_mm, y_mm, z_mm, label_text=label_text)
-
 def plot_rp_lines(dicom_dict):
     (lt_ovoid, tandem, rt_ovoid) = algo_to_get_pixel_lines(dicom_dict)
     (metric_lt_ovoid, metric_tandem, metric_rt_ovoid) = get_metric_lines_representation(dicom_dict, lt_ovoid, tandem, rt_ovoid)
@@ -1847,7 +1818,6 @@ def example_of_plot_rp_lines():
     #plot_with_contours(dicom_dict, z=sorted(dicom_dict['z'].keys())[10], algo_key='algo03')
     dicom_dict = python_object_load(bytes_filepath)
     plot_rp_lines(dicom_dict)
-
 def plot_cen_pt(dicom_dict, lt_ovoid_ctpa, tandem_ctpa, rt_ovoid_ctpa):
     z_lt_ovoid = [float(pt[2]) for pt in lt_ovoid_ctpa]
     z_rt_ovoid = [float(pt[2]) for pt in rt_ovoid_ctpa]
@@ -1872,7 +1842,6 @@ def example_of_plot_cen_pt():
     dicom_dict = python_object_load(bytes_filepath)
     (lt_ovoid, tandem, rt_ovoid) = algo_to_get_pixel_lines(dicom_dict)
     plot_cen_pt(dicom_dict, lt_ovoid_ctpa=lt_ovoid, tandem_ctpa=tandem, rt_ovoid_ctpa=rt_ovoid)
-
 def plot_with_contours(dicom_dict, z, algo_key):
     import matplotlib.pyplot as plt
     z_map = dicom_dict['z']
@@ -1903,7 +1872,6 @@ def example_of_plot_contours():
         #plot_with_contours(dicom_dict, z=sorted(dicom_dict['z'].keys())[z_idx], algo_key='algo01')
         plot_with_contours(dicom_dict, z=z, algo_key='algo01')
         continue
-
 def plot_with_needle_contours(dicom_dict, z):
     #algo_key = 'algo04'
     algo_key = 'algo06'
