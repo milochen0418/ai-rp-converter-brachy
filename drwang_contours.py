@@ -1171,8 +1171,17 @@ def generate_needle_contours_infos_to_dicom_dict(dicom_dict):
                 y_min = 0
             if y_max >= 512:
                 y_max = 512
-            pick_picture = rescale_pixel_array[x_min:x_max, y_min:y_max]
+            #pick_picture = rescale_pixel_array[x_min:x_max, y_min:y_max]
+            pick_picture = rescale_pixel_array[y_min:y_max, x_min:x_max]
             info['pick_picture'] = pick_picture
+            img = pick_picture
+            gray_img = convert_to_gray_image(img)
+            filter_img = cv2.adaptiveThreshold(gray_img, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 15, -22)
+            contours = get_max_contours_by_filter_img(img, filter_img, ContourRetrievalMode=cv2.RETR_EXTERNAL)
+            info['pick_picture_contours'] = contours
+
+
+
 
 
 
@@ -1379,7 +1388,6 @@ def example_dump_single_and_multiple_bytesfile():
     root_folder = r'RAL_plan_new_20190905'
     #root_folder = r'Study-RAL-20191105'
     contours_python_object_dump(root_folder, 'all_dicom_dict.bytes')
-
 def example_create_all_rp_file():
     """
     ...
@@ -1435,8 +1443,8 @@ def example_create_all_rp_file():
     print('failed / total = {}/{}'.format(len(failed_folders), len(total_folders) ))
     print('success /total = {}/{}'.format(len(success_folders), len(total_folders) ))
 
-
 def example_of_make_algo07():
+    import matplotlib.pyplot as plt
     root_folder = r'RAL_plan_new_20190905'
     folder = r'34982640' # Case of three needle
     folder = os.path.join(root_folder, folder)
@@ -1444,6 +1452,25 @@ def example_of_make_algo07():
     generate_metadata_to_dicom_dict(dicom_dict)
     generate_output_to_dicom_dict(dicom_dict)
     generate_needle_contours_infos_to_dicom_dict(dicom_dict)
+    for z in dicom_dict['z'].keys():
+        ct_obj = dicom_dict['z'][z]
+        ps_x = ct_obj['ps_x']
+        ps_y = ct_obj['ps_y']
+        for info in ct_obj['output']['needle_contours_infos']:
+            pick_picture = info['pick_picture']
+            plt.imshow( pick_picture,cmap=plt.cm.gray)
+            plt.show()
+            for contour in info['pick_picture_contours']:
+                pick_picture = copy.deepcopy(info['pick_picture'])
+                pick_area_mm2 = cv2.contourArea(contour) * ps_x * ps_y
+                label_text = 'pick_area_mm2 = {}'.format(pick_area_mm2)
+                print('label_text = {}'.format(label_text))
+                plt.text(0, -2, '{}'.format(label_text), fontsize=8)
+                cv2.drawContours(pick_picture, contour, -1, (0, 0, 255), 1)
+                plt.imshow(pick_picture, cmap=plt.cm.gray)
+                #plt.text(0, -2, 'draw ({},{}) px '.format(x_px, y_px), fontsize=8)
+                plt.show()
+
 
 
 
@@ -1848,6 +1875,7 @@ def example_of_plot_with_needle_contours():
 if __name__ == '__main__':
 
     example_of_make_algo07()
+
     exit()
     #example_of_plot_with_needle_contours()
     #exit()
