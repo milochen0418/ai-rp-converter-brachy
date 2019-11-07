@@ -1154,6 +1154,8 @@ def generate_needle_contours_infos_to_dicom_dict(dicom_dict):
     # Step 2. pick up  15px * 15 px picture for each light point
     for z in sorted(dicom_dict['z'].keys()):
         ct_obj = dicom_dict['z'][z]
+        ps_x = ct_obj['ps_x']
+        ps_y = ct_obj['ps_y']
         for info in ct_obj['output']['needle_contours_infos']:
             print('({}, {}, {})'.format(info['mean'][0], info['mean'][1], z))
             mean_x = info['mean'][0]
@@ -1179,6 +1181,12 @@ def generate_needle_contours_infos_to_dicom_dict(dicom_dict):
             filter_img = cv2.adaptiveThreshold(gray_img, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 15, -22)
             contours = get_max_contours_by_filter_img(img, filter_img, ContourRetrievalMode=cv2.RETR_EXTERNAL)
             info['pick_picture_contours'] = contours
+            info['pick_picture_contour_area_mm2s'] = [(cv2.contourArea(contour) * ps_x * ps_y) for contour in contours]
+
+
+
+
+            #pick_area_mm2 = cv2.contourArea(contour) * ps_x * ps_y
 
 
 
@@ -1460,15 +1468,15 @@ def example_of_make_algo07():
             pick_picture = info['pick_picture']
             plt.imshow( pick_picture,cmap=plt.cm.gray)
             plt.show()
-            for contour in info['pick_picture_contours']:
+            for contour_idx, contour in enumerate(info['pick_picture_contours']):
                 pick_picture = copy.deepcopy(info['pick_picture'])
-                pick_area_mm2 = cv2.contourArea(contour) * ps_x * ps_y
+                #pick_area_mm2 = cv2.contourArea(contour) * ps_x * ps_y
+                pick_area_mm2 = info['pick_picture_contour_area_mm2s'][contour_idx]
                 label_text = 'pick_area_mm2 = {}'.format(pick_area_mm2)
                 print('label_text = {}'.format(label_text))
                 plt.text(0, -2, '{}'.format(label_text), fontsize=8)
                 cv2.drawContours(pick_picture, contour, -1, (0, 0, 255), 1)
                 plt.imshow(pick_picture, cmap=plt.cm.gray)
-                #plt.text(0, -2, 'draw ({},{}) px '.format(x_px, y_px), fontsize=8)
                 plt.show()
 
 
