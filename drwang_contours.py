@@ -1149,8 +1149,6 @@ def generate_patient_needle_mean_area_csv_report(folder, csv_filepath = '2905981
     generate_metadata_to_dicom_dict(dicom_dict)
     generate_output_to_dicom_dict(dicom_dict)
 
-    generate_patient_needle_info(dicom_dict)
-    return
     # Process to make needle_contours_infos
     for z in sorted(dicom_dict['z'].keys()):
         ct_obj = dicom_dict['z'][z]
@@ -1159,21 +1157,9 @@ def generate_patient_needle_mean_area_csv_report(folder, csv_filepath = '2905981
         ct_obj['output']['needle_contours_infos'] = copy.deepcopy(needle_contours_infos)
         print('len(dicom_dict["z"][{}]["output"]["needle_contours_infos"]) = {}'.format(z, len(dicom_dict['z'][z]['output']['needle_contours_infos'])))
 
-def generate_patient_needle_info(dicom_dict):
-    # The process to make needle_contours_infos in output
-    for z in sorted(dicom_dict['z'].keys()):
-        ct_obj = dicom_dict['z'][z]
-        #needle_contours_infos = [info for info in ct_obj['output']['contours_infos']['algo04'] if (info['area_mm2'] < 10) ]
-        needle_contours_infos = [info for info in ct_obj['output']['contours_infos']['algo06'] if(info['area_mm2'] < 10)]
-        ct_obj['output']['needle_contours_infos'] = copy.deepcopy(needle_contours_infos)
-        print('len(dicom_dict["z"][{}]["output"]["needle_contours_infos"]) = {}'.format(z, len(dicom_dict['z'][z]['output']['needle_contours_infos'])))
-
-
-
     sheet_width = 0
     sheet_height = 0
     z_map = dicom_dict['z']
-
     max_of_contours = 0
     for z in sorted(z_map.keys()):
         ct_obj = z_map[z]
@@ -1787,13 +1773,12 @@ def example_of_plot_with_needle_contours():
     # folder = '413382-4'
     # folder = '592697-1' # Case of 2 needles
     # folder = '592697-2'  # Case of 2 needles
-    # folder = '592697-3' # Case of 2 needles nmnbnb  m
+    # folder = '592697-3' # Case of 2 needles
     # folder = '29059811-1' # Case no needle
     # folder = '29059811-2' # Case no needle
     # folder = '29059811-3' # Case no needle
     # folder = '34698361-1' # Case no needle
-    #folder = '34698361-2'  # Case no needle
-    folder = '34982640'  # Case no needle
+    folder = '34698361-2'  # Case no needle
 
 
     bytes_filepath = os.path.join('contours_bytes', r'{}.bytes'.format(folder))
@@ -1824,8 +1809,8 @@ def example_of_plot_with_needle_contours():
 
 if __name__ == '__main__':
 
-    example_of_plot_with_needle_contours()
-    exit()
+    #example_of_plot_with_needle_contours()
+    #exit()
 
     #example_of_plot_contours()
     #exit()
