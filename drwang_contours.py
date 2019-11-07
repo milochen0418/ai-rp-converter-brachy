@@ -1141,7 +1141,7 @@ def generate_all_patient_mean_area_csv_report(root_folder = r'RAL_plan_new_20190
         print('', end='\n', flush=True)
     pass
 
-def generate_neelde_contours_infos_to_dicom_dict(dicom_dict):
+def generate_needle_contours_infos_to_dicom_dict(dicom_dict):
     # Process to make needle_contours_infos
     for z in sorted(dicom_dict['z'].keys()):
         ct_obj = dicom_dict['z'][z]
@@ -1157,7 +1157,7 @@ def generate_patient_needle_mean_area_csv_report(folder, csv_filepath = '2905981
     dicom_dict = get_dicom_dict(folder)
     generate_metadata_to_dicom_dict(dicom_dict)
     generate_output_to_dicom_dict(dicom_dict)
-    generate_neelde_contours_infos_to_dicom_dict(dicom_dict)
+    generate_needle_contours_infos_to_dicom_dict(dicom_dict)
 
     sheet_width = 0
     sheet_height = 0
