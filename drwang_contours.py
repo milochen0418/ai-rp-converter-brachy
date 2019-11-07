@@ -1141,14 +1141,7 @@ def generate_all_patient_mean_area_csv_report(root_folder = r'RAL_plan_new_20190
         print('', end='\n', flush=True)
     pass
 
-def generate_patient_needle_mean_area_csv_report(folder, csv_filepath = '29059811-1-algo01.csv'):
-    #algo_key = 'algo04'
-    algo_key = 'algo06'
-    output_csv_filepath = csv_filepath
-    dicom_dict = get_dicom_dict(folder)
-    generate_metadata_to_dicom_dict(dicom_dict)
-    generate_output_to_dicom_dict(dicom_dict)
-
+def generate_neelde_contours_infos_to_dicom_dict(dicom_dict):
     # Process to make needle_contours_infos
     for z in sorted(dicom_dict['z'].keys()):
         ct_obj = dicom_dict['z'][z]
@@ -1156,6 +1149,15 @@ def generate_patient_needle_mean_area_csv_report(folder, csv_filepath = '2905981
         needle_contours_infos = [info for info in ct_obj['output']['contours_infos']['algo06'] if(info['area_mm2'] < 10)]
         ct_obj['output']['needle_contours_infos'] = copy.deepcopy(needle_contours_infos)
         print('len(dicom_dict["z"][{}]["output"]["needle_contours_infos"]) = {}'.format(z, len(dicom_dict['z'][z]['output']['needle_contours_infos'])))
+
+def generate_patient_needle_mean_area_csv_report(folder, csv_filepath = '29059811-1-algo01.csv'):
+    #algo_key = 'algo04'
+    algo_key = 'algo06'
+    output_csv_filepath = csv_filepath
+    dicom_dict = get_dicom_dict(folder)
+    generate_metadata_to_dicom_dict(dicom_dict)
+    generate_output_to_dicom_dict(dicom_dict)
+    generate_neelde_contours_infos_to_dicom_dict(dicom_dict)
 
     sheet_width = 0
     sheet_height = 0
