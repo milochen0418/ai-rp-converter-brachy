@@ -1283,6 +1283,7 @@ def generate_patient_needle_mean_area_csv_report(folder, csv_filepath = '2905981
         for rowlist in sheet:
             csv_writter.writerow(rowlist)
     #print('Time to lookup sheet variable')
+
 def generate_all_patient_needle_csv_report(root_folder = r'RAL_plan_new_20190905'): # generate for each patient's data and put in more-infos folder
     f_list = [ os.path.join(root_folder, file) for file in os.listdir(root_folder) ]
     for folder_idx, folder in enumerate(f_list):
@@ -1296,6 +1297,116 @@ def generate_all_patient_needle_csv_report(root_folder = r'RAL_plan_new_20190905
             generate_patient_needle_mean_area_csv_report(folder, csv_filepath=csv_filepath)
         print('', end='\n', flush=True)
     pass
+
+
+
+
+def generate_patient_needle_fixed_area_csv_report(folder, csv_filepath = '29059811-1-algo01.csv'):
+    #algo_key = 'algo04'
+    algo_key = 'algo06'
+    output_csv_filepath = csv_filepath
+    dicom_dict = get_dicom_dict(folder)
+    generate_metadata_to_dicom_dict(dicom_dict)
+    generate_output_to_dicom_dict(dicom_dict)
+    generate_needle_contours_infos_to_dicom_dict(dicom_dict)
+
+    sheet_width = 0
+    sheet_height = 0
+    z_map = dicom_dict['z']
+    max_of_contours = 0
+    for z in sorted(z_map.keys()):
+        ct_obj = z_map[z]
+        #contours_infos = ct_obj['output']['contours_infos'][algo_key]
+        contours_infos = ct_obj['output']['needle_contours_infos']
+        len_contours = len(contours_infos)
+        if len_contours > max_of_contours:
+            max_of_contours = len_contours
+    sheet_width = 2 + max_of_contours # 1st col is z, 2nd col is number of contours
+    sheet_height = 3 + len(z_map.keys()) # 1st row -> folder name. 2nd row -> algo key. 3rd row->data header
+
+    # declare sheet is list of list and will use it to write csv file
+    sheet = []
+
+    # write first 3 rows
+    sheet.append([folder]) # idx = 0
+    sheet.append([algo_key]) # idx = 1
+    sheet.append(['z', 'contours#']) # idx = 2
+
+    # fill first 2 columns
+    for z in sorted(z_map.keys()):
+        ct_obj = z_map[z]
+        #contours_infos = ct_obj['output']['contours_infos'][algo_key]
+        contours_infos = ct_obj['output']['needle_contours_infos']
+        contour_num = len(contours_infos)
+        row = [z, contour_num]
+        sheet.append(row)
+
+    # fill space for empty cell in first 2 rows
+    sheet[0] = sheet[0] + ['']*(sheet_width-len(sheet[0]))
+    sheet[1] = sheet[1] + ['']*(sheet_width-len(sheet[1]))
+
+    # write done for 3rd row
+    header = sheet[2]
+    for c_idx in range(sheet_width - 2):
+        header.append('X[{}](px)'.format(c_idx + 1))
+        header.append('Y[{}](px)'.format(c_idx + 1))
+        header.append('A[{}](mm2)'.format(c_idx + 1))
+
+    # Now, 1,2,3 th row are finished. 1,2 th col are finished too.
+    # another (row,col) is the cell to show contour's info
+
+    # Process to write all contours info value
+    for z_idx, z in enumerate(sorted(z_map.keys())):
+        ct_obj = z_map[z]
+        write_infos = []
+        #infos = copy.deepcopy(ct_obj['output']['contours_infos'][algo_key])
+        infos = copy.deepcopy(ct_obj['output']['needle_contours_infos'])
+        infos.sort(key=lambda info: info['mean'][0]) # sorting infos by mean x
+        for info_idx, info in enumerate(infos):
+            mean_x = info['mean'][0]
+            mean_y = info['mean'][1]
+            area_mm2 = info['area_mm2']
+            #write_info = '({},{})px - {}'.format(mean_x, mean_y, area_mm2)
+            write_info = '({},{})-{}'.format(mean_x, mean_y, round(area_mm2,1))
+            write_info_mean = '223,221'
+            write_info_area = '23.1'
+
+            #write_infos.append(write_info)
+            #write_infos.append('({},{})'.format(mean_x, mean_y))
+            write_infos.append('{}'.format(mean_x))
+            write_infos.append('{}'.format(mean_y))
+            write_infos.append('{}'.format(round(area_mm2,2)))
+
+
+        # Write infos into correct row_sheet
+        sheet_row = copy.deepcopy(sheet[z_idx+3])
+        sheet_row = sheet_row + write_infos
+        sheet_row = sheet_row + ['']*(sheet_width-len(sheet_row))
+        sheet[z_idx+3] = sheet_row
+    with open(output_csv_filepath, mode='w', newline='') as csv_file:
+        csv_writter = csv.writer(csv_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+        #csv_writter.writerow(out_dict['header'])
+        for rowlist in sheet:
+            csv_writter.writerow(rowlist)
+    #print('Time to lookup sheet variable')
+
+def generate_all_patient_needle_fixed_area_csv_report(root_folder = r'RAL_plan_new_20190905'): # generate for each patient's data and put in more-infos folder
+    f_list = [ os.path.join(root_folder, file) for file in os.listdir(root_folder) ]
+    for folder_idx, folder in enumerate(f_list):
+        print( r'[{}/{}] {}'.format(folder_idx+1, len(f_list), os.path.basename(folder)) , end='\t', flush=True)
+        #algo_keys = ['algo01', 'algo02', 'algo03', 'algo04']
+        algo_keys = ['algo06']
+        for algo_key in algo_keys:
+            print(algo_key, end='\t', flush=True)
+            #csv_filepath = r'needle_more_infos/{}-{}.csv'.format(os.path.basename(folder), algo_key)
+            #csv_filepath = r'pure_needle_more_infos/{}-{}.csv'.format(os.path.basename(folder), algo_key)
+            csv_filepath = r'pure_needle_more_infos_fixed_area/{}-{}.csv'.format(os.path.basename(folder), algo_key)
+            #generate_patient_needle_mean_area_csv_report(folder, csv_filepath=csv_filepath)
+            generate_patient_needle_fixed_area_csv_report(folder, csv_filepath=csv_filepath)
+        print('', end='\n', flush=True)
+    pass
+
+
 def generate_brachy_rp_file(RP_OperatorsName, dicom_dict, out_rp_filepath, is_enable_print=False):
     if (is_enable_print == False):
         blockPrint()
@@ -1882,9 +1993,8 @@ def example_of_plot_with_needle_contours():
 
 if __name__ == '__main__':
 
-    example_of_plot_15x15_needle_picture()
-
-    exit()
+    #example_of_plot_15x15_needle_picture()
+    #exit()
     #example_of_plot_with_needle_contours()
     #exit()
 
@@ -1892,9 +2002,10 @@ if __name__ == '__main__':
     #exit()
 
     root_folder = r'RAL_plan_new_20190905'
-    generate_all_patient_needle_csv_report(root_folder)
+    #generate_all_patient_needle_csv_report(root_folder)
     #generate_all_patient_mean_area_csv_report(root_folder)
-    #exit()
+    generate_all_patient_needle_fixed_area_csv_report(root_folder)
+    exit()
 
     #example_create_all_rp_file()
     #exit()
