@@ -588,60 +588,58 @@ def algo_to_get_pixel_lines(dicom_dict):
 def algo_to_get_needle_lines(dicom_dict):
     #TODO
     #needle_lines = [[],[],[]]
-    needle_lines = []
+    needle_lines = [[],[],[]]
     # Step 1. Use algo07 to get center point of inner contour
     last_z_in_step1 = sorted(dicom_dict['z'].keys())[0]
     center_pts_dict = {} # The following loop will use algo03 to figure L't Ovoid, R't Ovoid and half tandem
     for z in sorted(dicom_dict['z'].keys()):
         contours = dicom_dict['z'][z]['output']['contours512']['algo07']
-        #plot_with_contours(dicom_dict, z=z, algo_key='algo07')
-        # Step 1.1 The process to collect the contour which is inner of some contour into inner_contours[]
-        inner_contours = contours
-        # Step 1.3 figure out center point of contour in inner_contour and sorting it by the order x
-        print('z = {}, len(inner_contours) = {}'.format(z, len(inner_contours)))
-        inner_cen_pts = []
-        for contour in inner_contours:
-            #rect_info = [(x_min, x_max, y_min, y_max), (w, h), (x_mean, y_mean)]
+        plot_with_contours(dicom_dict, z=z, algo_key='algo07')
+        center_pts_dict[z] = []
+        for contour in contours:
             rect_info = get_rect_info_from_cv_contour(contour)
             cen_pt = ( rect_info[2][0], rect_info[2][1] )
-            inner_cen_pts.append(cen_pt)
-        inner_cen_pts.sort(key=lambda pt:pt[0])
-        print('z = {}, inner_cen_pts = {}'.format(z, inner_cen_pts) )
-        center_pts_dict[z] = inner_cen_pts
+            center_pts_dict[z].append(cen_pt)
+        center_pts_dict[z].sort(key=lambda pt:pt[0])
+        print('center_pts_dict[{}] = {}'.format(z, center_pts_dict[z]))
+    return needle_lines
 
 
     # Step 2. Figure L't Ovoid
     print('STEP 2.')
-    lt_ovoid = []
+
     allowed_distance_mm = 2.5 # allowed distance when trace from bottom to tips of L't Ovoid
-    prev_info = {}
-    prev_info['pt'] = None
-    prev_info['ps_x'] = None
-    prev_info['ps_y'] = None
-    print('sorted(center_pts_dict.keys()) = {}'.format(sorted(center_pts_dict.keys())))
-    for idx_z, z in enumerate(sorted(center_pts_dict.keys())):
-        ps_x = dicom_dict['z'][z]['ps_x']
-        ps_y = dicom_dict['z'][z]['ps_y']
-        if idx_z == 0:
-            prev_pt = ( center_pts_dict[z][0][0], center_pts_dict[z][0][1], float(z))
-            prev_info['pt'] = prev_pt
-            prev_info['ps_x'] = ps_x
-            prev_info['ps_y'] = ps_y
-            lt_ovoid.append(prev_pt)
-            continue
-        prev_x_mm = prev_info['pt'][0] * prev_info['ps_x']
-        prev_y_mm = prev_info['pt'][1] * prev_info['ps_y']
-        x_mm = center_pts_dict[z][0][0] * ps_x
-        y_mm = center_pts_dict[z][0][1] * ps_y
-        if math.sqrt( (x_mm-prev_x_mm)**2 + (y_mm-prev_y_mm)**2) < allowed_distance_mm:
-            prev_pt = ( center_pts_dict[z][0][0], center_pts_dict[z][0][1], float(z))
-            prev_info['pt'] = prev_pt
-            prev_info['ps_x'] = ps_x
-            prev_info['ps_y'] = ps_y
-            lt_ovoid.append(prev_pt)
-            print('lt_ovoid = {}'.format(lt_ovoid))
-        else:
-            break
+    for needle_line_idx in range(len(sorted(center_pts_dict[z]))):
+        needle_line = []
+        prev_info = {}
+        prev_info['pt'] = None
+        prev_info['ps_x'] = None
+        prev_info['ps_y'] = None
+        print('sorted(center_pts_dict.keys()) = {}'.format(sorted(center_pts_dict.keys())))
+        for idx_z, z in enumerate(sorted(center_pts_dict.keys())):
+            ps_x = dicom_dict['z'][z]['ps_x']
+            ps_y = dicom_dict['z'][z]['ps_y']
+            if idx_z == 0:
+                #prev_pt = ( center_pts_dict[z][0][0], center_pts_dict[z][0][1], float(z))
+                prev_pt = (center_pts_dict[z][needle_line_idx][0], center_pts_dict[z][needle_line_idx][1], float(z))
+                prev_info['pt'] = prev_pt
+                prev_info['ps_x'] = ps_x
+                prev_info['ps_y'] = ps_y
+                lt_ovoid.append(prev_pt)
+                continue
+            prev_x_mm = prev_info['pt'][0] * prev_info['ps_x']
+            prev_y_mm = prev_info['pt'][1] * prev_info['ps_y']
+            x_mm = center_pts_dict[z][0][0] * ps_x
+            y_mm = center_pts_dict[z][0][1] * ps_y
+            if math.sqrt( (x_mm-prev_x_mm)**2 + (y_mm-prev_y_mm)**2) < allowed_distance_mm:
+                prev_pt = ( center_pts_dict[z][0][0], center_pts_dict[z][0][1], float(z))
+                prev_info['pt'] = prev_pt
+                prev_info['ps_x'] = ps_x
+                prev_info['ps_y'] = ps_y
+                lt_ovoid.append(prev_pt)
+                print('needle_line (with idx={})  = {}'.format(needle_line_idx, needle_line))
+            else:
+                break
 
 
     return needle_lines
@@ -1537,7 +1535,8 @@ def example_of_generate_brachy_rp_file():
     print(os.listdir(root_folder))
     folders = os.listdir(root_folder)
     print('folders = {}'.format(folders))
-    folder = '24460566-new01'
+    #folder = '24460566-new01' # Case of three needle
+    folder = '592697-1' # Case of Two needle
     bytes_filepath = os.path.join('contours_bytes', r'{}.bytes'.format(folder))
 
     #plot_with_contours(dicom_dict, z=sorted(dicom_dict['z'].keys())[10], algo_key='algo03')
@@ -1657,7 +1656,7 @@ def example_create_all_rp_file():
             out_rp_filepath = r'RP.{}.{}.f{}.dcm'.format(  metadata['RS_PatientID'],  metadata['RS_StudyDate'],  os.path.basename(metadata['folder']) )
             out_rp_filepath = os.path.join('all_rp_output', out_rp_filepath)
             time_start = datetime.datetime.now()
-            print('[{}/{}]Create RP file -> {}'.format(folder_idx+1,len(folders), out_rp_filepath) ,end=' -> ')
+            print('[{}/{}] Create RP file -> {}'.format(folder_idx+1,len(folders), out_rp_filepath) ,end=' -> ')
             generate_brachy_rp_file(RP_OperatorsName='cylin', dicom_dict=dicom_dict, out_rp_filepath=out_rp_filepath, is_enable_print=False)
             time_end = datetime.datetime.now()
             print('{}s [{}-{}]'.format(time_end-time_start, time_start, time_end), end='\n')
