@@ -2010,12 +2010,12 @@ if __name__ == '__main__':
 
     root_folder = r'RAL_plan_new_20190905'
     #generate_all_patient_needle_csv_report(root_folder)
-    generate_all_patient_mean_area_csv_report(root_folder)
+    #generate_all_patient_mean_area_csv_report(root_folder)
     #generate_all_patient_needle_fixed_area_csv_report(root_folder)
     #exit()
 
-    #example_create_all_rp_file()
-    #exit()
+    example_create_all_rp_file()
+    exit()
 
     #example_of_plot_rp_lines()
     #exit()
@@ -2062,8 +2062,8 @@ if __name__ == '__main__':
     #exit(0)
 
     # example of plot_rp_lines()
-    #example_of_plot_rp_lines()
-    #exit(0)
+    # example_of_plot_rp_lines()
+    # exit(0)
 
     root_folder = r'RAL_plan_new_20190905'
     print(os.listdir(root_folder))
