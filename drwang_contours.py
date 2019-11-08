@@ -819,6 +819,19 @@ def get_metric_lines_representation(dicom_dict, lt_ovoid, tandem, rt_ovoid):
     (metric_lt_ovoid, metric_tandem, metric_rt_ovoid) = (new_lines[0], new_lines[1], new_lines[2])
     return (metric_lt_ovoid, metric_tandem, metric_rt_ovoid)
 
+def get_metric_needle_lines_representation(dicom_dict, needle_lines):
+    metric_needle_lines = []
+    for line in needle_lines:
+        metric_needle_line = []
+        for pt in line:
+            z = pt[2]
+            ct_obj = dicom_dict['z'][z]
+            x = pt[0] * ct_obj['ps_x'] + ct_obj['origin_x']
+            y = pt[1] * ct_obj['ps_y'] + ct_obj['origin_y']
+            metric_needle_line.append([x,y,z])
+        metric_needle_lines.append(metric_needle_line)
+    return metric_needle_lines
+
 # FUNCTIONS - DICOM data processing Functions
 def get_dicom_folder_pathinfo(folder):
     dicom_folder = {}
@@ -1412,9 +1425,13 @@ def generate_brachy_rp_file(RP_OperatorsName, dicom_dict, out_rp_filepath, is_en
     # Step 2. Convert line into metric representation
     # Original line is array of (x_px, y_px, z_mm) and we want to convert to (x_mm, y_mm, z_mm)
     (metric_lt_ovoid, metric_tandem, metric_rt_ovoid) = get_metric_lines_representation(dicom_dict, lt_ovoid, tandem, rt_ovoid)
+    metric_needle_lines = get_metric_needle_lines_representation(dicom_dict, needle_lines)
+
     print('metric_lt_ovoid = {}'.format(metric_lt_ovoid))
     print('metric_tandem = {}'.format(metric_tandem))
     print('metric_rt_ovoid = {}'.format(metric_rt_ovoid))
+    print('len(metric_needle_lines) = {}'.format(len(metric_needle_lines)))
+
 
     # Step 3. Reverse Order, so that first element is TIPS [from most top (z maximum) to most bottom (z minimum) ]
     metric_lt_ovoid.reverse()
