@@ -644,6 +644,7 @@ def algo_to_get_needle_lines(dicom_dict):
                 break
         needle_lines.append(needle_line)
     return needle_lines
+
 def get_applicator_rp_line(metric_line, first_purpose_distance_mm, each_purpose_distance_mm):
     if (len(metric_line) == 0):
         return []
@@ -834,11 +835,15 @@ def wrap_to_rp_file(RP_OperatorsName, rs_filepath, tandem_rp_line, out_rp_filepa
     BCPItemTemplate = copy.deepcopy(rp_fp.ApplicationSetupSequence[0].ChannelSequence[0].BrachyControlPointSequence[0])
     rp_lines = [tandem_rp_line, rt_ovoid_rp_line, lt_ovoid_rp_line]
 
+
     #TODO rp_Ref_ROI_Numbers need to match to current RS's ROI number of three applicators
     #rp_Ref_ROI_Numbers = [17, 18, 19]
     rp_Ref_ROI_Numbers = app_roi_num_list
     rp_ControlPointRelativePositions = [3.5, 3.5, 3.5]
     for idx,rp_line in enumerate(rp_lines):
+        if (idx >= len(rp_Ref_ROI_Numbers)):
+            print('the number of rp_line is larger than len(rp_Ref_ROI_Numbers)')
+            break
         # Change ROINumber of RP_Template_TestData RS into output RP output file
         # Do  I need to fit ROINumber in RS or not? I still have no answer
         rp_fp.ApplicationSetupSequence[0].ChannelSequence[idx].ReferencedROINumber = rp_Ref_ROI_Numbers[idx]
@@ -940,7 +945,14 @@ def get_dicom_dict(folder):
     # Set metadata for ROINumber list (for wrap rp data)
     rs_fp = pydicom.read_file(rs_filepath)
     if (rs_fp != None):
-        applicator_target_list = ['Applicator1', 'Applicator2', 'Applicator3']
+
+        # applicator_target_list = ['Applicator1', 'Applicator2', 'Applicator3']
+        # Process to get applicator_target_list
+        applicator_target_list = []
+        for item in rs_fp.StructureSetROISequence:
+            if 'Applicator' in item.ROIName:
+                applicator_target_list.append(item.ROIName)
+
         applicator_roi_dict = {}
         for app_name in applicator_target_list:
             for item in rs_fp.StructureSetROISequence:
