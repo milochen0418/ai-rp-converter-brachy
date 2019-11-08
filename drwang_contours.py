@@ -321,13 +321,14 @@ def get_most_closed_pt(src_pt, pts, allowed_distance=100):
     return dst_pt
 def algo_to_get_pixel_lines(dicom_dict):
     # type: (dicom_dict) -> (lt_ovoid, tandem, rt_ovoid)
-    # Step 1. Use algo03 to get center point of inner contour
+    # Step 1. Use algo05 to get center point of inner contour
     last_z_in_step1 = sorted(dicom_dict['z'].keys())[0]
     center_pts_dict = {} # The following loop will use algo03 to figure L't Ovoid, R't Ovoid and half tandem
     for z in sorted(dicom_dict['z'].keys()):
         #contours = dicom_dict['z'][z]['output']['contours512']['algo03']
         contours = dicom_dict['z'][z]['output']['contours512']['algo05']
         #plot_with_contours(dicom_dict, z=z, algo_key='algo03')
+        #plot_with_contours(dicom_dict, z=z, algo_key='algo05')
         # Step 1.1 The process to collect the contour which is inner of some contour into inner_contours[]
         inner_contours = []
         for inner_idx, inner_contour in enumerate(contours):
@@ -389,7 +390,6 @@ def algo_to_get_pixel_lines(dicom_dict):
             prev_info['ps_y'] = ps_y
             lt_ovoid.append(prev_pt)
             print('lt_ovoid = {}'.format(lt_ovoid))
-
         else:
             break
 
@@ -585,9 +585,65 @@ def algo_to_get_pixel_lines(dicom_dict):
             prev_info['ps_y'] = ps_y
             print('tandem = {}'.format(tandem))
     return (lt_ovoid, tandem, rt_ovoid)
-def algo_to_get_needles_lines(dicom_dict):
+def algo_to_get_needle_lines(dicom_dict):
     #TODO
-    needle_lines = [[],[],[]]
+    #needle_lines = [[],[],[]]
+    needle_lines = []
+    # Step 1. Use algo07 to get center point of inner contour
+    last_z_in_step1 = sorted(dicom_dict['z'].keys())[0]
+    center_pts_dict = {} # The following loop will use algo03 to figure L't Ovoid, R't Ovoid and half tandem
+    for z in sorted(dicom_dict['z'].keys()):
+        contours = dicom_dict['z'][z]['output']['contours512']['algo07']
+        #plot_with_contours(dicom_dict, z=z, algo_key='algo07')
+        # Step 1.1 The process to collect the contour which is inner of some contour into inner_contours[]
+        inner_contours = contours
+        # Step 1.3 figure out center point of contour in inner_contour and sorting it by the order x
+        print('z = {}, len(inner_contours) = {}'.format(z, len(inner_contours)))
+        inner_cen_pts = []
+        for contour in inner_contours:
+            #rect_info = [(x_min, x_max, y_min, y_max), (w, h), (x_mean, y_mean)]
+            rect_info = get_rect_info_from_cv_contour(contour)
+            cen_pt = ( rect_info[2][0], rect_info[2][1] )
+            inner_cen_pts.append(cen_pt)
+        inner_cen_pts.sort(key=lambda pt:pt[0])
+        print('z = {}, inner_cen_pts = {}'.format(z, inner_cen_pts) )
+        center_pts_dict[z] = inner_cen_pts
+
+
+    # Step 2. Figure L't Ovoid
+    print('STEP 2.')
+    lt_ovoid = []
+    allowed_distance_mm = 2.5 # allowed distance when trace from bottom to tips of L't Ovoid
+    prev_info = {}
+    prev_info['pt'] = None
+    prev_info['ps_x'] = None
+    prev_info['ps_y'] = None
+    print('sorted(center_pts_dict.keys()) = {}'.format(sorted(center_pts_dict.keys())))
+    for idx_z, z in enumerate(sorted(center_pts_dict.keys())):
+        ps_x = dicom_dict['z'][z]['ps_x']
+        ps_y = dicom_dict['z'][z]['ps_y']
+        if idx_z == 0:
+            prev_pt = ( center_pts_dict[z][0][0], center_pts_dict[z][0][1], float(z))
+            prev_info['pt'] = prev_pt
+            prev_info['ps_x'] = ps_x
+            prev_info['ps_y'] = ps_y
+            lt_ovoid.append(prev_pt)
+            continue
+        prev_x_mm = prev_info['pt'][0] * prev_info['ps_x']
+        prev_y_mm = prev_info['pt'][1] * prev_info['ps_y']
+        x_mm = center_pts_dict[z][0][0] * ps_x
+        y_mm = center_pts_dict[z][0][1] * ps_y
+        if math.sqrt( (x_mm-prev_x_mm)**2 + (y_mm-prev_y_mm)**2) < allowed_distance_mm:
+            prev_pt = ( center_pts_dict[z][0][0], center_pts_dict[z][0][1], float(z))
+            prev_info['pt'] = prev_pt
+            prev_info['ps_x'] = ps_x
+            prev_info['ps_y'] = ps_y
+            lt_ovoid.append(prev_pt)
+            print('lt_ovoid = {}'.format(lt_ovoid))
+        else:
+            break
+
+
     return needle_lines
 
 def get_applicator_rp_line(metric_line, first_purpose_distance_mm, each_purpose_distance_mm):
@@ -1421,7 +1477,7 @@ def generate_brachy_rp_file(RP_OperatorsName, dicom_dict, out_rp_filepath, is_en
 
     # Step 1. Get line of lt_ovoid, tandem, rt_ovoid by OpneCV contour material and innovated combination
     (lt_ovoid, tandem, rt_ovoid) = algo_to_get_pixel_lines(dicom_dict)
-    needle_lines = algo_to_get_needles_lines(dicom_dict)
+    needle_lines = algo_to_get_needle_lines(dicom_dict)
 
     # Step 2. Convert line into metric representation
     # Original line is array of (x_px, y_px, z_mm) and we want to convert to (x_mm, y_mm, z_mm)
@@ -1457,7 +1513,6 @@ def generate_brachy_rp_file(RP_OperatorsName, dicom_dict, out_rp_filepath, is_en
     print('lt_ovoid_rp_line = {}'.format(lt_ovoid_rp_line))
     print('tandem_rp_line = {}'.format(tandem_rp_line))
     print('rt_ovoid_rp_line = {}'.format(rt_ovoid_rp_line))
-
     print('len(rp_needle_lines) = {}'.format(len(rp_needle_lines)))
     for line_idx, line in enumerate(rp_needle_lines):
         print('rp_needle_lines[{}]= {}'.format(line_idx, line))
