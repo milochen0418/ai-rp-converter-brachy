@@ -585,6 +585,11 @@ def algo_to_get_pixel_lines(dicom_dict):
             prev_info['ps_y'] = ps_y
             print('tandem = {}'.format(tandem))
     return (lt_ovoid, tandem, rt_ovoid)
+def algo_to_get_needles_lines(dicom_dict):
+    #TODO
+    needle_lines = [[],[],[]]
+    return needle_lines
+
 def get_applicator_rp_line(metric_line, first_purpose_distance_mm, each_purpose_distance_mm):
     # REWRITE get_metric_pt_info_by_travel_distance, so the get_metric_pt, reduct_distance_step and get_metric_pt_info_travel_distance will not be USED
     def get_metric_pt(metric_line, pt_idx, pt_idx_remainder):
@@ -1402,6 +1407,7 @@ def generate_brachy_rp_file(RP_OperatorsName, dicom_dict, out_rp_filepath, is_en
 
     # Step 1. Get line of lt_ovoid, tandem, rt_ovoid by OpneCV contour material and innovated combination
     (lt_ovoid, tandem, rt_ovoid) = algo_to_get_pixel_lines(dicom_dict)
+    needle_lines = algo_to_get_needles_lines(dicom_dict)
 
     # Step 2. Convert line into metric representation
     # Original line is array of (x_px, y_px, z_mm) and we want to convert to (x_mm, y_mm, z_mm)
@@ -1436,6 +1442,33 @@ def generate_brachy_rp_file(RP_OperatorsName, dicom_dict, out_rp_filepath, is_en
     wrap_to_rp_file(RP_OperatorsName=RP_OperatorsName, rs_filepath=rs_filepath, tandem_rp_line=tandem_rp_line, out_rp_filepath=out_rp_filepath, lt_ovoid_rp_line=lt_ovoid_rp_line, rt_ovoid_rp_line=rt_ovoid_rp_line, app_roi_num_list=app_roi_num_list)
     if (is_enable_print == False):
         enablePrint()
+
+def example_of_generate_brachy_rp_file():
+    root_folder = r'RAL_plan_new_20190905'
+    print(os.listdir(root_folder))
+    folders = os.listdir(root_folder)
+    print('folders = {}'.format(folders))
+    folder = '24460566-new01'
+    bytes_filepath = os.path.join('contours_bytes', r'{}.bytes'.format(folder))
+
+    #plot_with_contours(dicom_dict, z=sorted(dicom_dict['z'].keys())[10], algo_key='algo03')
+    dicom_dict = python_object_load(bytes_filepath)
+    for z_idx, z in enumerate(sorted(dicom_dict['z'].keys())) :
+        #plot_with_contours(dicom_dict, z=sorted(dicom_dict['z'].keys())[z_idx], algo_key='algo01')
+        continue
+
+    metadata = dicom_dict['metadata']
+    # out_rp_filepath format is PatientID, RS StudyDate  and the final is folder name processing by coding
+    out_rp_filepath = r'RP.{}.{}.f{}.dcm'.format(  metadata['RS_PatientID'],  metadata['RS_StudyDate'],  os.path.basename(metadata['folder']) )
+    out_rp_filepath = os.path.join('all_rp_output', out_rp_filepath)
+    print('RP Create {}'.format(out_rp_filepath))
+    time_start = datetime.datetime.now()
+    print('Create RP file -> {}'.format(out_rp_filepath) ,end=' -> ')
+    #generate_brachy_rp_file(RP_OperatorsName='cylin', dicom_dict=dicom_dict, out_rp_filepath=out_rp_filepath, is_enable_print=False)
+    generate_brachy_rp_file(RP_OperatorsName='cylin', dicom_dict=dicom_dict, out_rp_filepath=out_rp_filepath, is_enable_print=True)
+    time_end = datetime.datetime.now()
+    print('{}s [{}-{}]'.format(time_end-time_start, time_start, time_end), end='\n')
+
 
 # FUNCTIONS - Some file batch processing function
 def contours_python_object_dump(root_folder, filename):
@@ -2014,8 +2047,11 @@ if __name__ == '__main__':
     #generate_all_patient_needle_fixed_area_csv_report(root_folder)
     #exit()
 
-    example_create_all_rp_file()
+    example_of_generate_brachy_rp_file()
     exit()
+
+    #example_create_all_rp_file()
+    #exit()
 
     #example_of_plot_rp_lines()
     #exit()
@@ -2065,37 +2101,10 @@ if __name__ == '__main__':
     # example_of_plot_rp_lines()
     # exit(0)
 
-    root_folder = r'RAL_plan_new_20190905'
-    print(os.listdir(root_folder))
-    folders = os.listdir(root_folder)
-    print('folders = {}'.format(folders))
-    #folder = '24460566-ctdate20191015'
-    #folder = '35252020-2'
-    #folder = '29059811-2'
-    folder = '24460566-new01'
-    bytes_filepath = os.path.join('contours_bytes', r'{}.bytes'.format(folder))
 
-    #plot_with_contours(dicom_dict, z=sorted(dicom_dict['z'].keys())[10], algo_key='algo03')
-    dicom_dict = python_object_load(bytes_filepath)
-
-    for z_idx, z in enumerate(sorted(dicom_dict['z'].keys())):
-        #plot_with_contours(dicom_dict, z=sorted(dicom_dict['z'].keys())[z_idx], algo_key='algo01')
-        continue
-
-    metadata = dicom_dict['metadata']
-    # out_rp_filepath format is PatientID, RS StudyDate  and the final is folder name processing by coding
-    out_rp_filepath = r'RP.{}.{}.f{}.dcm'.format(  metadata['RS_PatientID'],  metadata['RS_StudyDate'],  os.path.basename(metadata['folder']) )
-    out_rp_filepath = os.path.join('all_rp_output', out_rp_filepath)
-    print('RP Create {}'.format(out_rp_filepath))
-    time_start = datetime.datetime.now()
-    print('Create RP file -> {}'.format(out_rp_filepath) ,end=' -> ')
-    generate_brachy_rp_file(RP_OperatorsName='cylin', dicom_dict=dicom_dict, out_rp_filepath=out_rp_filepath, is_enable_print=False)
-    time_end = datetime.datetime.now()
-    print('{}s [{}-{}]'.format(time_end-time_start, time_start, time_end), end='\n')
 
 
     exit(0)
-
 
 
 
