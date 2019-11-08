@@ -588,13 +588,14 @@ def algo_to_get_pixel_lines(dicom_dict):
 def algo_to_get_needle_lines(dicom_dict):
     #TODO
     #needle_lines = [[],[],[]]
-    needle_lines = [[],[],[]]
+    #needle_lines = [[],[],[]]
+    needle_lines = []
     # Step 1. Use algo07 to get center point of inner contour
     last_z_in_step1 = sorted(dicom_dict['z'].keys())[0]
     center_pts_dict = {} # The following loop will use algo03 to figure L't Ovoid, R't Ovoid and half tandem
     for z in sorted(dicom_dict['z'].keys()):
         contours = dicom_dict['z'][z]['output']['contours512']['algo07']
-        plot_with_contours(dicom_dict, z=z, algo_key='algo07')
+        #plot_with_contours(dicom_dict, z=z, algo_key='algo07')
         center_pts_dict[z] = []
         for contour in contours:
             rect_info = get_rect_info_from_cv_contour(contour)
@@ -602,14 +603,17 @@ def algo_to_get_needle_lines(dicom_dict):
             center_pts_dict[z].append(cen_pt)
         center_pts_dict[z].sort(key=lambda pt:pt[0])
         print('center_pts_dict[{}] = {}'.format(z, center_pts_dict[z]))
-    return needle_lines
+    #return needle_lines
 
 
     # Step 2. Figure L't Ovoid
     print('STEP 2.')
 
+    min_z = sorted(center_pts_dict.keys())[0]
     allowed_distance_mm = 2.5 # allowed distance when trace from bottom to tips of L't Ovoid
-    for needle_line_idx in range(len(sorted(center_pts_dict[z]))):
+    # Get first slice and see how many needle point in it. the index of needle point in first slice will be the needle_line_idx
+    for needle_line_idx in range(len(center_pts_dict[min_z])):
+        print('needle_line_idx = {}'.format(needle_line_idx))
         needle_line = []
         prev_info = {}
         prev_info['pt'] = None
@@ -625,25 +629,28 @@ def algo_to_get_needle_lines(dicom_dict):
                 prev_info['pt'] = prev_pt
                 prev_info['ps_x'] = ps_x
                 prev_info['ps_y'] = ps_y
-                lt_ovoid.append(prev_pt)
+                #lt_ovoid.append(prev_pt)
+                needle_line.append(prev_pt)
                 continue
             prev_x_mm = prev_info['pt'][0] * prev_info['ps_x']
             prev_y_mm = prev_info['pt'][1] * prev_info['ps_y']
-            x_mm = center_pts_dict[z][0][0] * ps_x
-            y_mm = center_pts_dict[z][0][1] * ps_y
+            #x_mm = center_pts_dict[z][0][0] * ps_x
+            x_mm = center_pts_dict[z][needle_line_idx][0] * ps_x
+            #y_mm = center_pts_dict[z][0][1] * ps_y
+            y_mm = center_pts_dict[z][needle_line_idx][1] * ps_y
             if math.sqrt( (x_mm-prev_x_mm)**2 + (y_mm-prev_y_mm)**2) < allowed_distance_mm:
-                prev_pt = ( center_pts_dict[z][0][0], center_pts_dict[z][0][1], float(z))
+                #prev_pt = ( center_pts_dict[z][0][0], center_pts_dict[z][0][1], float(z))
+                prev_pt = (center_pts_dict[z][needle_line_idx][0], center_pts_dict[z][needle_line_idx][1], float(z))
                 prev_info['pt'] = prev_pt
                 prev_info['ps_x'] = ps_x
                 prev_info['ps_y'] = ps_y
-                lt_ovoid.append(prev_pt)
+                #lt_ovoid.append(prev_pt)
+                needle_line.append(prev_pt)
                 print('needle_line (with idx={})  = {}'.format(needle_line_idx, needle_line))
             else:
                 break
-
-
+        needle_lines.append(needle_line)
     return needle_lines
-
 def get_applicator_rp_line(metric_line, first_purpose_distance_mm, each_purpose_distance_mm):
     if (len(metric_line) == 0):
         return []
