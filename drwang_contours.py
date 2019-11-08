@@ -216,8 +216,6 @@ def get_contours_from_edge_detection_algo_07(img, contour_constant_value, ps_x, 
     needle_contours = [contour for contour in contours_without_filter if (get_contour_area_mm2(contour, ps_x, ps_y) < needle_allowed_area_mm2)]
     return needle_contours
 
-
-
 def get_rect_info_from_cv_contour(cv_contour):
     i = cv_contour
     con = i.reshape(i.shape[0], i.shape[2])
@@ -644,7 +642,6 @@ def algo_to_get_needle_lines(dicom_dict):
                 break
         needle_lines.append(needle_line)
     return needle_lines
-
 def get_applicator_rp_line(metric_line, first_purpose_distance_mm, each_purpose_distance_mm):
     if (len(metric_line) == 0):
         return []
@@ -770,7 +767,6 @@ def get_applicator_rp_line(metric_line, first_purpose_distance_mm, each_purpose_
         tandem_rp_line.append(t_pt)
 
     return tandem_rp_line
-
 def wrap_to_rp_file(RP_OperatorsName, rs_filepath, tandem_rp_line, out_rp_filepath, lt_ovoid_rp_line, rt_ovoid_rp_line, needle_rp_lines=[], app_roi_num_list=[16, 17, 18]):
     # TODO wrap needles
     print('len(needle_rp_lines)={}'.format(len(needle_rp_lines)))
@@ -2149,8 +2145,8 @@ if __name__ == '__main__':
     #generate_all_patient_needle_fixed_area_csv_report(root_folder)
     #exit()
 
-    example_of_generate_brachy_rp_file()
-    exit()
+    #example_of_generate_brachy_rp_file()
+    #exit()
 
     #example_create_all_rp_file()
     #exit()
@@ -2159,8 +2155,8 @@ if __name__ == '__main__':
     #exit()
 
     # Dump All data with contours into dicom_dict bytes files
-    #example_dump_single_and_multiple_bytesfile()
-    #exit()
+    example_dump_single_and_multiple_bytesfile()
+    exit()
 
     # Code START
     # Code END
