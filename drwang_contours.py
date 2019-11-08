@@ -770,8 +770,10 @@ def get_applicator_rp_line(metric_line, first_purpose_distance_mm, each_purpose_
         tandem_rp_line.append(t_pt)
 
     return tandem_rp_line
-def wrap_to_rp_file(RP_OperatorsName, rs_filepath, tandem_rp_line, out_rp_filepath, lt_ovoid_rp_line, rt_ovoid_rp_line, app_roi_num_list=[16, 17, 18]):
+
+def wrap_to_rp_file(RP_OperatorsName, rs_filepath, tandem_rp_line, out_rp_filepath, lt_ovoid_rp_line, rt_ovoid_rp_line, needle_rp_lines=[], app_roi_num_list=[16, 17, 18]):
     # TODO wrap needles
+    print('len(needle_rp_lines)={}'.format(len(needle_rp_lines)))
     rp_template_filepath = r'RP_Template/Brachy_RP.1.2.246.352.71.5.417454940236.2063186.20191015164204.dcm'
     def get_new_uid(old_uid='1.2.246.352.71.5.417454940236.2063186.20191015164204', study_date='20190923'):
         uid = old_uid
@@ -839,7 +841,8 @@ def wrap_to_rp_file(RP_OperatorsName, rs_filepath, tandem_rp_line, out_rp_filepa
     #TODO rp_Ref_ROI_Numbers need to match to current RS's ROI number of three applicators
     #rp_Ref_ROI_Numbers = [17, 18, 19]
     rp_Ref_ROI_Numbers = app_roi_num_list
-    rp_ControlPointRelativePositions = [3.5, 3.5, 3.5]
+    rp_ControlPointRelativePositions = [3.5, 3.5, 3.5] # After researching, all ControlPointRelativePositions is start in 3.5
+    rp_ControlPointRelativePositions = [3.5 for item in app_roi_num_list]
     for idx,rp_line in enumerate(rp_lines):
         if (idx >= len(rp_Ref_ROI_Numbers)):
             print('the number of rp_line is larger than len(rp_Ref_ROI_Numbers)')
@@ -849,7 +852,7 @@ def wrap_to_rp_file(RP_OperatorsName, rs_filepath, tandem_rp_line, out_rp_filepa
         rp_fp.ApplicationSetupSequence[0].ChannelSequence[idx].ReferencedROINumber = rp_Ref_ROI_Numbers[idx]
         rp_fp.ApplicationSetupSequence[0].ChannelSequence[idx].NumberOfControlPoints = len(rp_line)
         rp_fp.ApplicationSetupSequence[0].ChannelSequence[idx].BrachyControlPointSequence.clear()
-        for pt_idx, pt in enumerate( rp_line ):
+        for pt_idx, pt in enumerate(rp_line):
             BCPPt = copy.deepcopy(BCPItemTemplate)
             BCPPt.ControlPointRelativePosition = rp_ControlPointRelativePositions[idx] + pt_idx * 5
             BCPPt.ControlPoint3DPosition[0] = pt[0]
@@ -861,9 +864,7 @@ def wrap_to_rp_file(RP_OperatorsName, rs_filepath, tandem_rp_line, out_rp_filepa
             BCPEndPt.ControlPointIndex = 2 * pt_idx + 1
             rp_fp.ApplicationSetupSequence[0].ChannelSequence[idx].BrachyControlPointSequence.append(BCPStartPt)
             rp_fp.ApplicationSetupSequence[0].ChannelSequence[idx].BrachyControlPointSequence.append(BCPEndPt)
-
     pydicom.write_file(out_rp_filepath, rp_fp)
-
     pass
 def get_metric_lines_representation(dicom_dict, lt_ovoid, tandem, rt_ovoid):
     #(metric_lt_ovoid, metric_tandem, metric_rt_ovoid) = get_metric_lines_representation(dicom_dict, lt_ovoid, tandem, rt_ovoid)
@@ -1538,7 +1539,8 @@ def generate_brachy_rp_file(RP_OperatorsName, dicom_dict, out_rp_filepath, is_en
     print('out_rp_filepath = {}'.format(out_rp_filepath))
     app_roi_num_list = dicom_dict['metadata']['applicator123_roi_numbers']
     # TODO will change the wrap_to_rp_file function, because we will wrap needle information into RP files
-    wrap_to_rp_file(RP_OperatorsName=RP_OperatorsName, rs_filepath=rs_filepath, tandem_rp_line=tandem_rp_line, out_rp_filepath=out_rp_filepath, lt_ovoid_rp_line=lt_ovoid_rp_line, rt_ovoid_rp_line=rt_ovoid_rp_line, app_roi_num_list=app_roi_num_list)
+    #wrap_to_rp_file(RP_OperatorsName=RP_OperatorsName, rs_filepath=rs_filepath, tandem_rp_line=tandem_rp_line, out_rp_filepath=out_rp_filepath, lt_ovoid_rp_line=lt_ovoid_rp_line, rt_ovoid_rp_line=rt_ovoid_rp_line, app_roi_num_list=app_roi_num_list)
+    wrap_to_rp_file(RP_OperatorsName=RP_OperatorsName, rs_filepath=rs_filepath, tandem_rp_line=tandem_rp_line,out_rp_filepath=out_rp_filepath, lt_ovoid_rp_line=lt_ovoid_rp_line, needle_rp_lines=rp_needle_lines,rt_ovoid_rp_line=rt_ovoid_rp_line, app_roi_num_list=app_roi_num_list)
     if (is_enable_print == False):
         enablePrint()
 
