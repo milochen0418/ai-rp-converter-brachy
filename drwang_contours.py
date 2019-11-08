@@ -210,6 +210,14 @@ def get_contours_from_edge_detection_algo_06(img, contour_constant_value):
     (contours_without_filter, constant) = get_max_contours(img, constant_value=contour_constant_value, ContourRetrievalMode=cv2.RETR_EXTERNAL)
     contours = contours_without_filter
     return contours
+def get_contours_from_edge_detection_algo_07(img, contour_constant_value, ps_x, ps_y):
+    (contours_without_filter, constant) = get_max_contours(img, constant_value=contour_constant_value, ContourRetrievalMode=cv2.RETR_EXTERNAL)
+    needle_allowed_area_mm2 = 10
+    needle_contours = [contour for contour in contours_without_filter if (get_contour_area_mm2(contour, ps_x, ps_y) < needle_allowed_area_mm2)]
+    return needle_contours
+
+
+
 def get_rect_info_from_cv_contour(cv_contour):
     i = cv_contour
     con = i.reshape(i.shape[0], i.shape[2])
@@ -942,6 +950,8 @@ def generate_output_to_ct_obj(ct_obj):
     rescale_pixel_array = ct_obj['rescale_pixel_array']
     rescale_pixel_array = rescale_pixel_array[view_min_y: view_max_y, view_min_x:view_max_x]
     filter_img = cv2.adaptiveThreshold(gray_img, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 15, -22)
+    ps_x = ct_obj['ps_x']
+    ps_y = ct_obj['ps_y']
     ct_obj['output']['contours'] = {}
     ct_obj['output']['contours']['algo01'] = get_contours_from_edge_detection_algo_01(img, filter_img)
     ct_obj['output']['contours']['algo02'] = get_contours_from_edge_detection_algo_02(img, filter_img)
@@ -950,6 +960,8 @@ def generate_output_to_ct_obj(ct_obj):
     contour_constant_value = ct_obj['dicom_dict']['metadata']['global_max_contour_constant_value']
     ct_obj['output']['contours']['algo05'] = get_contours_from_edge_detection_algo_05(rescale_pixel_array, contour_constant_value)
     ct_obj['output']['contours']['algo06'] = get_contours_from_edge_detection_algo_06(rescale_pixel_array, contour_constant_value)
+    ct_obj['output']['contours']['algo07'] = get_contours_from_edge_detection_algo_07(rescale_pixel_array, contour_constant_value, ps_x, ps_y)
+
     #ct_obj['output']['contours']['algo05'] = get_contours_from_edge_detection_algo_05(img, contour_constant_vlaue = global_max_contour_constant_value)
     #ct_obj['output']['contours']['algo06'] = get_contours_from_edge_detection_algo_06(img, contour_constant_value = global_max_contour_constant_value)
 
@@ -1126,7 +1138,8 @@ def generate_all_patient_mean_area_csv_report(root_folder = r'RAL_plan_new_20190
     f_list = [ os.path.join(root_folder, file) for file in os.listdir(root_folder) ]
     for folder_idx, folder in enumerate(f_list):
         print( r'[{}/{}] {}'.format(folder_idx+1, len(f_list), os.path.basename(folder)) , end='\t', flush=True)
-        algo_keys = ['algo01', 'algo02', 'algo03', 'algo04']
+        #algo_keys = ['algo01', 'algo02', 'algo03', 'algo04']
+        algo_keys = ['algo01', 'algo02', 'algo03', 'algo04', 'algo05', 'algo06', 'algo07']
         for algo_key in algo_keys:
             print(algo_key, end='\t', flush=True)
             csv_filepath = r'more_infos/{}-{}.csv'.format(os.path.basename(folder), algo_key)
@@ -1986,8 +1999,9 @@ def example_of_plot_with_needle_contours():
 
 if __name__ == '__main__':
 
-    example_of_plot_15x15_needle_picture()
-    exit()
+    #example_of_plot_15x15_needle_picture()
+    #exit()
+
     #example_of_plot_with_needle_contours()
     #exit()
 
@@ -1996,15 +2010,15 @@ if __name__ == '__main__':
 
     root_folder = r'RAL_plan_new_20190905'
     #generate_all_patient_needle_csv_report(root_folder)
-    #generate_all_patient_mean_area_csv_report(root_folder)
-    generate_all_patient_needle_fixed_area_csv_report(root_folder)
-    exit()
+    generate_all_patient_mean_area_csv_report(root_folder)
+    #generate_all_patient_needle_fixed_area_csv_report(root_folder)
+    #exit()
 
     #example_create_all_rp_file()
     #exit()
 
-    example_of_plot_rp_lines()
-    exit()
+    #example_of_plot_rp_lines()
+    #exit()
 
     # Dump All data with contours into dicom_dict bytes files
     #example_dump_single_and_multiple_bytesfile()
