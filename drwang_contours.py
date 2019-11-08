@@ -586,13 +586,10 @@ def algo_to_get_pixel_lines(dicom_dict):
             print('tandem = {}'.format(tandem))
     return (lt_ovoid, tandem, rt_ovoid)
 def algo_to_get_needle_lines(dicom_dict):
-    #TODO
-    #needle_lines = [[],[],[]]
-    #needle_lines = [[],[],[]]
     needle_lines = []
     # Step 1. Use algo07 to get center point of inner contour
     last_z_in_step1 = sorted(dicom_dict['z'].keys())[0]
-    center_pts_dict = {} # The following loop will use algo03 to figure L't Ovoid, R't Ovoid and half tandem
+    center_pts_dict = {}
     for z in sorted(dicom_dict['z'].keys()):
         contours = dicom_dict['z'][z]['output']['contours512']['algo07']
         #plot_with_contours(dicom_dict, z=z, algo_key='algo07')
@@ -603,10 +600,7 @@ def algo_to_get_needle_lines(dicom_dict):
             center_pts_dict[z].append(cen_pt)
         center_pts_dict[z].sort(key=lambda pt:pt[0])
         print('center_pts_dict[{}] = {}'.format(z, center_pts_dict[z]))
-    #return needle_lines
 
-
-    # Step 2. Figure L't Ovoid
     print('STEP 2.')
 
     min_z = sorted(center_pts_dict.keys())[0]
@@ -619,7 +613,6 @@ def algo_to_get_needle_lines(dicom_dict):
         prev_info['pt'] = None
         prev_info['ps_x'] = None
         prev_info['ps_y'] = None
-        print('sorted(center_pts_dict.keys()) = {}'.format(sorted(center_pts_dict.keys())))
         for idx_z, z in enumerate(sorted(center_pts_dict.keys())):
             ps_x = dicom_dict['z'][z]['ps_x']
             ps_y = dicom_dict['z'][z]['ps_y']
