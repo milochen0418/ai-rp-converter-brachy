@@ -591,6 +591,9 @@ def algo_to_get_needles_lines(dicom_dict):
     return needle_lines
 
 def get_applicator_rp_line(metric_line, first_purpose_distance_mm, each_purpose_distance_mm):
+    if (len(metric_line) == 0):
+        return []
+
     # REWRITE get_metric_pt_info_by_travel_distance, so the get_metric_pt, reduct_distance_step and get_metric_pt_info_travel_distance will not be USED
     def get_metric_pt(metric_line, pt_idx, pt_idx_remainder):
         # print('get_metric_pt(metric_line={}, pt_idx={}, pt_idx_remainder={})'.format(metric_line, pt_idx, pt_idx_remainder))
@@ -600,7 +603,6 @@ def get_applicator_rp_line(metric_line, first_purpose_distance_mm, each_purpose_
                 end_pt = metric_line[pt_idx]
             else:
                 end_pt = metric_line[pt_idx + 1]
-
 
         except Exception as e:
             print('EEEEEE')
@@ -674,7 +676,6 @@ def get_applicator_rp_line(metric_line, first_purpose_distance_mm, each_purpose_
         dist = travel_dist
         count_max = len(metric_line)
         count = 0
-
         while (True):
             (t_dist, t_pt_idx, t_pt_idx_remainder) = reduce_distance_step(metric_line, pt_idx, pt_idx_remainder, dist)
 
@@ -715,6 +716,7 @@ def get_applicator_rp_line(metric_line, first_purpose_distance_mm, each_purpose_
 
     return tandem_rp_line
 def wrap_to_rp_file(RP_OperatorsName, rs_filepath, tandem_rp_line, out_rp_filepath, lt_ovoid_rp_line, rt_ovoid_rp_line, app_roi_num_list=[16, 17, 18]):
+    # TODO wrap needles
     rp_template_filepath = r'RP_Template/Brachy_RP.1.2.246.352.71.5.417454940236.2063186.20191015164204.dcm'
     def get_new_uid(old_uid='1.2.246.352.71.5.417454940236.2063186.20191015164204', study_date='20190923'):
         uid = old_uid
@@ -818,7 +820,6 @@ def get_metric_lines_representation(dicom_dict, lt_ovoid, tandem, rt_ovoid):
         new_lines.append(new_line)
     (metric_lt_ovoid, metric_tandem, metric_rt_ovoid) = (new_lines[0], new_lines[1], new_lines[2])
     return (metric_lt_ovoid, metric_tandem, metric_rt_ovoid)
-
 def get_metric_needle_lines_representation(dicom_dict, needle_lines):
     metric_needle_lines = []
     for line in needle_lines:
@@ -828,7 +829,7 @@ def get_metric_needle_lines_representation(dicom_dict, needle_lines):
             ct_obj = dicom_dict['z'][z]
             x = pt[0] * ct_obj['ps_x'] + ct_obj['origin_x']
             y = pt[1] * ct_obj['ps_y'] + ct_obj['origin_y']
-            metric_needle_line.append([x,y,z])
+            metric_needle_line.append([x, y, z])
         metric_needle_lines.append(metric_needle_line)
     return metric_needle_lines
 
@@ -1431,23 +1432,38 @@ def generate_brachy_rp_file(RP_OperatorsName, dicom_dict, out_rp_filepath, is_en
     print('metric_tandem = {}'.format(metric_tandem))
     print('metric_rt_ovoid = {}'.format(metric_rt_ovoid))
     print('len(metric_needle_lines) = {}'.format(len(metric_needle_lines)))
+    for line_idx, line in enumerate(metric_needle_lines):
+        print('metric_needle_lines[{}]= {}'.format(line_idx, line))
+
 
 
     # Step 3. Reverse Order, so that first element is TIPS [from most top (z maximum) to most bottom (z minimum) ]
     metric_lt_ovoid.reverse()
     metric_tandem.reverse()
     metric_rt_ovoid.reverse()
+    for metric_line in metric_needle_lines:
+        metric_line.reverse()
 
     # Step 4. Get Applicator RP line
     tandem_rp_line = get_applicator_rp_line(metric_tandem, 4, 5)
     lt_ovoid_rp_line = get_applicator_rp_line(metric_lt_ovoid, 0, 5)
     rt_ovoid_rp_line = get_applicator_rp_line(metric_rt_ovoid, 0 ,5)
+    rp_needle_lines = []
+    for metric_line in metric_needle_lines:
+        rp_needle_line = get_applicator_rp_line(metric_line, 0, 5)
+        rp_needle_lines.append(rp_needle_line)
+
+
     print('lt_ovoid_rp_line = {}'.format(lt_ovoid_rp_line))
     print('tandem_rp_line = {}'.format(tandem_rp_line))
     print('rt_ovoid_rp_line = {}'.format(rt_ovoid_rp_line))
 
-    # Step 5. Wrap to RP file
+    print('len(rp_needle_lines) = {}'.format(len(rp_needle_lines)))
+    for line_idx, line in enumerate(rp_needle_lines):
+        print('rp_needle_lines[{}]= {}'.format(line_idx, line))
 
+    # Step 5. Wrap to RP file
+    # TODO for wrap rp_needle_lines into RP file
     print(dicom_dict['pathinfo']['rs_filepath'])
     print(dicom_dict['metadata'].keys())
     #print(pydicom.read_file(dicom_dict['pathinfo']['rs_filepath']).keys())
@@ -1456,6 +1472,7 @@ def generate_brachy_rp_file(RP_OperatorsName, dicom_dict, out_rp_filepath, is_en
 
     print('out_rp_filepath = {}'.format(out_rp_filepath))
     app_roi_num_list = dicom_dict['metadata']['applicator123_roi_numbers']
+    # TODO will change the wrap_to_rp_file function, because we will wrap needle information into RP files
     wrap_to_rp_file(RP_OperatorsName=RP_OperatorsName, rs_filepath=rs_filepath, tandem_rp_line=tandem_rp_line, out_rp_filepath=out_rp_filepath, lt_ovoid_rp_line=lt_ovoid_rp_line, rt_ovoid_rp_line=rt_ovoid_rp_line, app_roi_num_list=app_roi_num_list)
     if (is_enable_print == False):
         enablePrint()
