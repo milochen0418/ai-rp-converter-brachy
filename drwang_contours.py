@@ -1544,21 +1544,46 @@ def example_of_plot_15x15_needle_picture():
     generate_metadata_to_dicom_dict(dicom_dict)
     generate_output_to_dicom_dict(dicom_dict)
     generate_needle_contours_infos_to_dicom_dict(dicom_dict)
-    for z in dicom_dict['z'].keys():
+    for z in sorted(dicom_dict['z'].keys()):
         ct_obj = dicom_dict['z'][z]
         ps_x = ct_obj['ps_x']
         ps_y = ct_obj['ps_y']
+
+        # show total picture
+        total_picture = ct_obj['rescale_pixel_array']
+        plt.text(0, -2, 'z_mm = {}'.format(z), fontsize=8)
+        plt.imshow(total_picture, cmap=plt.cm.gray)
+        plt.show()
+
         for info in ct_obj['output']['needle_contours_infos']:
+            print('info.keys() = {}'.format(info.keys()))
+            x = info['mean'][0]
+            y = info['mean'][1]
+
+            # show in larger
+            larger_picture = ct_obj['rescale_pixel_array'][y-75:y+75, x-75:x+75]
+            plt.text(0, -2, '(x_px,y_px,z_mm) = ({} ±75, {} ±75, {})'.format(x, y, z), fontsize=8)
+            plt.imshow( larger_picture,cmap=plt.cm.gray)
+            plt.show()
+
+
             pick_picture = info['pick_picture']
+            plt.text(0, -2, '(x_px,y_px,z_mm) = ({} ±15, {}±15, {})'.format(x, y, z), fontsize=8)
             plt.imshow( pick_picture,cmap=plt.cm.gray)
             plt.show()
+
+
+
             for contour_idx, contour in enumerate(info['pick_picture_contours']):
                 pick_picture = copy.deepcopy(info['pick_picture'])
                 #pick_area_mm2 = cv2.contourArea(contour) * ps_x * ps_y
                 pick_area_mm2 = info['pick_picture_contour_area_mm2s'][contour_idx]
-                label_text = 'pick_area_mm2 = {}'.format(pick_area_mm2)
+                label_text = '(x_px,y_px,z_mm) = ({} ±15, {} ±15, {})'.format(x, y, z)
+                label_text += '\n' + 'pick_area_mm2 = {} '.format(pick_area_mm2)
+                #label_text = label_text + '\n' + '(x_px,y_px,z_mm) = ({}±15,{}±15,{})'.format(x, y, z)
                 print('label_text = {}'.format(label_text))
-                plt.text(0, -2, '{}'.format(label_text), fontsize=8)
+                plt.text(0, -1, '{}'.format(label_text), fontsize=8)
+                #plt.text(0, 0, '(x_px,y_px,z_mm) = ({}±15,{}±15,{})'.format(x, y, z), fontsize=8)
                 cv2.drawContours(pick_picture, contour, -1, (0, 0, 255), 1)
                 plt.imshow(pick_picture, cmap=plt.cm.gray)
                 plt.show()
@@ -1956,10 +1981,13 @@ def example_of_plot_with_needle_contours():
 
     pass
 
+
+
+
 if __name__ == '__main__':
 
-    #example_of_plot_15x15_needle_picture()
-    #exit()
+    example_of_plot_15x15_needle_picture()
+    exit()
     #example_of_plot_with_needle_contours()
     #exit()
 
