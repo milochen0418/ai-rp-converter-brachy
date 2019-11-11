@@ -2148,18 +2148,16 @@ if __name__ == '__main__':
     #example_of_generate_brachy_rp_file()
     #exit()
 
-    #example_create_all_rp_file()
-    #exit()
+    example_create_all_rp_file()
+    exit()
 
     #example_of_plot_rp_lines()
     #exit()
 
     # Dump All data with contours into dicom_dict bytes files
-    example_dump_single_and_multiple_bytesfile()
-    exit()
+    #example_dump_single_and_multiple_bytesfile()
+    #exit()
 
-    # Code START
-    # Code END
 
     # Debug to check data
     root_folder = r'RAL_plan_new_20190905'
