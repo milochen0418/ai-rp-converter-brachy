@@ -1539,7 +1539,6 @@ def generate_brachy_rp_file(RP_OperatorsName, dicom_dict, out_rp_filepath, is_en
     wrap_to_rp_file(RP_OperatorsName=RP_OperatorsName, rs_filepath=rs_filepath, tandem_rp_line=tandem_rp_line,out_rp_filepath=out_rp_filepath, lt_ovoid_rp_line=lt_ovoid_rp_line, needle_rp_lines=rp_needle_lines,rt_ovoid_rp_line=rt_ovoid_rp_line, app_roi_num_list=app_roi_num_list)
     if (is_enable_print == False):
         enablePrint()
-
 def example_of_generate_brachy_rp_file():
     root_folder = r'RAL_plan_new_20190905'
     print(os.listdir(root_folder))
@@ -2196,7 +2195,6 @@ if __name__ == '__main__':
     # example of plot_rp_lines()
     # example_of_plot_rp_lines()
     # exit(0)
-
 
 
 
