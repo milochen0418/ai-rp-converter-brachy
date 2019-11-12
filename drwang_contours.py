@@ -512,8 +512,22 @@ def algo_to_get_pixel_lines(dicom_dict):
         print('tandem first slice evaluation inner_cen_pts = {}'.format(inner_cen_pts))
         if(len(inner_cen_pts) != 3 ) :
             print('inner_cen_pts is not == 3')
-            raise Exception
-        tandem.append( (inner_cen_pts[1][0], inner_cen_pts[1][1], float(z)) )
+            # To process first slice when there are no no three inner contour
+            l_pt = lt_ovoid[0]
+            r_pt = rt_ovoid[0]
+            m_pt = None # middle pt
+            for pt in inner_cen_pts:
+                if pt[0] > l_pt[0] + 4 and pt[0] < r_pt[0] - 4:
+                    if (pt[1] > min([l_pt[1], r_pt[1]]) - 4 and pt[1] < max([l_pt[1], r_pt[1]]) + 4 ):
+                        m_pt = pt
+                        break
+            if (m_pt == None):
+                raise Exception
+            else:
+                tandem.append((m_pt[0], m_pt[1], float(z)))
+        else :
+            tandem.append( (inner_cen_pts[1][0], inner_cen_pts[1][1], float(z)) )
+
         # Step 5.1. Find Algo01 and detect the inner_contour
 
         print('TODO tandem for the case that without thicker pipe in scanned CT')
