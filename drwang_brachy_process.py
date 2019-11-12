@@ -626,7 +626,10 @@ def algo_to_get_needle_lines(dicom_dict):
             prev_x_mm = prev_info['pt'][0] * prev_info['ps_x']
             prev_y_mm = prev_info['pt'][1] * prev_info['ps_y']
             #x_mm = center_pts_dict[z][0][0] * ps_x
-            x_mm = center_pts_dict[z][needle_line_idx][0] * ps_x
+            if( needle_line_idx >= len(center_pts_dict[z]) ):
+                # It's mean there is no more point, so continue
+                continue
+            x_mm = center_pts_dict[z][needle_line_idx][0] * ps_x #Error
             #y_mm = center_pts_dict[z][0][1] * ps_y
             y_mm = center_pts_dict[z][needle_line_idx][1] * ps_y
             if math.sqrt( (x_mm-prev_x_mm)**2 + (y_mm-prev_y_mm)**2) < allowed_distance_mm:
