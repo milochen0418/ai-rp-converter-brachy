@@ -464,7 +464,10 @@ def algo_to_get_pixel_lines(dicom_dict):
             continue
         prev_x_mm = prev_info['pt'][0] * prev_info['ps_x']
         prev_y_mm = prev_info['pt'][1] * prev_info['ps_y']
-        print('aa')
+        print('aa and idx_z = ',idx_z, flush= True)
+        if ( len(center_pts_dict[z]) <= 1 ):
+            # to prevent out of range of list
+            continue
         x_mm = center_pts_dict[z][1][0] * ps_x
         y_mm = center_pts_dict[z][1][1] * ps_y
         #print('x_mm = {}, y_mm ={}'.format(x_mm, y_mm))
@@ -2169,7 +2172,7 @@ def generate_all_rp_process(root_folder=r'RAL_plan_new_20190905', rp_output_fold
     #for folder_idx, folder in enumerate(sorted(f_list)):
     for folder_idx, folder in enumerate(sorted_f_list):
         enablePrint()
-        if folder_idx !=1 :
+        if (folder_idx != 7) :
             continue
         print('\n[{}/{}] Loop info : folder_idx = {}, folder = {}'.format(folder_idx + 1, len(folders), folder_idx, folder),flush=True)
         byte_filename = r'{}.bytes'.format(os.path.basename(folder))
