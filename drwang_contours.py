@@ -2290,14 +2290,8 @@ def generate_all_rp_process(root_folder=r'RAL_plan_new_20190905', rp_output_fold
     #for folder_idx, folder in enumerate(sorted(f_list)):
     for folder_idx, folder in enumerate(sorted_f_list):
         enablePrint()
-
-        #if (folder_idx not in [4, 21]) :
+        #if (os.path.basename(folder) not in ['21569696', '33220132']):
         #    continue
-        # if (os.path.basename(folder) not in ['16199549', '21569696', '33220132']):
-        if (os.path.basename(folder) not in ['21569696', '33220132']):
-            continue
-
-
         print('\n[{}/{}] Loop info : folder_idx = {}, folder = {}'.format(folder_idx + 1, len(folders), folder_idx, folder),flush=True)
         byte_filename = r'{}.bytes'.format(os.path.basename(folder))
         #dump_filepath = os.path.join('contours_bytes', byte_filename)
@@ -2309,21 +2303,6 @@ def generate_all_rp_process(root_folder=r'RAL_plan_new_20190905', rp_output_fold
         dicom_dict = get_dicom_dict(folder)
         generate_metadata_to_dicom_dict(dicom_dict)
         generate_output_to_dicom_dict(dicom_dict)
-
-        if (os.path.basename(folder) == '33220132'):
-            print('Start to plot 33220132 in algo01')
-            for z in sorted(dicom_dict['z'].keys()):
-                plot_with_contours(dicom_dict, z, 'algo01')
-        elif (os.path.basename(folder) == '21569696'):
-            print('Start to plot 21569696 in algo01')
-            (view_x_min, view_x_max, view_y_min, view_y_max) = (140, -140, 140, -140)
-            view = (view_x_min, view_x_max, view_y_min, view_y_max)
-            for z in sorted(dicom_dict['z'].keys()):
-                plot_with_contours(dicom_dict, z, 'algo01', view = view )
-        else:
-            pass
-
-
 
         all_dicom_dict[folder] = dicom_dict
         python_object_dump(dicom_dict, dump_filepath)
@@ -2344,8 +2323,8 @@ def generate_all_rp_process(root_folder=r'RAL_plan_new_20190905', rp_output_fold
             out_rp_filepath = os.path.join(rp_output_folder_filepath, out_rp_filepath)
             time_start = datetime.datetime.now()
             print('[{}/{}] Create RP file -> {}'.format(folder_idx+1,len(folders), out_rp_filepath) ,end=' -> ', flush=True)
-            #generate_brachy_rp_file(RP_OperatorsName='cylin', dicom_dict=dicom_dict, out_rp_filepath=out_rp_filepath, is_enable_print=False)
-            generate_brachy_rp_file(RP_OperatorsName='cylin', dicom_dict=dicom_dict, out_rp_filepath=out_rp_filepath, is_enable_print=True)
+            generate_brachy_rp_file(RP_OperatorsName='cylin', dicom_dict=dicom_dict, out_rp_filepath=out_rp_filepath, is_enable_print=False)
+            #generate_brachy_rp_file(RP_OperatorsName='cylin', dicom_dict=dicom_dict, out_rp_filepath=out_rp_filepath, is_enable_print=True)
             time_end = datetime.datetime.now()
             print('{}s [{}-{}]'.format(time_end-time_start, time_start, time_end), end='\n', flush=True)
             success_folders.append(folder)
