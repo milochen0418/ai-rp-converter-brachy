@@ -215,7 +215,6 @@ def get_contours_from_edge_detection_algo_07(img, contour_constant_value, ps_x, 
     needle_allowed_area_mm2 = 10
     needle_contours = [contour for contour in contours_without_filter if (get_contour_area_mm2(contour, ps_x, ps_y) < needle_allowed_area_mm2)]
     return needle_contours
-
 def get_rect_info_from_cv_contour(cv_contour):
     i = cv_contour
     con = i.reshape(i.shape[0], i.shape[2])
@@ -2125,6 +2124,66 @@ def example_of_plot_with_needle_contours():
     pass
 
 
+def example_of_all_process_2():
+    root_folder = r'RAL_plan_new_20190905'
+    all_dicom_dict = {}
+    # Step 2. Generate all our target
+    #root_folder = r'RAL_plan_new_20190905'
+    f_list = [ os.path.join(root_folder, file) for file in os.listdir(root_folder) ]
+    folders = os.listdir(root_folder)
+    total_folders = []
+    failed_folders = []
+    success_folders = []
+    for folder_idx, folder in enumerate(sorted(f_list)):
+        byte_filename = r'{}.bytes'.format(os.path.basename(folder))
+        dump_filepath = os.path.join('contours_bytes', byte_filename)
+        time_start = datetime.datetime.now()
+        print('[{}/{}] Create bytes file {} '.format(folder_idx + 1, len(folders), dump_filepath), end=' -> ',flush=True)
+        dicom_dict = get_dicom_dict(folder)
+        generate_metadata_to_dicom_dict(dicom_dict)
+        generate_output_to_dicom_dict(dicom_dict)
+        all_dicom_dict[folder] = dicom_dict
+        python_object_dump(dicom_dict, dump_filepath)
+        #print('Create {}'.format(dump_filepath))
+        time_end = datetime.datetime.now()
+        print('{}s [{}-{}]'.format(time_end - time_start, time_start, time_end), end='\n', flush=True)
+        # Change to basename of folder here
+        folder = os.path.basename(folder)
+        total_folders.append(folder)
+        try:
+            bytes_filepath = os.path.join('contours_bytes', r'{}.bytes'.format(folder))
+            dicom_dict = python_object_load(bytes_filepath)
+            metadata = dicom_dict['metadata']
+            # out_rp_filepath format is PatientID, RS StudyDate  and the final is folder name processing by coding
+            out_rp_filepath = r'RP.{}.{}.f{}.dcm'.format(  metadata['RS_PatientID'],  metadata['RS_StudyDate'],  os.path.basename(metadata['folder']) )
+            out_rp_filepath = os.path.join('all_rp_output', out_rp_filepath)
+            time_start = datetime.datetime.now()
+            print('[{}/{}] Create RP file -> {}'.format(folder_idx+1,len(folders), out_rp_filepath) ,end=' -> ', flush=True)
+            generate_brachy_rp_file(RP_OperatorsName='cylin', dicom_dict=dicom_dict, out_rp_filepath=out_rp_filepath, is_enable_print=False)
+            time_end = datetime.datetime.now()
+            print('{}s [{}-{}]'.format(time_end-time_start, time_start, time_end), end='\n', flush=True)
+            success_folders.append(folder)
+        except Exception as ex:
+            print('Create RP file Failed')
+            failed_folders.append(folder)
+            print(ex)
+
+            #raise(ex)
+    print('FOLDER SUMMARY REPORT')
+    print('failed folders = {}'.format(failed_folders))
+    print('failed / total = {}/{}'.format(len(failed_folders), len(total_folders) ))
+    print('success /total = {}/{}'.format(len(success_folders), len(total_folders) ))
+
+
+    # Step 3. Use python_object_dump to dump it into some file
+    try:
+        print('Creating {} in very largest size'.format(filename))
+        python_object_dump(all_dicom_dict, filename)
+        print('Created {}'.format(filename))
+    except Exception as ex:
+        print('Create largest size dicom file failed')
+
+
 def example_of_all_process():
     # Make bytes files
     root_folder = r'RAL_plan_new_20190905'
@@ -2151,10 +2210,10 @@ def example_of_all_process():
             out_rp_filepath = r'RP.{}.{}.f{}.dcm'.format(  metadata['RS_PatientID'],  metadata['RS_StudyDate'],  os.path.basename(metadata['folder']) )
             out_rp_filepath = os.path.join('all_rp_output', out_rp_filepath)
             time_start = datetime.datetime.now()
-            print('[{}/{}] Create RP file -> {}'.format(folder_idx+1,len(folders), out_rp_filepath) ,end=' -> ')
+            print('[{}/{}] Create RP file -> {}'.format(folder_idx+1,len(folders), out_rp_filepath) ,end=' -> ', flush=True)
             generate_brachy_rp_file(RP_OperatorsName='cylin', dicom_dict=dicom_dict, out_rp_filepath=out_rp_filepath, is_enable_print=False)
             time_end = datetime.datetime.now()
-            print('{}s [{}-{}]'.format(time_end-time_start, time_start, time_end), end='\n')
+            print('{}s [{}-{}]'.format(time_end-time_start, time_start, time_end), end='\n', flush=True)
             success_folders.append(folder)
         except Exception as ex:
             print('Create Failed')
@@ -2170,7 +2229,8 @@ def example_of_all_process():
 
 
 if __name__ == '__main__':
-
+    example_of_all_process_2()
+    exit()
     #example_of_plot_15x15_needle_picture()
     #exit()
 
