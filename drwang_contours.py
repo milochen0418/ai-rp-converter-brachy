@@ -2048,7 +2048,8 @@ def example_of_plot_cen_pt():
     dicom_dict = python_object_load(bytes_filepath)
     (lt_ovoid, tandem, rt_ovoid) = algo_to_get_pixel_lines(dicom_dict)
     plot_cen_pt(dicom_dict, lt_ovoid_ctpa=lt_ovoid, tandem_ctpa=tandem, rt_ovoid_ctpa=rt_ovoid)
-def plot_with_contours(dicom_dict, z, algo_key):
+def plot_with_contours(dicom_dict, z, algo_key , view = (0,512,0,512) ):
+    (view_x_min, view_x_max, view_y_min, view_y_max) = view
     import matplotlib.pyplot as plt
     z_map = dicom_dict['z']
     ct_obj = z_map[z]
@@ -2062,6 +2063,7 @@ def plot_with_contours(dicom_dict, z, algo_key):
     #plt.imshow(pixel_array, cmap=plt.cm.bone)
     folder_name = os.path.basename(dicom_dict['metadata']['folder'])
     plt.text(0, -2, 'z = {}, folder = {}, algo={}'.format(z, folder_name,algo_key), fontsize=10)
+    img = img[view_y_min:view_y_max, view_x_min:view_x_max]
     plt.imshow(img, cmap=plt.cm.bone)
     plt.show()
     pass
@@ -2261,7 +2263,6 @@ def example_of_all_process():
     pass
 
 
-
 def generate_all_rp_process(root_folder=r'RAL_plan_new_20190905', rp_output_folder_filepath='all_rp_output',  bytes_dump_folder_filepath='contours_bytes'):
     print('Call generate_all_rp_process with the following arguments')
     print('root_folder = ', root_folder)
@@ -2292,8 +2293,11 @@ def generate_all_rp_process(root_folder=r'RAL_plan_new_20190905', rp_output_fold
 
         #if (folder_idx not in [4, 21]) :
         #    continue
-        if (os.path.basename(folder) not in ['16199549', '21569696', '33220132']):
+        # if (os.path.basename(folder) not in ['16199549', '21569696', '33220132']):
+        if (os.path.basename(folder) not in ['21569696', '33220132']):
             continue
+
+
         print('\n[{}/{}] Loop info : folder_idx = {}, folder = {}'.format(folder_idx + 1, len(folders), folder_idx, folder),flush=True)
         byte_filename = r'{}.bytes'.format(os.path.basename(folder))
         #dump_filepath = os.path.join('contours_bytes', byte_filename)
@@ -2305,6 +2309,22 @@ def generate_all_rp_process(root_folder=r'RAL_plan_new_20190905', rp_output_fold
         dicom_dict = get_dicom_dict(folder)
         generate_metadata_to_dicom_dict(dicom_dict)
         generate_output_to_dicom_dict(dicom_dict)
+
+        if (os.path.basename(folder) == '33220132'):
+            print('Start to plot 33220132 in algo01')
+            for z in sorted(dicom_dict['z'].keys()):
+                plot_with_contours(dicom_dict, z, 'algo01')
+        elif (os.path.basename(folder) == '21569696'):
+            print('Start to plot 21569696 in algo01')
+            (view_x_min, view_x_max, view_y_min, view_y_max) = (140, -140, 140, -140)
+            view = (view_x_min, view_x_max, view_y_min, view_y_max)
+            for z in sorted(dicom_dict['z'].keys()):
+                plot_with_contours(dicom_dict, z, 'algo01', view = view )
+        else:
+            pass
+
+
+
         all_dicom_dict[folder] = dicom_dict
         python_object_dump(dicom_dict, dump_filepath)
         #print('Create {}'.format(dump_filepath))
