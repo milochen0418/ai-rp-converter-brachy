@@ -825,7 +825,7 @@ def wrap_to_rp_file(RP_OperatorsName, rs_filepath, tandem_rp_line, out_rp_filepa
     rp_fp = pydicom.read_file(rp_template_filepath)
 
     rp_fp.OperatorsName = RP_OperatorsName
-    rp_fp.PhysiciansOfRecord = rs_fp.PhysiciansOfRecord
+
     rp_fp.FrameOfReferenceUID = rs_fp.ReferencedFrameOfReferenceSequence[0].FrameOfReferenceUID
     rp_fp.ReferencedStructureSetSequence[0].ReferencedSOPClassUID = rs_fp.SOPClassUID
     rp_fp.ReferencedStructureSetSequence[0].ReferencedSOPInstanceUID = rs_fp.SOPInstanceUID
@@ -839,8 +839,12 @@ def wrap_to_rp_file(RP_OperatorsName, rs_filepath, tandem_rp_line, out_rp_filepa
         #rs_val = getattr(rs_fp, attr)
         #rp_val = getattr(rp_fp, attr)
         #print('attr={}, \n In RS->{} \n In RP->{}'.format(attr, rs_val, rp_val))
-        val = getattr(rs_fp, attr)
-        setattr(rp_fp, attr, val)
+        try:
+            val = getattr(rs_fp, attr)
+            setattr(rp_fp, attr, val)
+        except Exception as ex:
+            print('Error is happend in for attr in directAttrSet. Sometimes RS file is out of control')
+            print(ex)
         #new_rp_val = getattr(rp_fp, attr)
         #print('after update, RP->{}\n'.format(new_rp_val))
 
@@ -2157,7 +2161,6 @@ def example_of_plot_with_needle_contours():
         continue
 
     pass
-
 def example_of_all_process_2():
     root_folder = r'RAL_plan_new_20190905'
     all_dicom_dict = {}
@@ -2287,7 +2290,9 @@ def generate_all_rp_process(root_folder=r'RAL_plan_new_20190905', rp_output_fold
     for folder_idx, folder in enumerate(sorted_f_list):
         enablePrint()
 
-        if (folder_idx not in [4, 21]) :
+        #if (folder_idx not in [4, 21]) :
+        #    continue
+        if (os.path.basename(folder) not in ['16199549', '21569696', '33220132']):
             continue
         print('\n[{}/{}] Loop info : folder_idx = {}, folder = {}'.format(folder_idx + 1, len(folders), folder_idx, folder),flush=True)
         byte_filename = r'{}.bytes'.format(os.path.basename(folder))
@@ -2352,10 +2357,10 @@ def generate_all_rp_process(root_folder=r'RAL_plan_new_20190905', rp_output_fold
 if __name__ == '__main__':
     #generate_all_rp_process(root_folder=r'RAL_plan_new_20190905', rp_output_folder_filepath='all_rp_output',bytes_dump_folder_filepath='contours_bytes')
     #generate_all_rp_process(root_folder=r'RAL_plan_new_20190905', rp_output_folder_filepath='RRR',bytes_dump_folder_filepath='BBB')
+
     #generate_all_rp_process(root_folder=r'Study-RAL-implant_20191112', rp_output_folder_filepath='Study-RAL-implant_20191112_RP_Files',bytes_dump_folder_filepath='Study-RAL-implant_20191112_Bytes_Files')
-    generate_all_rp_process(root_folder=r'RAL_plan_new_20190905',
-                            rp_output_folder_filepath='RAL_plan_new_20190905_RP_Files',
-                            bytes_dump_folder_filepath='RAL_plan_new_20190905_Bytes_Files')
+    #generate_all_rp_process(root_folder=r'RAL_plan_new_20190905', rp_output_folder_filepath='RAL_plan_new_20190905_RP_Files', bytes_dump_folder_filepath='RAL_plan_new_20190905_Bytes_Files')
+    generate_all_rp_process(root_folder=r'Study-RAL-20191105', rp_output_folder_filepath='Study-RAL-20191105_RP_Files', bytes_dump_folder_filepath='Study-RAL-20191105_Bytes_Files')
     #example_of_all_process_2()
     exit()
     #example_of_plot_15x15_needle_picture()
