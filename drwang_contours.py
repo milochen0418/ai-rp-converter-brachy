@@ -2125,6 +2125,48 @@ def example_of_plot_with_needle_contours():
     pass
 
 
+def example_of_all_process():
+    # Make bytes files
+    root_folder = r'RAL_plan_new_20190905'
+    try:
+        contours_python_object_dump(root_folder, 'all_dicom_dict.bytes')
+    except Exception as ex:
+        print(ex)
+        pass
+
+    # Make RP lines and RP files
+    print(os.listdir(root_folder))
+    folders = os.listdir(root_folder)
+    print('folders = {}'.format(folders))
+    total_folders = []
+    failed_folders = []
+    success_folders = []
+    for folder_idx, folder in enumerate(folders):
+        total_folders.append(folder)
+        try:
+            bytes_filepath = os.path.join('contours_bytes', r'{}.bytes'.format(folder))
+            dicom_dict = python_object_load(bytes_filepath)
+            metadata = dicom_dict['metadata']
+            # out_rp_filepath format is PatientID, RS StudyDate  and the final is folder name processing by coding
+            out_rp_filepath = r'RP.{}.{}.f{}.dcm'.format(  metadata['RS_PatientID'],  metadata['RS_StudyDate'],  os.path.basename(metadata['folder']) )
+            out_rp_filepath = os.path.join('all_rp_output', out_rp_filepath)
+            time_start = datetime.datetime.now()
+            print('[{}/{}] Create RP file -> {}'.format(folder_idx+1,len(folders), out_rp_filepath) ,end=' -> ')
+            generate_brachy_rp_file(RP_OperatorsName='cylin', dicom_dict=dicom_dict, out_rp_filepath=out_rp_filepath, is_enable_print=False)
+            time_end = datetime.datetime.now()
+            print('{}s [{}-{}]'.format(time_end-time_start, time_start, time_end), end='\n')
+            success_folders.append(folder)
+        except Exception as ex:
+            print('Create Failed')
+            failed_folders.append(folder)
+            #raise(ex)
+    print('FOLDER SUMMARY REPORT')
+    print('failed folders = {}'.format(failed_folders))
+    print('failed / total = {}/{}'.format(len(failed_folders), len(total_folders) ))
+    print('success /total = {}/{}'.format(len(success_folders), len(total_folders) ))
+    pass
+
+
 
 
 if __name__ == '__main__':
