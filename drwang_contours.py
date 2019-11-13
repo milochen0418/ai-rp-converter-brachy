@@ -2310,14 +2310,37 @@ def generate_all_rp_process(root_folder=r'RAL_plan_new_20190905', rp_output_fold
             print('{}s [{}-{}]'.format(time_end - time_start, time_start, time_end), end='\n', flush=True)
         else: # CASE is_recreate_bytes == False
             #TODO
-            pass
+            bytes_filepath = os.path.join(bytes_dump_folder_filepath, r'{}.bytes'.format(folder))
+            bytes_file_exists = os.path.isfile(bytes_filepath)
+            if (bytes_file_exists == True):
+                #dicom_dict = python_object_load(bytes_filepath)
+                #all_dicom_dict[folder] = dicom_dict
+                print('File have been created - {}'.format(dump_filepath))
+                pass
+            else: #CASE When the file is not exist in bytes_filepath
+                time_start = datetime.datetime.now()
+                print('[{}/{}] Create bytes file {} '.format(folder_idx + 1, len(folders), dump_filepath), end=' -> ',flush=True)
+                dicom_dict = get_dicom_dict(folder)
+                generate_metadata_to_dicom_dict(dicom_dict)
+                generate_output_to_dicom_dict(dicom_dict)
+                all_dicom_dict[folder] = dicom_dict
+                python_object_dump(dicom_dict, dump_filepath)
+                time_end = datetime.datetime.now()
+                print('{}s [{}-{}]'.format(time_end - time_start, time_start, time_end), end='\n', flush=True)
+                pass
+
         # Change to basename of folder here
+        fullpath_folder = folder
         folder = os.path.basename(folder)
         total_folders.append(folder)
         try:
             #bytes_filepath = os.path.join('contours_bytes', r'{}.bytes'.format(folder))
             bytes_filepath = os.path.join(bytes_dump_folder_filepath, r'{}.bytes'.format(folder))
             dicom_dict = python_object_load(bytes_filepath)
+
+            if fullpath_folder not in all_dicom_dict.keys():
+                all_dicom_dict[fullpath_folder] = dicom_dict
+
             metadata = dicom_dict['metadata']
             # out_rp_filepath format is PatientID, RS StudyDate  and the final is folder name processing by coding
             out_rp_filepath = r'RP.{}.{}.f{}.dcm'.format(  metadata['RS_PatientID'],  metadata['RS_StudyDate'],  os.path.basename(metadata['folder']) )
