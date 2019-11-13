@@ -938,7 +938,8 @@ def wrap_to_rp_file(RP_OperatorsName, rs_filepath, tandem_rp_line, out_rp_filepa
 
     #TODO rp_Ref_ROI_Numbers need to match to current RS's ROI number of three applicators
     #rp_Ref_ROI_Numbers = [17, 18, 19]
-    rp_Ref_ROI_Numbers = app_roi_num_list
+    #rp_Ref_ROI_Numbers = app_roi_num_list
+    rp_Ref_ROI_Numbers = sorted(app_roi_num_list, reverse=True)
     rp_ControlPointRelativePositions = [3.5, 3.5, 3.5] # After researching, all ControlPointRelativePositions is start in 3.5
     rp_ControlPointRelativePositions = [3.5 for item in app_roi_num_list]
     for idx,rp_line in enumerate(rp_lines):
@@ -1646,6 +1647,9 @@ def generate_brachy_rp_file(RP_OperatorsName, dicom_dict, out_rp_filepath, is_en
 
     print('out_rp_filepath = {}'.format(out_rp_filepath))
     app_roi_num_list = dicom_dict['metadata']['applicator123_roi_numbers']
+    enablePrint()
+    print('app_roi_num_list = {}'.format(app_roi_num_list))
+    blockPrint()
     # TODO will change the wrap_to_rp_file function, because we will wrap needle information into RP files
     #wrap_to_rp_file(RP_OperatorsName=RP_OperatorsName, rs_filepath=rs_filepath, tandem_rp_line=tandem_rp_line, out_rp_filepath=out_rp_filepath, lt_ovoid_rp_line=lt_ovoid_rp_line, rt_ovoid_rp_line=rt_ovoid_rp_line, app_roi_num_list=app_roi_num_list)
     wrap_to_rp_file(RP_OperatorsName=RP_OperatorsName, rs_filepath=rs_filepath, tandem_rp_line=tandem_rp_line,out_rp_filepath=out_rp_filepath, lt_ovoid_rp_line=lt_ovoid_rp_line, needle_rp_lines=rp_needle_lines,rt_ovoid_rp_line=rt_ovoid_rp_line, app_roi_num_list=app_roi_num_list)
