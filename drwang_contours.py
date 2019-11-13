@@ -538,19 +538,53 @@ def algo_to_get_pixel_lines(dicom_dict, needle_lines = []):
 
                 min_z = sorted(dicom_dict['z'].keys())[0]
                 ct_obj = dicom_dict['z'][min_z]
+                ps_x = ct_obj['ps_x']
+                ps_y = ct_obj['ps_y']
+
                 #ct_obj['output']['algo02']
                 potential_contours = []
                 for contour in ct_obj['output']['contours512']['algo02']:
                     rect_info = get_rect_info_from_cv_contour(contour)
                     cen_pt = (rect_info[2][0], rect_info[2][1])
-                    if cen_pt[0] > max(l_pt[0], r_pt[0]) or cen_pt[0] < min(l_pt[0], r_pt[0]):
+                    inner_rect_gap_allowed_mm = 8.4
+                    i_mm = inner_rect_gap_allowed_mm
+                    i_px_x = i_mm / ps_x
+                    i_px_y = i_mm / ps_y
+                    #if cen_pt[0] > max(l_pt[0], r_pt[0])-28 or cen_pt[0]  < min(l_pt[0], r_pt[0])+28:
+                    if cen_pt[0] > max(l_pt[0], r_pt[0]) - i_px_x or cen_pt[0] < min(l_pt[0], r_pt[0]) + i_px_x:
                         continue
-                    if cen_pt[1] > max(l_pt[1], r_pt[1]) or cen_pt[1] < min(l_pt[1], r_pt[1]):
+                    #if cen_pt[1] > max(l_pt[1], r_pt[1])-28 or cen_pt[1]  < min(l_pt[1], r_pt[1])+28:
+                    if cen_pt[1] > max(l_pt[1], r_pt[1]) - i_px_y or cen_pt[1] < min(l_pt[1], r_pt[1]) + i_px_y:
                         continue
+                    cen_pt_is_on_needle = False
+                    for needle_line in needle_lines:
+                        n_pt = needle_line[0]
+                        gap_of_needle_allowed_distance_mm = 1
+                        dist_to_needle_mm = math.sqrt( ((n_pt[0]-cen_pt[0])*ps_x)**2 + ( (n_pt[1] - cen_pt[1])*ps_y)**2 )
+                        if dist_to_needle_mm < gap_of_needle_allowed_distance_mm:
+                            cen_pt_is_on_needle = True
+                            break
+                    if cen_pt_is_on_needle == True:
+                        continue
+                    potential_contours.append(contour)
+                enablePrint()
+                print('len(potential_contours) = {}'.format(len(potential_contours)))
+                for c_idx,c in enumerate(potential_contours):
+                    print('[{}] -> {}', c_idx, get_rect_info_from_cv_contour(c))
+                blockPrint()
+                if len(potential_contours) == 1:
+                    contour = potential_contours[0]
+                    rect_info = get_rect_info_from_cv_contour(contour)
+                    m_pt = (rect_info[2][0], rect_info[2][1])
+                    tandem.append((m_pt[0], m_pt[1], float(z)))
+                else:
+                    print('len(potential_contours) = {}'.format(len(potential_contours)))
+                    if len(potential_contours) == 0 and len(needle_lines) == 1:
+                        # In this case needle
+                        raise Exception
+                    else:
+                        raise Exception
 
-
-
-                #raise Exception
             else:
                 tandem.append((m_pt[0], m_pt[1], float(z)))
         else :
