@@ -1590,13 +1590,41 @@ def generate_brachy_rp_file(RP_OperatorsName, dicom_dict, out_rp_filepath, is_en
 
     # Step 1. Get line of lt_ovoid, tandem, rt_ovoid by OpneCV contour material and innovated combination
     needle_lines = algo_to_get_needle_lines(dicom_dict)
+
+
+
     enablePrint()
     print('len(needle_lines) = {}'.format(len(needle_lines)))
     if len(needle_lines) > 0 :
-        print('needle_lines[0] = {}'.format(needle_lines[0]))
+        for idx, needle_line in enumerate(needle_lines):
+            #print('needle_lines[0] = {}'.format(needle_lines[0]))
+            print('needle_lines[{}] = {}'.format(idx, needle_lines[idx]))
     blockPrint()
+
     (lt_ovoid, tandem, rt_ovoid) = algo_to_get_pixel_lines(dicom_dict, needle_lines)
 
+    # Step 1.2.
+    # finetune needle_lines to add 2mm in tips side
+
+    enablePrint()
+    print('finetune needle_lines')
+    print('len(needle_lines) = {}'.format(len(needle_lines)))
+    if len(needle_lines) > 0:
+        for idx, needle_line in enumerate(needle_lines):
+            #TODO
+            #print('needle_lines[0] = {}'.format(needle_lines[0]))
+            print('needle_lines[{}] = {}'.format(idx, needle_lines[idx]))
+            pt_start= needle_line[0]
+            pt_end  = needle_line[-1]
+            z = pt_end[2]
+            ct_obj = dicom_dict['z'][z]
+            ps_x = ct_obj['ps_x']
+            ps_y = ct_obj['ps_y']
+            old_dist = math.sqrt( ( ps_x*(pt_start[0]-pt_end[0]))**2 + ( ps_y*(pt_start[1]-pt_end[1]))**2 + (pt_start[2]-pt_end[2])**2 )
+    blockPrint()
+
+    for idx, needle_line in enumerate(needle_lines):
+        continue
 
     # Step 2. Convert line into metric representation
     # Original line is array of (x_px, y_px, z_mm) and we want to convert to (x_mm, y_mm, z_mm)
