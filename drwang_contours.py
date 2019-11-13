@@ -332,7 +332,7 @@ def get_most_closed_pt(src_pt, pts, allowed_distance=100):
                 dst_pt = pt
         pass
     return dst_pt
-def algo_to_get_pixel_lines(dicom_dict):
+def algo_to_get_pixel_lines(dicom_dict, needle_lines = []):
     # type: (dicom_dict) -> (lt_ovoid, tandem, rt_ovoid)
     # Step 1. Use algo05 to get center point of inner contour
     last_z_in_step1 = sorted(dicom_dict['z'].keys())[0]
@@ -1523,7 +1523,7 @@ def generate_brachy_rp_file(RP_OperatorsName, dicom_dict, out_rp_filepath, is_en
 
     # Step 1. Get line of lt_ovoid, tandem, rt_ovoid by OpneCV contour material and innovated combination
     needle_lines = algo_to_get_needle_lines(dicom_dict)
-    (lt_ovoid, tandem, rt_ovoid) = algo_to_get_pixel_lines(dicom_dict)
+    (lt_ovoid, tandem, rt_ovoid) = algo_to_get_pixel_lines(dicom_dict, needle_lines)
 
 
     # Step 2. Convert line into metric representation
@@ -2294,6 +2294,9 @@ def generate_all_rp_process(root_folder=r'RAL_plan_new_20190905', rp_output_fold
         enablePrint()
         #if (os.path.basename(folder) not in ['21569696', '33220132']):
         #    continue
+        if (os.path.basename(folder) not in ['21569696']):
+            continue
+
         print('\n[{}/{}] Loop info : folder_idx = {}, folder = {}'.format(folder_idx + 1, len(folders), folder_idx, folder),flush=True)
         byte_filename = r'{}.bytes'.format(os.path.basename(folder))
         #dump_filepath = os.path.join('contours_bytes', byte_filename)
@@ -2310,7 +2313,6 @@ def generate_all_rp_process(root_folder=r'RAL_plan_new_20190905', rp_output_fold
             time_end = datetime.datetime.now()
             print('{}s [{}-{}]'.format(time_end - time_start, time_start, time_end), end='\n', flush=True)
         else: # CASE is_recreate_bytes == False
-            #TODO
             bytes_filepath = os.path.join(bytes_dump_folder_filepath, r'{}.bytes'.format(os.path.basename(folder)))
             bytes_file_exists = os.path.exists(bytes_filepath)
             if bytes_file_exists == True:
@@ -2327,8 +2329,6 @@ def generate_all_rp_process(root_folder=r'RAL_plan_new_20190905', rp_output_fold
                 python_object_dump(dicom_dict, dump_filepath)
                 time_end = datetime.datetime.now()
                 print('{}s [{}-{}]'.format(time_end - time_start, time_start, time_end), end='\n', flush=True)
-
-
         # Change to basename of folder here
         fullpath_folder = folder
         folder = os.path.basename(folder)
