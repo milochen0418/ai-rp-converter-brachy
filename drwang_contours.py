@@ -567,11 +567,11 @@ def algo_to_get_pixel_lines(dicom_dict, needle_lines = []):
                     if cen_pt_is_on_needle == True:
                         continue
                     potential_contours.append(contour)
-                #enablePrint()
+                enablePrint()
                 print('len(potential_contours) = {}'.format(len(potential_contours)))
                 for c_idx,c in enumerate(potential_contours):
                     print('[{}] -> {}', c_idx, get_rect_info_from_cv_contour(c))
-                #blockPrint()
+                blockPrint()
                 if len(potential_contours) == 1:
                     contour = potential_contours[0]
                     rect_info = get_rect_info_from_cv_contour(contour)
@@ -580,8 +580,9 @@ def algo_to_get_pixel_lines(dicom_dict, needle_lines = []):
                 else:
                     print('len(potential_contours) = {}'.format(len(potential_contours)))
                     if len(potential_contours) == 0 and len(needle_lines) == 1:
-                        # In this case needle
-                        raise Exception
+                        # In this case needle should be remove and change the needle to tandem
+                        # TODO
+                        pass
                     else:
                         raise Exception
 
@@ -1652,6 +1653,7 @@ def generate_brachy_rp_file(RP_OperatorsName, dicom_dict, out_rp_filepath, is_en
     wrap_to_rp_file(RP_OperatorsName=RP_OperatorsName, rs_filepath=rs_filepath, tandem_rp_line=tandem_rp_line,out_rp_filepath=out_rp_filepath, lt_ovoid_rp_line=lt_ovoid_rp_line, needle_rp_lines=rp_needle_lines,rt_ovoid_rp_line=rt_ovoid_rp_line, app_roi_num_list=app_roi_num_list)
     if (is_enable_print == False):
         enablePrint()
+
 def example_of_generate_brachy_rp_file():
     root_folder = r'RAL_plan_new_20190905'
     print(os.listdir(root_folder))
@@ -2367,8 +2369,8 @@ def generate_all_rp_process(root_folder=r'RAL_plan_new_20190905', rp_output_fold
         enablePrint()
         #if (os.path.basename(folder) not in ['21569696', '33220132']):
         #    continue
-        #if (os.path.basename(folder) not in ['21569696']):
-        #    continue
+        if (os.path.basename(folder) not in ['21569696']):
+            continue
         #if (os.path.basename(folder) not in ['487961']): # One Needle case
         #    continue
 
@@ -2504,9 +2506,9 @@ if __name__ == '__main__':
     #generate_all_rp_process(root_folder=r'RAL_plan_new_20190905', rp_output_folder_filepath='all_rp_output',bytes_dump_folder_filepath='contours_bytes')
     #generate_all_rp_process(root_folder=r'RAL_plan_new_20190905', rp_output_folder_filepath='RRR',bytes_dump_folder_filepath='BBB')
 
-    generate_all_rp_process(root_folder=r'Study-RAL-implant_20191112', rp_output_folder_filepath='Study-RAL-implant_20191112_RP_Files',bytes_dump_folder_filepath='Study-RAL-implant_20191112_Bytes_Files', is_recreate_bytes=False)
+    #generate_all_rp_process(root_folder=r'Study-RAL-implant_20191112', rp_output_folder_filepath='Study-RAL-implant_20191112_RP_Files',bytes_dump_folder_filepath='Study-RAL-implant_20191112_Bytes_Files', is_recreate_bytes=False)
     #generate_all_rp_process(root_folder=r'RAL_plan_new_20190905', rp_output_folder_filepath='RAL_plan_new_20190905_RP_Files', bytes_dump_folder_filepath='RAL_plan_new_20190905_Bytes_Files', is_recreate_bytes=False)
-    #generate_all_rp_process(root_folder=r'Study-RAL-20191105', rp_output_folder_filepath='Study-RAL-20191105_RP_Files', bytes_dump_folder_filepath='Study-RAL-20191105_Bytes_Files', is_recreate_bytes=False)
+    generate_all_rp_process(root_folder=r'Study-RAL-20191105', rp_output_folder_filepath='Study-RAL-20191105_RP_Files', bytes_dump_folder_filepath='Study-RAL-20191105_Bytes_Files', is_recreate_bytes=False)
 
     #generate_all_rp_process(root_folder=r'Study-RAL-20191105', rp_output_folder_filepath='Study-RAL-20191105_RP_Files',
     #                        bytes_dump_folder_filepath='Study-RAL-20191105_Bytes_Files', is_recreate_bytes=False)
