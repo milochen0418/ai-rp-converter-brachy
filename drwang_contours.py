@@ -569,6 +569,7 @@ def algo_to_get_pixel_lines(dicom_dict, needle_lines = []):
                     potential_contours.append(contour)
                 enablePrint()
                 print('len(potential_contours) = {}'.format(len(potential_contours)))
+                blockPrint()
                 for c_idx,c in enumerate(potential_contours):
                     print('[{}] -> {}', c_idx, get_rect_info_from_cv_contour(c))
                 blockPrint()
@@ -578,10 +579,16 @@ def algo_to_get_pixel_lines(dicom_dict, needle_lines = []):
                     m_pt = (rect_info[2][0], rect_info[2][1])
                     tandem.append((m_pt[0], m_pt[1], float(z)))
                 else:
+                    enablePrint()
                     print('len(potential_contours) = {}'.format(len(potential_contours)))
+                    print('len(needle_lines) = {}'.format(len(needle_lines)))
+                    blockPrint()
                     if len(potential_contours) == 0 and len(needle_lines) == 1:
                         # In this case needle should be remove and change the needle to tandem
-                        # TODO
+                        only_needle_line = needle_lines[0]
+                        m_pt = only_needle_line[0]
+                        needle_lines.remove(only_needle_line)
+                        tandem.append( (m_pt[0], m_pt[1], float(z)) )
                         pass
                     else:
                         raise Exception
