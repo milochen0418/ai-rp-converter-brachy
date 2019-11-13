@@ -1586,11 +1586,11 @@ def generate_brachy_rp_file(RP_OperatorsName, dicom_dict, out_rp_filepath, is_en
 
     # Step 1. Get line of lt_ovoid, tandem, rt_ovoid by OpneCV contour material and innovated combination
     needle_lines = algo_to_get_needle_lines(dicom_dict)
-    #enablePrint()
+    enablePrint()
     print('len(needle_lines) = {}'.format(len(needle_lines)))
     if len(needle_lines) > 0 :
         print('needle_lines[0] = {}'.format(needle_lines[0]))
-    #blockPrint()
+    blockPrint()
     (lt_ovoid, tandem, rt_ovoid) = algo_to_get_pixel_lines(dicom_dict, needle_lines)
 
 
@@ -1648,7 +1648,6 @@ def generate_brachy_rp_file(RP_OperatorsName, dicom_dict, out_rp_filepath, is_en
     wrap_to_rp_file(RP_OperatorsName=RP_OperatorsName, rs_filepath=rs_filepath, tandem_rp_line=tandem_rp_line,out_rp_filepath=out_rp_filepath, lt_ovoid_rp_line=lt_ovoid_rp_line, needle_rp_lines=rp_needle_lines,rt_ovoid_rp_line=rt_ovoid_rp_line, app_roi_num_list=app_roi_num_list)
     if (is_enable_print == False):
         enablePrint()
-
 def example_of_generate_brachy_rp_file():
     root_folder = r'RAL_plan_new_20190905'
     print(os.listdir(root_folder))
@@ -2364,10 +2363,12 @@ def generate_all_rp_process(root_folder=r'RAL_plan_new_20190905', rp_output_fold
         enablePrint()
         #if (os.path.basename(folder) not in ['21569696', '33220132']):
         #    continue
-        if (os.path.basename(folder) not in ['21569696']):
-            continue
+        #if (os.path.basename(folder) not in ['21569696']):
+        #    continue
         #if (os.path.basename(folder) not in ['487961']): # One Needle case
         #    continue
+        if (os.path.basename(folder) not in ['34982640']):
+            continue
 
         print('\n[{}/{}] Loop info : folder_idx = {}, folder = {}'.format(folder_idx + 1, len(folders), folder_idx, folder),flush=True)
         byte_filename = r'{}.bytes'.format(os.path.basename(folder))
@@ -2420,8 +2421,8 @@ def generate_all_rp_process(root_folder=r'RAL_plan_new_20190905', rp_output_fold
             out_rp_filepath = os.path.join(rp_output_folder_filepath, out_rp_filepath)
             time_start = datetime.datetime.now()
             print('[{}/{}] Create RP file -> {}'.format(folder_idx+1,len(folders), out_rp_filepath) ,end=' -> ', flush=True)
-            #generate_brachy_rp_file(RP_OperatorsName='cylin', dicom_dict=dicom_dict, out_rp_filepath=out_rp_filepath, is_enable_print=False)
-            generate_brachy_rp_file(RP_OperatorsName='cylin', dicom_dict=dicom_dict, out_rp_filepath=out_rp_filepath, is_enable_print=True)
+            generate_brachy_rp_file(RP_OperatorsName='cylin', dicom_dict=dicom_dict, out_rp_filepath=out_rp_filepath, is_enable_print=False)
+            #generate_brachy_rp_file(RP_OperatorsName='cylin', dicom_dict=dicom_dict, out_rp_filepath=out_rp_filepath, is_enable_print=True)
             time_end = datetime.datetime.now()
             print('{}s [{}-{}]'.format(time_end-time_start, time_start, time_end), end='\n', flush=True)
             success_folders.append(folder)
@@ -2502,8 +2503,8 @@ if __name__ == '__main__':
     #generate_all_rp_process(root_folder=r'RAL_plan_new_20190905', rp_output_folder_filepath='RRR',bytes_dump_folder_filepath='BBB')
 
     #generate_all_rp_process(root_folder=r'Study-RAL-implant_20191112', rp_output_folder_filepath='Study-RAL-implant_20191112_RP_Files',bytes_dump_folder_filepath='Study-RAL-implant_20191112_Bytes_Files', is_recreate_bytes=False)
-    #generate_all_rp_process(root_folder=r'RAL_plan_new_20190905', rp_output_folder_filepath='RAL_plan_new_20190905_RP_Files', bytes_dump_folder_filepath='RAL_plan_new_20190905_Bytes_Files', is_recreate_bytes=False)
-    generate_all_rp_process(root_folder=r'Study-RAL-20191105', rp_output_folder_filepath='Study-RAL-20191105_RP_Files', bytes_dump_folder_filepath='Study-RAL-20191105_Bytes_Files', is_recreate_bytes=False)
+    generate_all_rp_process(root_folder=r'RAL_plan_new_20190905', rp_output_folder_filepath='RAL_plan_new_20190905_RP_Files', bytes_dump_folder_filepath='RAL_plan_new_20190905_Bytes_Files', is_recreate_bytes=False)
+    #generate_all_rp_process(root_folder=r'Study-RAL-20191105', rp_output_folder_filepath='Study-RAL-20191105_RP_Files', bytes_dump_folder_filepath='Study-RAL-20191105_Bytes_Files', is_recreate_bytes=False)
 
     #generate_all_rp_process(root_folder=r'Study-RAL-20191105', rp_output_folder_filepath='Study-RAL-20191105_RP_Files',
     #                        bytes_dump_folder_filepath='Study-RAL-20191105_Bytes_Files', is_recreate_bytes=False)
