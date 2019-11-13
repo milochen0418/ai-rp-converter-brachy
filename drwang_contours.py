@@ -1,5 +1,6 @@
 # Try to seperate program into clear verion and useful functions
 import os
+from pathlib import Path, PureWindowsPath
 import errno
 import pydicom
 import numpy as np
@@ -2310,13 +2311,12 @@ def generate_all_rp_process(root_folder=r'RAL_plan_new_20190905', rp_output_fold
             print('{}s [{}-{}]'.format(time_end - time_start, time_start, time_end), end='\n', flush=True)
         else: # CASE is_recreate_bytes == False
             #TODO
-            bytes_filepath = os.path.join(bytes_dump_folder_filepath, r'{}.bytes'.format(folder))
-            bytes_file_exists = os.path.isfile(bytes_filepath)
-            if (bytes_file_exists == True):
+            bytes_filepath = os.path.join(bytes_dump_folder_filepath, r'{}.bytes'.format(os.path.basename(folder)))
+            bytes_file_exists = os.path.exists(bytes_filepath)
+            if bytes_file_exists == True:
                 #dicom_dict = python_object_load(bytes_filepath)
                 #all_dicom_dict[folder] = dicom_dict
-                print('File have been created - {}'.format(dump_filepath))
-                pass
+                print('[{}/{}] File have been created - {}'.format(folder_idx + 1, len(folders), dump_filepath))
             else: #CASE When the file is not exist in bytes_filepath
                 time_start = datetime.datetime.now()
                 print('[{}/{}] Create bytes file {} '.format(folder_idx + 1, len(folders), dump_filepath), end=' -> ',flush=True)
@@ -2327,7 +2327,7 @@ def generate_all_rp_process(root_folder=r'RAL_plan_new_20190905', rp_output_fold
                 python_object_dump(dicom_dict, dump_filepath)
                 time_end = datetime.datetime.now()
                 print('{}s [{}-{}]'.format(time_end - time_start, time_start, time_end), end='\n', flush=True)
-                pass
+
 
         # Change to basename of folder here
         fullpath_folder = folder
@@ -2384,7 +2384,9 @@ if __name__ == '__main__':
 
     #generate_all_rp_process(root_folder=r'Study-RAL-implant_20191112', rp_output_folder_filepath='Study-RAL-implant_20191112_RP_Files',bytes_dump_folder_filepath='Study-RAL-implant_20191112_Bytes_Files')
     #generate_all_rp_process(root_folder=r'RAL_plan_new_20190905', rp_output_folder_filepath='RAL_plan_new_20190905_RP_Files', bytes_dump_folder_filepath='RAL_plan_new_20190905_Bytes_Files')
-    generate_all_rp_process(root_folder=r'Study-RAL-20191105', rp_output_folder_filepath='Study-RAL-20191105_RP_Files', bytes_dump_folder_filepath='Study-RAL-20191105_Bytes_Files')
+    #generate_all_rp_process(root_folder=r'Study-RAL-20191105', rp_output_folder_filepath='Study-RAL-20191105_RP_Files', bytes_dump_folder_filepath='Study-RAL-20191105_Bytes_Files', is_recreate_bytes=False)
+    generate_all_rp_process(root_folder=r'Study-RAL-20191105', rp_output_folder_filepath='Study-RAL-20191105_RP_Files',
+                            bytes_dump_folder_filepath='Study-RAL-20191105_Bytes_Files', is_recreate_bytes=False)
     #example_of_all_process_2()
     exit()
     #example_of_plot_15x15_needle_picture()
