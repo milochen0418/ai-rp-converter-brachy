@@ -945,6 +945,9 @@ def wrap_to_rp_file(RP_OperatorsName, rs_filepath, tandem_rp_line, out_rp_filepa
         if (idx >= len(rp_Ref_ROI_Numbers)):
             print('the number of rp_line is larger than len(rp_Ref_ROI_Numbers)')
             break
+        if (idx >= len(rp_fp.ApplicationSetupSequence[0].ChannelSequence) ):
+            print('the number of rp_line is larger than len(rp_fp.ApplicationSetupSequence[0].ChannelSequence)')
+            break
         # Change ROINumber of RP_Template_TestData RS into output RP output file
         # Do  I need to fit ROINumber in RS or not? I still have no answer
         rp_fp.ApplicationSetupSequence[0].ChannelSequence[idx].ReferencedROINumber = rp_Ref_ROI_Numbers[idx]
@@ -2426,12 +2429,11 @@ def generate_all_rp_process(root_folder=r'RAL_plan_new_20190905', rp_output_fold
             time_end = datetime.datetime.now()
             print('{}s [{}-{}]'.format(time_end-time_start, time_start, time_end), end='\n', flush=True)
             success_folders.append(folder)
-        except Exception as ex:
+        except Exception as debug_ex:
             print('Create RP file Failed')
             failed_folders.append(folder)
-            print(ex)
-
-            #raise(ex)
+            print(debug_ex)
+            #raise(debug_ex)
     print('FOLDER SUMMARY REPORT')
     print('failed folders = {}'.format(failed_folders))
     print('failed / total = {}/{}'.format(len(failed_folders), len(total_folders) ))
