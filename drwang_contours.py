@@ -1603,37 +1603,27 @@ def generate_brachy_rp_file(RP_OperatorsName, dicom_dict, out_rp_filepath, is_en
 
     (lt_ovoid, tandem, rt_ovoid) = algo_to_get_pixel_lines(dicom_dict, needle_lines)
 
-    # Step 1.2.
-    # finetune needle_lines to add 2mm in tips side
-
-    enablePrint()
-    print('finetune needle_lines')
-    print('len(needle_lines) = {}'.format(len(needle_lines)))
-    if len(needle_lines) > 0:
-        for idx, needle_line in enumerate(needle_lines):
-            #TODO
-            #print('needle_lines[0] = {}'.format(needle_lines[0]))
-            print('needle_lines[{}] = {}'.format(idx, needle_lines[idx]))
-            pt_start= needle_line[0]
-            pt_end  = needle_line[-1]
-            z = pt_end[2]
-            ct_obj = dicom_dict['z'][z]
-            ps_x = ct_obj['ps_x']
-            ps_y = ct_obj['ps_y']
-            old_dist = math.sqrt( ( ps_x*(pt_start[0]-pt_end[0]))**2 + ( ps_y*(pt_start[1]-pt_end[1]))**2 + (pt_start[2]-pt_end[2])**2 )
-    blockPrint()
-
-    for idx, needle_line in enumerate(needle_lines):
-        continue
-
     # Step 2. Convert line into metric representation
     # Original line is array of (x_px, y_px, z_mm) and we want to convert to (x_mm, y_mm, z_mm)
     (metric_lt_ovoid, metric_tandem, metric_rt_ovoid) = get_metric_lines_representation(dicom_dict, lt_ovoid, tandem, rt_ovoid)
-    metric_needle_lines = get_metric_needle_lines_representation(dicom_dict, needle_lines)
-
     print('metric_lt_ovoid = {}'.format(metric_lt_ovoid))
     print('metric_tandem = {}'.format(metric_tandem))
     print('metric_rt_ovoid = {}'.format(metric_rt_ovoid))
+
+
+    metric_needle_lines = get_metric_needle_lines_representation(dicom_dict, needle_lines)
+
+    # Step 2.1 Extend metric needle line with 2mm in the end point of metric_needle_lines
+    needle_extend_mm = 2
+    for line_idx, line in enumerate(metric_needle_lines):
+        pt_s = line[0] # point start
+        pt_e = line[-1] # point end
+        pt_n = pt_e.copy() # point new. it will append in end of line
+        cur_dist = math.sqrt( (pt_e[0]-pt_s[0])**2 + (pt_e[1]-pt_s[1])**2 + (pt_e[2]-pt_s[2])**2 )
+        for i in range(3):
+            pt_n[i] = pt_n[i] + ( (pt_e[i] - pt_s[i]) * (needle_extend_mm / cur_dist) )
+        line.append(pt_n)
+
     print('len(metric_needle_lines) = {}'.format(len(metric_needle_lines)))
     for line_idx, line in enumerate(metric_needle_lines):
         print('metric_needle_lines[{}]= {}'.format(line_idx, line))
