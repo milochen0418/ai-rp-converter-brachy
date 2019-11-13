@@ -567,11 +567,11 @@ def algo_to_get_pixel_lines(dicom_dict, needle_lines = []):
                     if cen_pt_is_on_needle == True:
                         continue
                     potential_contours.append(contour)
-                enablePrint()
+                #enablePrint()
                 print('len(potential_contours) = {}'.format(len(potential_contours)))
                 for c_idx,c in enumerate(potential_contours):
                     print('[{}] -> {}', c_idx, get_rect_info_from_cv_contour(c))
-                blockPrint()
+                #blockPrint()
                 if len(potential_contours) == 1:
                     contour = potential_contours[0]
                     rect_info = get_rect_info_from_cv_contour(contour)
@@ -932,8 +932,11 @@ def wrap_to_rp_file(RP_OperatorsName, rs_filepath, tandem_rp_line, out_rp_filepa
 
     BCPItemTemplate = copy.deepcopy(rp_fp.ApplicationSetupSequence[0].ChannelSequence[0].BrachyControlPointSequence[0])
     rp_lines = [tandem_rp_line, rt_ovoid_rp_line, lt_ovoid_rp_line]
+    rp_lines = rp_lines + needle_rp_lines
 
-
+    for idx, rp_line in enumerate(rp_lines):
+        print('rp_line[{}] = {}'.format(idx, rp_line))
+    print('WRITE_FILE_START', flush=True, end='*')
     #TODO rp_Ref_ROI_Numbers need to match to current RS's ROI number of three applicators
     #rp_Ref_ROI_Numbers = [17, 18, 19]
     rp_Ref_ROI_Numbers = app_roi_num_list
@@ -960,7 +963,9 @@ def wrap_to_rp_file(RP_OperatorsName, rs_filepath, tandem_rp_line, out_rp_filepa
             BCPEndPt.ControlPointIndex = 2 * pt_idx + 1
             rp_fp.ApplicationSetupSequence[0].ChannelSequence[idx].BrachyControlPointSequence.append(BCPStartPt)
             rp_fp.ApplicationSetupSequence[0].ChannelSequence[idx].BrachyControlPointSequence.append(BCPEndPt)
+    print('WRITE_FILE_START', flush=True, end='*')
     pydicom.write_file(out_rp_filepath, rp_fp)
+    print('WRITE_FILE_START', flush=True)
     pass
 def get_metric_lines_representation(dicom_dict, lt_ovoid, tandem, rt_ovoid):
     #(metric_lt_ovoid, metric_tandem, metric_rt_ovoid) = get_metric_lines_representation(dicom_dict, lt_ovoid, tandem, rt_ovoid)
@@ -1584,11 +1589,11 @@ def generate_brachy_rp_file(RP_OperatorsName, dicom_dict, out_rp_filepath, is_en
 
     # Step 1. Get line of lt_ovoid, tandem, rt_ovoid by OpneCV contour material and innovated combination
     needle_lines = algo_to_get_needle_lines(dicom_dict)
-    enablePrint()
+    #enablePrint()
     print('len(needle_lines) = {}'.format(len(needle_lines)))
     if len(needle_lines) > 0 :
         print('needle_lines[0] = {}'.format(needle_lines[0]))
-    blockPrint()
+    #blockPrint()
     (lt_ovoid, tandem, rt_ovoid) = algo_to_get_pixel_lines(dicom_dict, needle_lines)
 
 
@@ -1615,6 +1620,7 @@ def generate_brachy_rp_file(RP_OperatorsName, dicom_dict, out_rp_filepath, is_en
 
     # Step 4. Get Applicator RP line
     tandem_rp_line = get_applicator_rp_line(metric_tandem, 4, 5)
+    #tandem_rp_line = get_applicator_rp_line(metric_tandem, 3, 5) # <-- change to reduce 1mm
     lt_ovoid_rp_line = get_applicator_rp_line(metric_lt_ovoid, 0, 5)
     rt_ovoid_rp_line = get_applicator_rp_line(metric_rt_ovoid, 0 ,5)
     rp_needle_lines = []
@@ -2416,8 +2422,8 @@ def generate_all_rp_process(root_folder=r'RAL_plan_new_20190905', rp_output_fold
             out_rp_filepath = os.path.join(rp_output_folder_filepath, out_rp_filepath)
             time_start = datetime.datetime.now()
             print('[{}/{}] Create RP file -> {}'.format(folder_idx+1,len(folders), out_rp_filepath) ,end=' -> ', flush=True)
-            generate_brachy_rp_file(RP_OperatorsName='cylin', dicom_dict=dicom_dict, out_rp_filepath=out_rp_filepath, is_enable_print=False)
-            #generate_brachy_rp_file(RP_OperatorsName='cylin', dicom_dict=dicom_dict, out_rp_filepath=out_rp_filepath, is_enable_print=True)
+            #generate_brachy_rp_file(RP_OperatorsName='cylin', dicom_dict=dicom_dict, out_rp_filepath=out_rp_filepath, is_enable_print=False)
+            generate_brachy_rp_file(RP_OperatorsName='cylin', dicom_dict=dicom_dict, out_rp_filepath=out_rp_filepath, is_enable_print=True)
             time_end = datetime.datetime.now()
             print('{}s [{}-{}]'.format(time_end-time_start, time_start, time_end), end='\n', flush=True)
             success_folders.append(folder)
@@ -2444,15 +2450,62 @@ def generate_all_rp_process(root_folder=r'RAL_plan_new_20190905', rp_output_fold
 
 
 
+def lookup_rp_fs_applicator_info(rp_fp):
+    length = len(rp_fp.ApplicationSetupSequence[0].ChannelSequence)
+    print('length = ', length)
+    for seq_idx, seq in enumerate(rp_fp.ApplicationSetupSequence[0].ChannelSequence):
+        print('idx = ', seq_idx)
+        """
+            (300a, 0290) Source Applicator Number            IS: "1"
+            (300a, 0291) Source Applicator ID                SH: 'Lt Ovoid'
+            (300a, 0292) Source Applicator Type              CS: 'RIGID'
+            (300a, 0294) Source Applicator Name              LO: ''
+            (300a, 0296) Source Applicator Length            DS: "1300"
+            (300a, 02a0) Source Applicator Step Size         DS: "5"        
+        """
+        dict = {}
+        dict['SourceApplicatorNumber'] = seq.SourceApplicatorNumber
+        dict['SourceApplicatorID'] = seq.SourceApplicatorID
+        dict['SourceApplicatorName'] = seq.SourceApplicatorName
+        dict['SourceApplicatorLength'] = seq.SourceApplicatorLength
+        dict['SourceApplicatorStepSize'] = seq.SourceApplicatorStepSize
+        print(dict)
+        print('')
+
+def look_rp_file():
+    print('REAL Example')
+    import pydicom
+    import os
+    root_folder = r'RAL_plan_new_20190905'
+    folder = '592697-1'
+    folder = os.path.join(root_folder, folder)
+    rp_filename = r'RP.1.2.246.352.71.5.417454940236.1938846.20190115100859.dcm'
+    rp_filepath = os.path.join(folder, rp_filename)
+    print(rp_filepath)
+    rp_fp = pydicom.read_file(rp_filepath)
+    lookup_rp_fs_applicator_info(rp_fp)
+
+    print('[[MY OUTPUT]]')
+    rp_output_folder_filepath = r'Study-RAL-implant_20191112_RP_Files'
+    for rp_file in os.listdir(rp_output_folder_filepath):
+        rp_filepath = os.path.join(rp_output_folder_filepath, rp_file)
+        rp_fp = pydicom.read_file(rp_filepath)
+        print('rp_filepath = {}'.format(os.path.basename(rp_filepath)))
+        lookup_rp_fs_applicator_info(rp_fp)
+
+
+
 
 
 if __name__ == '__main__':
+    look_rp_file()
+    exit()
     #generate_all_rp_process(root_folder=r'RAL_plan_new_20190905', rp_output_folder_filepath='all_rp_output',bytes_dump_folder_filepath='contours_bytes')
     #generate_all_rp_process(root_folder=r'RAL_plan_new_20190905', rp_output_folder_filepath='RRR',bytes_dump_folder_filepath='BBB')
 
-    #generate_all_rp_process(root_folder=r'Study-RAL-implant_20191112', rp_output_folder_filepath='Study-RAL-implant_20191112_RP_Files',bytes_dump_folder_filepath='Study-RAL-implant_20191112_Bytes_Files', is_recreate_bytes=False)
+    generate_all_rp_process(root_folder=r'Study-RAL-implant_20191112', rp_output_folder_filepath='Study-RAL-implant_20191112_RP_Files',bytes_dump_folder_filepath='Study-RAL-implant_20191112_Bytes_Files', is_recreate_bytes=False)
     #generate_all_rp_process(root_folder=r'RAL_plan_new_20190905', rp_output_folder_filepath='RAL_plan_new_20190905_RP_Files', bytes_dump_folder_filepath='RAL_plan_new_20190905_Bytes_Files', is_recreate_bytes=False)
-    generate_all_rp_process(root_folder=r'Study-RAL-20191105', rp_output_folder_filepath='Study-RAL-20191105_RP_Files', bytes_dump_folder_filepath='Study-RAL-20191105_Bytes_Files', is_recreate_bytes=False)
+    #generate_all_rp_process(root_folder=r'Study-RAL-20191105', rp_output_folder_filepath='Study-RAL-20191105_RP_Files', bytes_dump_folder_filepath='Study-RAL-20191105_Bytes_Files', is_recreate_bytes=False)
 
     #generate_all_rp_process(root_folder=r'Study-RAL-20191105', rp_output_folder_filepath='Study-RAL-20191105_RP_Files',
     #                        bytes_dump_folder_filepath='Study-RAL-20191105_Bytes_Files', is_recreate_bytes=False)
