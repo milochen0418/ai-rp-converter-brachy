@@ -514,16 +514,43 @@ def algo_to_get_pixel_lines(dicom_dict, needle_lines = []):
         if(len(inner_cen_pts) != 3 ) :
             print('inner_cen_pts is not == 3')
             # To process first slice when there are no no three inner contour
+            min_z = sorted(dicom_dict['z'].keys())[0]
+            ct_obj = dicom_dict['z'][min_z]
+            ps_x = ct_obj['ps_x']
+            ps_y = ct_obj['ps_y']
+            a_mm = 1.5 # allowed distance mm
+            a_px_x = a_mm / ps_x # allowed distance pixel for x-axis
+            a_px_y = a_mm / ps_y # allowed distance pixel for y-axis
+
             l_pt = lt_ovoid[0]
             r_pt = rt_ovoid[0]
             m_pt = None # middle pt
             for pt in inner_cen_pts:
-                if pt[0] > l_pt[0] + 4 and pt[0] < r_pt[0] - 4:
-                    if (pt[1] > min([l_pt[1], r_pt[1]]) - 4 and pt[1] < max([l_pt[1], r_pt[1]]) + 4 ):
+                #if pt[0] > l_pt[0] + 4 and pt[0] < r_pt[0] - 4:
+                if pt[0] > l_pt[0] + a_px_x and pt[0] < r_pt[0] - a_px_x:
+                    #if (pt[1] > min([l_pt[1], r_pt[1]]) - 4 and pt[1] < max([l_pt[1], r_pt[1]]) + 4 ):
+                    if (pt[1] > min([l_pt[1], r_pt[1]]) - a_px_y and pt[1] < max([l_pt[1], r_pt[1]]) + a_px_y):
                         m_pt = pt
                         break
             if (m_pt == None):
-                raise Exception
+                # Use algo02 to find tandem
+                # And remember to avoid needle_lines[][0]
+
+                min_z = sorted(dicom_dict['z'].keys())[0]
+                ct_obj = dicom_dict['z'][min_z]
+                #ct_obj['output']['algo02']
+                potential_contours = []
+                for contour in ct_obj['output']['contours512']['algo02']:
+                    rect_info = get_rect_info_from_cv_contour(contour)
+                    cen_pt = (rect_info[2][0], rect_info[2][1])
+                    if cen_pt[0] > max(l_pt[0], r_pt[0]) or cen_pt[0] < min(l_pt[0], r_pt[0]):
+                        continue
+                    if cen_pt[1] > max(l_pt[1], r_pt[1]) or cen_pt[1] < min(l_pt[1], r_pt[1]):
+                        continue
+
+
+
+                #raise Exception
             else:
                 tandem.append((m_pt[0], m_pt[1], float(z)))
         else :
@@ -1523,6 +1550,11 @@ def generate_brachy_rp_file(RP_OperatorsName, dicom_dict, out_rp_filepath, is_en
 
     # Step 1. Get line of lt_ovoid, tandem, rt_ovoid by OpneCV contour material and innovated combination
     needle_lines = algo_to_get_needle_lines(dicom_dict)
+    enablePrint()
+    print('len(needle_lines) = {}'.format(len(needle_lines)))
+    if len(needle_lines) > 0 :
+        print('needle_lines[0] = {}'.format(needle_lines[0]))
+    blockPrint()
     (lt_ovoid, tandem, rt_ovoid) = algo_to_get_pixel_lines(dicom_dict, needle_lines)
 
 
@@ -1706,7 +1738,7 @@ def example_create_all_rp_file():
             out_rp_filepath = os.path.join('all_rp_output', out_rp_filepath)
             time_start = datetime.datetime.now()
             print('[{}/{}] Create RP file -> {}'.format(folder_idx+1,len(folders), out_rp_filepath) ,end=' -> ')
-            generate_brachy_rp_file(RP_OperatorsName='cylin', dicom_dict=dicom_dict, out_rp_filepath=out_rp_filepath, is_enable_print=False)
+            generate_brachy_rp_file(RP_OperatorsName='cylin', dicom_dict=dicom_dict, out_rp_filepath=out_rp_filepath, is_enable_print=True)
             time_end = datetime.datetime.now()
             print('{}s [{}-{}]'.format(time_end-time_start, time_start, time_end), end='\n')
             success_folders.append(folder)
@@ -2294,8 +2326,10 @@ def generate_all_rp_process(root_folder=r'RAL_plan_new_20190905', rp_output_fold
         enablePrint()
         #if (os.path.basename(folder) not in ['21569696', '33220132']):
         #    continue
-        if (os.path.basename(folder) not in ['21569696']):
-            continue
+        #if (os.path.basename(folder) not in ['21569696']):
+        #    continue
+        #if (os.path.basename(folder) not in ['487961']): # One Needle case
+        #    continue
 
         print('\n[{}/{}] Loop info : folder_idx = {}, folder = {}'.format(folder_idx + 1, len(folders), folder_idx, folder),flush=True)
         byte_filename = r'{}.bytes'.format(os.path.basename(folder))
@@ -2318,7 +2352,7 @@ def generate_all_rp_process(root_folder=r'RAL_plan_new_20190905', rp_output_fold
             if bytes_file_exists == True:
                 #dicom_dict = python_object_load(bytes_filepath)
                 #all_dicom_dict[folder] = dicom_dict
-                print('[{}/{}] File have been created - {}'.format(folder_idx + 1, len(folders), dump_filepath))
+                print('[{}/{}] File have been created - {}'.format(folder_idx + 1, len(folders), dump_filepath), flush=True)
             else: #CASE When the file is not exist in bytes_filepath
                 time_start = datetime.datetime.now()
                 print('[{}/{}] Create bytes file {} '.format(folder_idx + 1, len(folders), dump_filepath), end=' -> ',flush=True)
@@ -2382,11 +2416,12 @@ if __name__ == '__main__':
     #generate_all_rp_process(root_folder=r'RAL_plan_new_20190905', rp_output_folder_filepath='all_rp_output',bytes_dump_folder_filepath='contours_bytes')
     #generate_all_rp_process(root_folder=r'RAL_plan_new_20190905', rp_output_folder_filepath='RRR',bytes_dump_folder_filepath='BBB')
 
-    #generate_all_rp_process(root_folder=r'Study-RAL-implant_20191112', rp_output_folder_filepath='Study-RAL-implant_20191112_RP_Files',bytes_dump_folder_filepath='Study-RAL-implant_20191112_Bytes_Files')
-    #generate_all_rp_process(root_folder=r'RAL_plan_new_20190905', rp_output_folder_filepath='RAL_plan_new_20190905_RP_Files', bytes_dump_folder_filepath='RAL_plan_new_20190905_Bytes_Files')
-    #generate_all_rp_process(root_folder=r'Study-RAL-20191105', rp_output_folder_filepath='Study-RAL-20191105_RP_Files', bytes_dump_folder_filepath='Study-RAL-20191105_Bytes_Files', is_recreate_bytes=False)
-    generate_all_rp_process(root_folder=r'Study-RAL-20191105', rp_output_folder_filepath='Study-RAL-20191105_RP_Files',
-                            bytes_dump_folder_filepath='Study-RAL-20191105_Bytes_Files', is_recreate_bytes=False)
+    #generate_all_rp_process(root_folder=r'Study-RAL-implant_20191112', rp_output_folder_filepath='Study-RAL-implant_20191112_RP_Files',bytes_dump_folder_filepath='Study-RAL-implant_20191112_Bytes_Files', is_recreate_bytes=False)
+    #generate_all_rp_process(root_folder=r'RAL_plan_new_20190905', rp_output_folder_filepath='RAL_plan_new_20190905_RP_Files', bytes_dump_folder_filepath='RAL_plan_new_20190905_Bytes_Files', is_recreate_bytes=False)
+    generate_all_rp_process(root_folder=r'Study-RAL-20191105', rp_output_folder_filepath='Study-RAL-20191105_RP_Files', bytes_dump_folder_filepath='Study-RAL-20191105_Bytes_Files', is_recreate_bytes=False)
+
+    #generate_all_rp_process(root_folder=r'Study-RAL-20191105', rp_output_folder_filepath='Study-RAL-20191105_RP_Files',
+    #                        bytes_dump_folder_filepath='Study-RAL-20191105_Bytes_Files', is_recreate_bytes=False)
     #example_of_all_process_2()
     exit()
     #example_of_plot_15x15_needle_picture()
