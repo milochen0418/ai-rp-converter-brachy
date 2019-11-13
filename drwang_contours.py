@@ -1521,8 +1521,9 @@ def generate_brachy_rp_file(RP_OperatorsName, dicom_dict, out_rp_filepath, is_en
         enablePrint()
 
     # Step 1. Get line of lt_ovoid, tandem, rt_ovoid by OpneCV contour material and innovated combination
-    (lt_ovoid, tandem, rt_ovoid) = algo_to_get_pixel_lines(dicom_dict)
     needle_lines = algo_to_get_needle_lines(dicom_dict)
+    (lt_ovoid, tandem, rt_ovoid) = algo_to_get_pixel_lines(dicom_dict)
+
 
     # Step 2. Convert line into metric representation
     # Original line is array of (x_px, y_px, z_mm) and we want to convert to (x_mm, y_mm, z_mm)
@@ -2263,7 +2264,7 @@ def example_of_all_process():
     pass
 
 
-def generate_all_rp_process(root_folder=r'RAL_plan_new_20190905', rp_output_folder_filepath='all_rp_output',  bytes_dump_folder_filepath='contours_bytes'):
+def generate_all_rp_process(root_folder=r'RAL_plan_new_20190905', rp_output_folder_filepath='all_rp_output',  bytes_dump_folder_filepath='contours_bytes', is_recreate_bytes=True):
     print('Call generate_all_rp_process with the following arguments')
     print('root_folder = ', root_folder)
     print('rp_output_folder_filepath = ', rp_output_folder_filepath)
@@ -2297,18 +2298,19 @@ def generate_all_rp_process(root_folder=r'RAL_plan_new_20190905', rp_output_fold
         #dump_filepath = os.path.join('contours_bytes', byte_filename)
         dump_filepath = os.path.join(bytes_dump_folder_filepath, byte_filename)
 
-
-        time_start = datetime.datetime.now()
-        print('[{}/{}] Create bytes file {} '.format(folder_idx + 1, len(folders), dump_filepath), end=' -> ',flush=True)
-        dicom_dict = get_dicom_dict(folder)
-        generate_metadata_to_dicom_dict(dicom_dict)
-        generate_output_to_dicom_dict(dicom_dict)
-
-        all_dicom_dict[folder] = dicom_dict
-        python_object_dump(dicom_dict, dump_filepath)
-        #print('Create {}'.format(dump_filepath))
-        time_end = datetime.datetime.now()
-        print('{}s [{}-{}]'.format(time_end - time_start, time_start, time_end), end='\n', flush=True)
+        if (is_recreate_bytes == True):
+            time_start = datetime.datetime.now()
+            print('[{}/{}] Create bytes file {} '.format(folder_idx + 1, len(folders), dump_filepath), end=' -> ',flush=True)
+            dicom_dict = get_dicom_dict(folder)
+            generate_metadata_to_dicom_dict(dicom_dict)
+            generate_output_to_dicom_dict(dicom_dict)
+            all_dicom_dict[folder] = dicom_dict
+            python_object_dump(dicom_dict, dump_filepath)
+            time_end = datetime.datetime.now()
+            print('{}s [{}-{}]'.format(time_end - time_start, time_start, time_end), end='\n', flush=True)
+        else: # CASE is_recreate_bytes == False
+            #TODO
+            pass
         # Change to basename of folder here
         folder = os.path.basename(folder)
         total_folders.append(folder)
