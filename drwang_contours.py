@@ -567,22 +567,12 @@ def algo_to_get_pixel_lines(dicom_dict, needle_lines = []):
                     if cen_pt_is_on_needle == True:
                         continue
                     potential_contours.append(contour)
-                enablePrint()
-                print('len(potential_contours) = {}'.format(len(potential_contours)))
-                blockPrint()
-                for c_idx,c in enumerate(potential_contours):
-                    print('[{}] -> {}', c_idx, get_rect_info_from_cv_contour(c))
-                blockPrint()
                 if len(potential_contours) == 1:
                     contour = potential_contours[0]
                     rect_info = get_rect_info_from_cv_contour(contour)
                     m_pt = (rect_info[2][0], rect_info[2][1])
                     tandem.append((m_pt[0], m_pt[1], float(z)))
                 else:
-                    enablePrint()
-                    print('len(potential_contours) = {}'.format(len(potential_contours)))
-                    print('len(needle_lines) = {}'.format(len(needle_lines)))
-                    blockPrint()
                     if len(potential_contours) == 0 and len(needle_lines) == 1:
                         # In this case needle should be remove and change the needle to tandem
                         only_needle_line = needle_lines[0]
@@ -945,7 +935,7 @@ def wrap_to_rp_file(RP_OperatorsName, rs_filepath, tandem_rp_line, out_rp_filepa
 
     for idx, rp_line in enumerate(rp_lines):
         print('rp_line[{}] = {}'.format(idx, rp_line))
-    print('WRITE_FILE_START', flush=True, end='*')
+
     #TODO rp_Ref_ROI_Numbers need to match to current RS's ROI number of three applicators
     #rp_Ref_ROI_Numbers = [17, 18, 19]
     rp_Ref_ROI_Numbers = app_roi_num_list
@@ -972,9 +962,7 @@ def wrap_to_rp_file(RP_OperatorsName, rs_filepath, tandem_rp_line, out_rp_filepa
             BCPEndPt.ControlPointIndex = 2 * pt_idx + 1
             rp_fp.ApplicationSetupSequence[0].ChannelSequence[idx].BrachyControlPointSequence.append(BCPStartPt)
             rp_fp.ApplicationSetupSequence[0].ChannelSequence[idx].BrachyControlPointSequence.append(BCPEndPt)
-    print('WRITE_FILE_START', flush=True, end='*')
     pydicom.write_file(out_rp_filepath, rp_fp)
-    print('WRITE_FILE_START', flush=True)
     pass
 def get_metric_lines_representation(dicom_dict, lt_ovoid, tandem, rt_ovoid):
     #(metric_lt_ovoid, metric_tandem, metric_rt_ovoid) = get_metric_lines_representation(dicom_dict, lt_ovoid, tandem, rt_ovoid)
@@ -1683,8 +1671,8 @@ def example_of_generate_brachy_rp_file():
     print('RP Create {}'.format(out_rp_filepath))
     time_start = datetime.datetime.now()
     print('Create RP file -> {}'.format(out_rp_filepath) ,end=' -> ')
-    #generate_brachy_rp_file(RP_OperatorsName='cylin', dicom_dict=dicom_dict, out_rp_filepath=out_rp_filepath, is_enable_print=False)
-    generate_brachy_rp_file(RP_OperatorsName='cylin', dicom_dict=dicom_dict, out_rp_filepath=out_rp_filepath, is_enable_print=True)
+    generate_brachy_rp_file(RP_OperatorsName='cylin', dicom_dict=dicom_dict, out_rp_filepath=out_rp_filepath, is_enable_print=False)
+    #generate_brachy_rp_file(RP_OperatorsName='cylin', dicom_dict=dicom_dict, out_rp_filepath=out_rp_filepath, is_enable_print=True)
     time_end = datetime.datetime.now()
     print('{}s [{}-{}]'.format(time_end-time_start, time_start, time_end), end='\n')
 
