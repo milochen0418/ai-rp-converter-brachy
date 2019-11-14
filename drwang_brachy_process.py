@@ -1503,17 +1503,36 @@ def generate_brachy_rp_file(RP_OperatorsName, dicom_dict, out_rp_filepath, is_en
         enablePrint()
 
     # Step 1. Get line of lt_ovoid, tandem, rt_ovoid by OpneCV contour material and innovated combination
-    (lt_ovoid, tandem, rt_ovoid) = algo_to_get_pixel_lines(dicom_dict)
     needle_lines = algo_to_get_needle_lines(dicom_dict)
+    print('len(needle_lines) = {}'.format(len(needle_lines)))
+    if len(needle_lines) > 0 :
+        for idx, needle_line in enumerate(needle_lines):
+            #print('needle_lines[0] = {}'.format(needle_lines[0]))
+            print('needle_lines[{}] = {}'.format(idx, needle_lines[idx]))
+
+    (lt_ovoid, tandem, rt_ovoid) = algo_to_get_pixel_lines(dicom_dict, needle_lines)
 
     # Step 2. Convert line into metric representation
     # Original line is array of (x_px, y_px, z_mm) and we want to convert to (x_mm, y_mm, z_mm)
     (metric_lt_ovoid, metric_tandem, metric_rt_ovoid) = get_metric_lines_representation(dicom_dict, lt_ovoid, tandem, rt_ovoid)
-    metric_needle_lines = get_metric_needle_lines_representation(dicom_dict, needle_lines)
-
     print('metric_lt_ovoid = {}'.format(metric_lt_ovoid))
     print('metric_tandem = {}'.format(metric_tandem))
     print('metric_rt_ovoid = {}'.format(metric_rt_ovoid))
+
+
+    metric_needle_lines = get_metric_needle_lines_representation(dicom_dict, needle_lines)
+
+    # Step 2.1 Extend metric needle line with 2mm in the end point of metric_needle_lines
+    needle_extend_mm = 2
+    for line_idx, line in enumerate(metric_needle_lines):
+        pt_s = line[0] # point start
+        pt_e = line[-1] # point end
+        pt_n = pt_e.copy() # point new. it will append in end of line
+        cur_dist = math.sqrt( (pt_e[0]-pt_s[0])**2 + (pt_e[1]-pt_s[1])**2 + (pt_e[2]-pt_s[2])**2 )
+        for i in range(3):
+            pt_n[i] = pt_n[i] + ( (pt_e[i] - pt_s[i]) * (needle_extend_mm / cur_dist) )
+        line.append(pt_n)
+
     print('len(metric_needle_lines) = {}'.format(len(metric_needle_lines)))
     for line_idx, line in enumerate(metric_needle_lines):
         print('metric_needle_lines[{}]= {}'.format(line_idx, line))
@@ -1528,7 +1547,8 @@ def generate_brachy_rp_file(RP_OperatorsName, dicom_dict, out_rp_filepath, is_en
         metric_line.reverse()
 
     # Step 4. Get Applicator RP line
-    tandem_rp_line = get_applicator_rp_line(metric_tandem, 4, 5)
+    #tandem_rp_line = get_applicator_rp_line(metric_tandem, 4, 5)
+    tandem_rp_line = get_applicator_rp_line(metric_tandem, 3, 5) # <-- change to reduce 1mm
     lt_ovoid_rp_line = get_applicator_rp_line(metric_lt_ovoid, 0, 5)
     rt_ovoid_rp_line = get_applicator_rp_line(metric_rt_ovoid, 0 ,5)
     rp_needle_lines = []
@@ -2331,6 +2351,117 @@ def example_of_all_process():
     print('success /total = {}/{}'.format(len(success_folders), len(total_folders) ))
     pass
 
+def generate_all_rp_process(root_folder=r'RAL_plan_new_20190905', rp_output_folder_filepath='all_rp_output',  bytes_dump_folder_filepath='contours_bytes', is_recreate_bytes=True):
+    print('Call generate_all_rp_process with the following arguments')
+    print('root_folder = ', root_folder)
+    print('rp_output_folder_filepath = ', rp_output_folder_filepath)
+    print('bytes_dump_folder_filepath = ', bytes_dump_folder_filepath)
+
+    create_directory_if_not_exists(bytes_dump_folder_filepath)
+    create_directory_if_not_exists(rp_output_folder_filepath)
+
+    print('[START] generate_all_rp_process()')
+    all_dicom_dict = {}
+    # Step 2. Generate all our target
+    #root_folder = r'RAL_plan_new_20190905'
+    f_list = [ os.path.join(root_folder, file) for file in os.listdir(root_folder) ]
+    folders = os.listdir(root_folder)
+    total_folders = []
+    failed_folders = []
+    success_folders = []
+    sorted_f_list = copy.deepcopy(sorted(f_list))
+
+    #for folder_idx, folder in enumerate(sorted_f_list):
+    #    print(folder_idx, folder)
+    #    print('[{}/{}] Loop info : folder_idx = {}, folder = {}'.format(folder_idx + 1, len(folders), folder_idx, folder),flush=True)
+
+    #for folder_idx, folder in enumerate(sorted(f_list)):
+    for folder_idx, folder in enumerate(sorted_f_list):
+        enablePrint()
+        #if (os.path.basename(folder) not in ['21569696', '33220132']):
+        #    continue
+        #if (os.path.basename(folder) not in ['21569696']):
+        #    continue
+        #if (os.path.basename(folder) not in ['487961']): # One Needle case
+        #    continue
+        #if (os.path.basename(folder) not in ['34982640']):
+        #    continue
+
+        print('\n[{}/{}] Loop info : folder_idx = {}, folder = {}'.format(folder_idx + 1, len(folders), folder_idx, folder),flush=True)
+        byte_filename = r'{}.bytes'.format(os.path.basename(folder))
+        #dump_filepath = os.path.join('contours_bytes', byte_filename)
+        dump_filepath = os.path.join(bytes_dump_folder_filepath, byte_filename)
+
+        if (is_recreate_bytes == True):
+            time_start = datetime.datetime.now()
+            print('[{}/{}] Create bytes file {} '.format(folder_idx + 1, len(folders), dump_filepath), end=' -> ',flush=True)
+            dicom_dict = get_dicom_dict(folder)
+            generate_metadata_to_dicom_dict(dicom_dict)
+            generate_output_to_dicom_dict(dicom_dict)
+            all_dicom_dict[folder] = dicom_dict
+            python_object_dump(dicom_dict, dump_filepath)
+            time_end = datetime.datetime.now()
+            print('{}s [{}-{}]'.format(time_end - time_start, time_start, time_end), end='\n', flush=True)
+        else: # CASE is_recreate_bytes == False
+            bytes_filepath = os.path.join(bytes_dump_folder_filepath, r'{}.bytes'.format(os.path.basename(folder)))
+            bytes_file_exists = os.path.exists(bytes_filepath)
+            if bytes_file_exists == True:
+                #dicom_dict = python_object_load(bytes_filepath)
+                #all_dicom_dict[folder] = dicom_dict
+                print('[{}/{}] File have been created - {}'.format(folder_idx + 1, len(folders), dump_filepath), flush=True)
+            else: #CASE When the file is not exist in bytes_filepath
+                time_start = datetime.datetime.now()
+                print('[{}/{}] Create bytes file {} '.format(folder_idx + 1, len(folders), dump_filepath), end=' -> ',flush=True)
+                dicom_dict = get_dicom_dict(folder)
+                generate_metadata_to_dicom_dict(dicom_dict)
+                generate_output_to_dicom_dict(dicom_dict)
+                all_dicom_dict[folder] = dicom_dict
+                python_object_dump(dicom_dict, dump_filepath)
+                time_end = datetime.datetime.now()
+                print('{}s [{}-{}]'.format(time_end - time_start, time_start, time_end), end='\n', flush=True)
+        # Change to basename of folder here
+        fullpath_folder = folder
+        folder = os.path.basename(folder)
+        total_folders.append(folder)
+        try:
+            #bytes_filepath = os.path.join('contours_bytes', r'{}.bytes'.format(folder))
+            bytes_filepath = os.path.join(bytes_dump_folder_filepath, r'{}.bytes'.format(folder))
+            dicom_dict = python_object_load(bytes_filepath)
+
+            if fullpath_folder not in all_dicom_dict.keys():
+                all_dicom_dict[fullpath_folder] = dicom_dict
+
+            metadata = dicom_dict['metadata']
+            # out_rp_filepath format is PatientID, RS StudyDate  and the final is folder name processing by coding
+            out_rp_filepath = r'RP.{}.{}.f{}.dcm'.format(  metadata['RS_PatientID'],  metadata['RS_StudyDate'],  os.path.basename(metadata['folder']) )
+            #out_rp_filepath = os.path.join('all_rp_output', out_rp_filepath)
+            out_rp_filepath = os.path.join(rp_output_folder_filepath, out_rp_filepath)
+            time_start = datetime.datetime.now()
+            print('[{}/{}] Create RP file -> {}'.format(folder_idx+1,len(folders), out_rp_filepath) ,end=' -> ', flush=True)
+            generate_brachy_rp_file(RP_OperatorsName='cylin', dicom_dict=dicom_dict, out_rp_filepath=out_rp_filepath, is_enable_print=False)
+            #generate_brachy_rp_file(RP_OperatorsName='cylin', dicom_dict=dicom_dict, out_rp_filepath=out_rp_filepath, is_enable_print=True)
+            time_end = datetime.datetime.now()
+            print('{}s [{}-{}]'.format(time_end-time_start, time_start, time_end), end='\n', flush=True)
+            success_folders.append(folder)
+        except Exception as debug_ex:
+            print('Create RP file Failed')
+            failed_folders.append(folder)
+            print(debug_ex)
+            #raise(debug_ex)
+    print('FOLDER SUMMARY REPORT')
+    print('failed folders = {}'.format(failed_folders))
+    print('failed / total = {}/{}'.format(len(failed_folders), len(total_folders) ))
+    print('success /total = {}/{}'.format(len(success_folders), len(total_folders) ))
+
+
+    # Step 3. Use python_object_dump to dump it into some file
+    try:
+        print('Creating {} in very largest size'.format(filename))
+        python_object_dump(all_dicom_dict, filename)
+        print('Created {}'.format(filename))
+    except Exception as ex:
+        print('Create largest size dicom file failed')
+    print('[END] generate_all_rp_process()')
 
 if __name__ == '__main__':
 
