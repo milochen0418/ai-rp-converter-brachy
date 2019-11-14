@@ -936,13 +936,40 @@ def wrap_to_rp_file(RP_OperatorsName, rs_filepath, tandem_rp_line, out_rp_filepa
     for idx, rp_line in enumerate(rp_lines):
         print('rp_line[{}] = {}'.format(idx, rp_line))
 
+
     #TODO rp_Ref_ROI_Numbers need to match to current RS's ROI number of three applicators
     #rp_Ref_ROI_Numbers = [17, 18, 19]
     #rp_Ref_ROI_Numbers = app_roi_num_list
+    enablePrint()
+    print('app_roi_num_list = {}'.format(app_roi_num_list))
     rp_Ref_ROI_Numbers = sorted(app_roi_num_list, reverse=True)
+    print('rp_Ref_ROI_Numbers = {}'.format(rp_Ref_ROI_Numbers))
+    blockPrint()
     rp_ControlPointRelativePositions = [3.5, 3.5, 3.5] # After researching, all ControlPointRelativePositions is start in 3.5
     rp_ControlPointRelativePositions = [3.5 for item in app_roi_num_list]
+
+    enablePrint()
+    print('Dr. Wang debug message')
+    for idx, rp_line in enumerate(rp_lines):
+        print('\nidx={} -> rp_line = ['.format(idx))
+        for pt in rp_line:
+            print('\t, {}'.format(pt))
+
+    blockPrint()
     for idx,rp_line in enumerate(rp_lines):
+        if ( len(needle_rp_lines) == 0):
+            enablePrint()
+            print('Case without needles')
+            if (idx >= 3):
+                break
+            blockPrint()
+
+        if (idx >= 1 and False): #OneTandem
+            enablePrint()
+            print('Debug importing RP by only tandem')
+            rp_fp.ApplicationSetupSequence[0].ChannelSequence = copy.deepcopy(rp_fp.ApplicationSetupSequence[0].ChannelSequence[0:1])
+            blockPrint()
+            break
         if (idx >= len(rp_Ref_ROI_Numbers)):
             print('the number of rp_line is larger than len(rp_Ref_ROI_Numbers)')
             break
@@ -1634,7 +1661,12 @@ def generate_brachy_rp_file(RP_OperatorsName, dicom_dict, out_rp_filepath, is_en
 
     # Step 4. Get Applicator RP line
     #tandem_rp_line = get_applicator_rp_line(metric_tandem, 4, 5)
-    tandem_rp_line = get_applicator_rp_line(metric_tandem, 3, 5) # <-- change to reduce 1mm
+
+    # for debug , so change about testing rp import correct or not. So change tandem start from 3mm to 13mm
+    #tandem_rp_line = get_applicator_rp_line(metric_tandem, 3, 5) # <-- change to reduce 1mm
+    tandem_rp_line = get_applicator_rp_line(metric_tandem, 13, 5)  # <-- change to reduce 1mm
+
+
     lt_ovoid_rp_line = get_applicator_rp_line(metric_lt_ovoid, 0, 5)
     rt_ovoid_rp_line = get_applicator_rp_line(metric_rt_ovoid, 0 ,5)
     rp_needle_lines = []
@@ -1665,6 +1697,59 @@ def generate_brachy_rp_file(RP_OperatorsName, dicom_dict, out_rp_filepath, is_en
     wrap_to_rp_file(RP_OperatorsName=RP_OperatorsName, rs_filepath=rs_filepath, tandem_rp_line=tandem_rp_line,out_rp_filepath=out_rp_filepath, lt_ovoid_rp_line=lt_ovoid_rp_line, needle_rp_lines=rp_needle_lines,rt_ovoid_rp_line=rt_ovoid_rp_line, app_roi_num_list=app_roi_num_list)
     if (is_enable_print == False):
         enablePrint()
+def generate_brachy_rp_file_without_needle(RP_OperatorsName, dicom_dict, out_rp_filepath, is_enable_print=False):
+    if (is_enable_print == False):
+        blockPrint()
+    else:
+        enablePrint()
+
+    # Step 1. Get line of lt_ovoid, tandem, rt_ovoid by OpneCV contour material and innovated combination
+    (lt_ovoid, tandem, rt_ovoid) = algo_to_get_pixel_lines(dicom_dict)
+
+    # Step 2. Convert line into metric representation
+    # Original line is array of (x_px, y_px, z_mm) and we want to convert to (x_mm, y_mm, z_mm)
+    (metric_lt_ovoid, metric_tandem, metric_rt_ovoid) = get_metric_lines_representation(dicom_dict, lt_ovoid, tandem, rt_ovoid)
+    print('metric_lt_ovoid = {}'.format(metric_lt_ovoid))
+    print('metric_tandem = {}'.format(metric_tandem))
+    print('metric_rt_ovoid = {}'.format(metric_rt_ovoid))
+
+
+    # Step 3. Reverse Order, so that first element is TIPS [from most top (z maximum) to most bottom (z minimum) ]
+    metric_lt_ovoid.reverse()
+    metric_tandem.reverse()
+    metric_rt_ovoid.reverse()
+
+    # Step 4. Get Applicator RP line
+    #tandem_rp_line = get_applicator_rp_line(metric_tandem, 4, 5)
+
+    # for debug , so change about testing rp import correct or not. So change tandem start from 3mm to 13mm
+    #tandem_rp_line = get_applicator_rp_line(metric_tandem, 3, 5) # <-- change to reduce 1mm
+    tandem_rp_line = get_applicator_rp_line(metric_tandem, 13, 5)  # <-- change to reduce 1mm
+    lt_ovoid_rp_line = get_applicator_rp_line(metric_lt_ovoid, 0, 5)
+    rt_ovoid_rp_line = get_applicator_rp_line(metric_rt_ovoid, 0 ,5)
+
+
+    print('lt_ovoid_rp_line = {}'.format(lt_ovoid_rp_line))
+    print('tandem_rp_line = {}'.format(tandem_rp_line))
+    print('rt_ovoid_rp_line = {}'.format(rt_ovoid_rp_line))
+
+    # Step 5. Wrap to RP file
+    # TODO for wrap rp_needle_lines into RP file
+    print(dicom_dict['pathinfo']['rs_filepath'])
+    print(dicom_dict['metadata'].keys())
+    #print(pydicom.read_file(dicom_dict['pathinfo']['rs_filepath']).keys())
+
+    rs_filepath = dicom_dict['pathinfo']['rs_filepath']
+
+    print('out_rp_filepath = {}'.format(out_rp_filepath))
+    app_roi_num_list = dicom_dict['metadata']['applicator123_roi_numbers']
+    # TODO will change the wrap_to_rp_file function, because we will wrap needle information into RP files
+    #wrap_to_rp_file(RP_OperatorsName=RP_OperatorsName, rs_filepath=rs_filepath, tandem_rp_line=tandem_rp_line, out_rp_filepath=out_rp_filepath, lt_ovoid_rp_line=lt_ovoid_rp_line, rt_ovoid_rp_line=rt_ovoid_rp_line, app_roi_num_list=app_roi_num_list)
+    #wrap_to_rp_file(RP_OperatorsName=RP_OperatorsName, rs_filepath=rs_filepath, tandem_rp_line=tandem_rp_line,out_rp_filepath=out_rp_filepath, lt_ovoid_rp_line=lt_ovoid_rp_line, needle_rp_lines=rp_needle_lines,rt_ovoid_rp_line=rt_ovoid_rp_line, app_roi_num_list=app_roi_num_list)
+    wrap_to_rp_file(RP_OperatorsName=RP_OperatorsName, rs_filepath=rs_filepath, tandem_rp_line=tandem_rp_line,out_rp_filepath=out_rp_filepath, lt_ovoid_rp_line=lt_ovoid_rp_line, needle_rp_lines=[],rt_ovoid_rp_line=rt_ovoid_rp_line, app_roi_num_list=app_roi_num_list)
+    if (is_enable_print == False):
+        enablePrint()
+
 def example_of_generate_brachy_rp_file():
     root_folder = r'RAL_plan_new_20190905'
     print(os.listdir(root_folder))
@@ -2519,7 +2604,7 @@ if __name__ == '__main__':
     #generate_all_rp_process(root_folder=r'RAL_plan_new_20190905', rp_output_folder_filepath='RRR',bytes_dump_folder_filepath='BBB')
 
     # 10 CASE
-    generate_all_rp_process(root_folder=r'Study-RAL-implant_20191112', rp_output_folder_filepath='Study-RAL-implant_20191112_RP_Files',bytes_dump_folder_filepath='Study-RAL-implant_20191112_Bytes_Files', is_recreate_bytes=False)
+    #generate_all_rp_process(root_folder=r'Study-RAL-implant_20191112', rp_output_folder_filepath='Study-RAL-implant_20191112_RP_Files',bytes_dump_folder_filepath='Study-RAL-implant_20191112_Bytes_Files', is_recreate_bytes=False)
     # 31 CASE
     #generate_all_rp_process(root_folder=r'RAL_plan_new_20190905', rp_output_folder_filepath='RAL_plan_new_20190905_RP_Files', bytes_dump_folder_filepath='RAL_plan_new_20190905_Bytes_Files', is_recreate_bytes=False)
     # 22 CASE : the case of 33220132 is only one tandem and not with pipe. This case should be wrong
@@ -2527,6 +2612,11 @@ if __name__ == '__main__':
 
     #generate_all_rp_process(root_folder=r'Study-RAL-20191105', rp_output_folder_filepath='Study-RAL-20191105_RP_Files',
     #                        bytes_dump_folder_filepath='Study-RAL-20191105_Bytes_Files', is_recreate_bytes=False)
+
+    # Case from Lin-ZY
+    #generate_all_rp_process(root_folder=r'Study-LinZY',rp_output_folder_filepath='Study-LinZY_RP_Files',bytes_dump_folder_filepath='Study-LinZY_Bytes_Files',is_recreate_bytes=False)
+    generate_all_rp_process(root_folder=r'Study-LinCY-vReverse', rp_output_folder_filepath='Study-LinCY-vReverse_RP_Files',
+                            bytes_dump_folder_filepath='Study-LinCY-vReverse_Bytes_Files', is_recreate_bytes=True)
     #example_of_all_process_2()
     exit()
     #example_of_plot_15x15_needle_picture()
