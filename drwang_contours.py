@@ -2161,10 +2161,43 @@ def example_of_plot_xyz_mm():
         label_text='tandem_rp_line[{}]\n(x, y, z)mm = ({},{},{})'.format(pt_idx, round(x_mm,2), round(y_mm,2), round(z_mm,2))
         plot_xyz_mm(dicom_dict, x_mm, y_mm, z_mm, label_text=label_text)
 
-def plot_rp_file(dicom_dict, rp_filepath):
+def plot_rp_file_tandem(dicom_dict, rp_filepath):
     print('plot_rp_file(dicom_dict, rp_filepath={})'.format(rp_filepath))
-
+    rp_fp = pydicom.read_file(rp_filepath)
+    bcpSeq = rp_fp.ApplicationSetupSequence[0].ChannelSequence[0].BrachyControlPointSequence
+    rp_line = []
+    for idx, item in enumerate(bcpSeq):
+        if idx % 2 != 1:
+            continue
+        pt = [float(v) for v in item.ControlPoint3DPosition]
+        rp_line.append(pt)
+        print('tandem rp_line = {}'.format(rp_line))
     pass
+
+
+    rp_file_name = os.path.basename(rp_filepath)
+    rp_line_name = 'tandem'
+    for pt_idx, pt in enumerate(rp_line):
+        print('{}[{}]->{}'.format(rp_line_name, pt_idx, pt))
+        x_mm = pt[0]
+        y_mm = pt[1]
+        z_mm = pt[2]
+        label_text = '{}\n{}[{}/{}]\n(x, y, z)mm = ({},{},{})'.format(rp_file_name, rp_line_name, pt_idx,(len(rp_line) - 1), round(x_mm, 1), round(y_mm, 1),round(z_mm, 1))
+        plot_xyz_mm(dicom_dict, x_mm, y_mm, z_mm, label_text=label_text)
+
+
+def example_of_plot_rp_file_tandem():
+    root_folder = r'Study-LinCY-vReverse'
+    print(os.listdir(root_folder))
+    folders = os.listdir(root_folder)
+    print('folders = {}'.format(folders))
+    folder = '34765539-20191114'
+    bytes_filepath = os.path.join('Study-LinCY-vReverse_Bytes_Files', r'{}.bytes'.format(folder))
+    #plot_with_contours(dicom_dict, z=sorted(dicom_dict['z'].keys())[10], algo_key='algo03')
+    dicom_dict = python_object_load(bytes_filepath)
+    rp_filepath = r'Study-LinCY-vReverse_RP_Files/RP.34765539.20190307.f34765539-20191114.dcm'
+    plot_rp_file_tandem(dicom_dict, rp_filepath)
+
 
 def plot_rp_lines(dicom_dict):
     (lt_ovoid, tandem, rt_ovoid) = algo_to_get_pixel_lines(dicom_dict)
@@ -2611,6 +2644,9 @@ def look_rp_file():
 
 
 if __name__ == '__main__':
+    example_of_plot_rp_file_tandem()
+    exit()
+
     #look_rp_file()
     #exit()
     #generate_all_rp_process(root_folder=r'RAL_plan_new_20190905', rp_output_folder_filepath='all_rp_output',bytes_dump_folder_filepath='contours_bytes')
