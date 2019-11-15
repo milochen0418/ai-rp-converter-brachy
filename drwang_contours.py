@@ -943,7 +943,8 @@ def wrap_to_rp_file(RP_OperatorsName, rs_filepath, tandem_rp_line, out_rp_filepa
     #rp_Ref_ROI_Numbers = app_roi_num_list
     enablePrint()
     print('app_roi_num_list = {}'.format(app_roi_num_list))
-    rp_Ref_ROI_Numbers = sorted(app_roi_num_list, reverse=True)
+    #rp_Ref_ROI_Numbers = sorted(app_roi_num_list, reverse=True)
+    rp_Ref_ROI_Numbers = app_roi_num_list
     print('rp_Ref_ROI_Numbers = {}'.format(rp_Ref_ROI_Numbers))
     blockPrint()
     rp_ControlPointRelativePositions = [3.5, 3.5, 3.5] # After researching, all ControlPointRelativePositions is start in 3.5
@@ -1665,8 +1666,8 @@ def generate_brachy_rp_file(RP_OperatorsName, dicom_dict, out_rp_filepath, is_en
     #tandem_rp_line = get_applicator_rp_line(metric_tandem, 4, 5)
 
     # for debug , so change about testing rp import correct or not. So change tandem start from 3mm to 13mm
-    #tandem_rp_line = get_applicator_rp_line(metric_tandem, 3, 5) # <-- change to reduce 1mm
-    tandem_rp_line = get_applicator_rp_line(metric_tandem, 13, 5)  # <-- change to reduce 1mm
+    tandem_rp_line = get_applicator_rp_line(metric_tandem, 3, 5) # <-- change to reduce 1mm
+    #tandem_rp_line = get_applicator_rp_line(metric_tandem, 13, 5)  # <-- change to reduce 1mm
 
 
     lt_ovoid_rp_line = get_applicator_rp_line(metric_lt_ovoid, 0, 5)
