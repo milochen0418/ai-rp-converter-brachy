@@ -861,7 +861,7 @@ def get_applicator_rp_line(metric_line, first_purpose_distance_mm, each_purpose_
         tandem_rp_line.append(t_pt)
 
     return tandem_rp_line
-def wrap_to_rp_file(RP_OperatorsName, rs_filepath, tandem_rp_line, out_rp_filepath, lt_ovoid_rp_line, rt_ovoid_rp_line, needle_rp_lines=[], app_roi_num_list=[16, 17, 18]):
+def wrap_to_rp_file(RP_OperatorsName, rs_filepath, tandem_rp_line, out_rp_filepath, lt_ovoid_rp_line, rt_ovoid_rp_line, needle_rp_lines=[], applicator_roi_dict={}):
     # TODO wrap needles
     print('len(needle_rp_lines)={}'.format(len(needle_rp_lines)))
     # rp_template_filepath = r'RP_Template/Brachy_RP.1.2.246.352.71.5.417454940236.2063186.20191015164204.dcm'
@@ -942,6 +942,14 @@ def wrap_to_rp_file(RP_OperatorsName, rs_filepath, tandem_rp_line, out_rp_filepa
     #rp_Ref_ROI_Numbers = [17, 18, 19]
     #rp_Ref_ROI_Numbers = app_roi_num_list
     enablePrint()
+
+    SortedAppKeys = sorted(applicator_roi_dict.keys())
+
+    app_roi_num_list = []
+    print('mapping of [ROI Name => ROI Number]')
+    for applicator_roi_name in SortedAppKeys:
+        print('{}->{}'.format(applicator_roi_name, applicator_roi_dict[applicator_roi_name]))
+        app_roi_num_list.append(applicator_roi_dict[applicator_roi_name])
     print('app_roi_num_list = {}'.format(app_roi_num_list))
     #rp_Ref_ROI_Numbers = sorted(app_roi_num_list, reverse=True)
     rp_Ref_ROI_Numbers = app_roi_num_list
@@ -1086,17 +1094,22 @@ def get_dicom_dict(folder):
             if 'Applicator' in item.ROIName:
                 applicator_target_list.append(item.ROIName)
 
+
         applicator_roi_dict = {}
         for app_name in applicator_target_list:
             for item in rs_fp.StructureSetROISequence:
                 if (item.ROIName == app_name):
                     applicator_roi_dict[app_name] = item.ROINumber
                     break
+        enablePrint()
+        print('\napplicator_roi_dict = {}'.format(applicator_roi_dict))
+        blockPrint()
         #display(applicator_roi_dict)
         #print(applicator_roi_dict.values())
         roi_num_list = [int(num) for num in applicator_roi_dict.values()]
         #print(roi_num_list)
         out_dict['metadata']['applicator123_roi_numbers'] = roi_num_list.copy()
+        out_dict['metadata']['applicator_roi_dict'] = applicator_roi_dict
 
     ct_filelist = pathinfo['ct_filelist']
     for ct_filepath in ct_filelist:
@@ -1694,10 +1707,14 @@ def generate_brachy_rp_file(RP_OperatorsName, dicom_dict, out_rp_filepath, is_en
     rs_filepath = dicom_dict['pathinfo']['rs_filepath']
 
     print('out_rp_filepath = {}'.format(out_rp_filepath))
-    app_roi_num_list = dicom_dict['metadata']['applicator123_roi_numbers']
+
+    applicator_roi_dict = dicom_dict['metadata']['applicator_roi_dict']
     # TODO will change the wrap_to_rp_file function, because we will wrap needle information into RP files
     #wrap_to_rp_file(RP_OperatorsName=RP_OperatorsName, rs_filepath=rs_filepath, tandem_rp_line=tandem_rp_line, out_rp_filepath=out_rp_filepath, lt_ovoid_rp_line=lt_ovoid_rp_line, rt_ovoid_rp_line=rt_ovoid_rp_line, app_roi_num_list=app_roi_num_list)
-    wrap_to_rp_file(RP_OperatorsName=RP_OperatorsName, rs_filepath=rs_filepath, tandem_rp_line=tandem_rp_line,out_rp_filepath=out_rp_filepath, lt_ovoid_rp_line=lt_ovoid_rp_line, needle_rp_lines=rp_needle_lines,rt_ovoid_rp_line=rt_ovoid_rp_line, app_roi_num_list=app_roi_num_list)
+    #wrap_to_rp_file(RP_OperatorsName=RP_OperatorsName, rs_filepath=rs_filepath, tandem_rp_line=tandem_rp_line,out_rp_filepath=out_rp_filepath, lt_ovoid_rp_line=lt_ovoid_rp_line, needle_rp_lines=rp_needle_lines,rt_ovoid_rp_line=rt_ovoid_rp_line, app_roi_num_list=app_roi_num_list)
+    wrap_to_rp_file(RP_OperatorsName=RP_OperatorsName, rs_filepath=rs_filepath, tandem_rp_line=tandem_rp_line,
+                    out_rp_filepath=out_rp_filepath, lt_ovoid_rp_line=lt_ovoid_rp_line, needle_rp_lines=rp_needle_lines,
+                    rt_ovoid_rp_line=rt_ovoid_rp_line, applicator_roi_dict=applicator_roi_dict)
     if (is_enable_print == False):
         enablePrint()
 def generate_brachy_rp_file_without_needle(RP_OperatorsName, dicom_dict, out_rp_filepath, is_enable_print=False):
