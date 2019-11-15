@@ -2186,6 +2186,42 @@ def plot_rp_file_tandem(dicom_dict, rp_filepath):
         label_text = '{}\n{}[{}/{}]\n(x, y, z)mm = ({},{},{})'.format(rp_file_name, rp_line_name, pt_idx,(len(rp_line) - 1), round(x_mm, 1), round(y_mm, 1),round(z_mm, 1))
         plot_xyz_mm(dicom_dict, x_mm, y_mm, z_mm, label_text=label_text)
 
+def example_of_plot_rp_file_first():
+    root_folder = r'Study-LinCY-vReverse'
+    print(os.listdir(root_folder))
+    folders = os.listdir(root_folder)
+    print('folders = {}'.format(folders))
+    folder = '34765539_20191115'
+    bytes_filepath = os.path.join('Study-LinCY-vReverse_Bytes_Files', r'{}.bytes'.format(folder))
+    dicom_dict = python_object_load(bytes_filepath)
+    print('bytes_filepath = {}'.format(bytes_filepath))
+    rp_filepath = r'LinCY-RP-Compare/LastLine_RP.34765539.20190307.f34765539_20191115.dcm'
+
+    print('plot_rp_file(dicom_dict, rp_filepath={})'.format(rp_filepath))
+    rp_fp = pydicom.read_file(rp_filepath)
+    bcpSeq = rp_fp.ApplicationSetupSequence[0].ChannelSequence[0].BrachyControlPointSequence
+    rp_line = []
+    for idx, item in enumerate(bcpSeq):
+        if idx % 2 != 1:
+            continue
+        pt = [float(v) for v in item.ControlPoint3DPosition]
+        rp_line.append(pt)
+        print('first rp_line = {}'.format(rp_line))
+    pass
+
+    rp_file_name = os.path.basename(rp_filepath)
+    rp_line_name = 'last needle'
+    for pt_idx, pt in enumerate(rp_line):
+        print('{}[{}]->{}'.format(rp_line_name, pt_idx, pt))
+        x_mm = pt[0]
+        y_mm = pt[1]
+        z_mm = pt[2]
+        label_text = '{}\n{}[{}/{}]\n(x, y, z)mm = ({},{},{})'.format(rp_file_name, rp_line_name, pt_idx,(len(rp_line) - 1), round(x_mm, 1), round(y_mm, 1),round(z_mm, 1))
+        plot_xyz_mm(dicom_dict, x_mm, y_mm, z_mm, label_text=label_text)
+
+
+
+
 
 def example_of_plot_rp_file_tandem():
     root_folder = r'Study-LinCY-vReverse'
@@ -2649,7 +2685,8 @@ def look_rp_file():
 
 if __name__ == '__main__':
     #example_of_plot_rp_file_tandem()
-    #exit()
+    example_of_plot_rp_file_first()
+    exit()
 
     #look_rp_file()
     #exit()
