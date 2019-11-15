@@ -864,8 +864,9 @@ def get_applicator_rp_line(metric_line, first_purpose_distance_mm, each_purpose_
 def wrap_to_rp_file(RP_OperatorsName, rs_filepath, tandem_rp_line, out_rp_filepath, lt_ovoid_rp_line, rt_ovoid_rp_line, needle_rp_lines=[], app_roi_num_list=[16, 17, 18]):
     # TODO wrap needles
     print('len(needle_rp_lines)={}'.format(len(needle_rp_lines)))
-    #rp_template_filepath = r'RP_Template/Brachy_RP.1.2.246.352.71.5.417454940236.2063186.20191015164204.dcm'
-    rp_template_filepath = r'RP_Template_Brachy_24460566_implant-5_20191113/RP.1.2.246.352.71.5.417454940236.2060926.20191008103753.dcm'
+    # rp_template_filepath = r'RP_Template/Brachy_RP.1.2.246.352.71.5.417454940236.2063186.20191015164204.dcm'
+    # rp_template_filepath = r'RP_Template_Brachy_24460566_implant-5_20191113/RP.1.2.246.352.71.5.417454940236.2060926.20191008103753.dcm'
+    rp_template_filepath = r'RP_Template_34135696_20191115/RP.1.2.246.352.71.5.417454940236.2077416.20191115161213.dcm'
     def get_new_uid(old_uid='1.2.246.352.71.5.417454940236.2063186.20191015164204', study_date='20190923'):
         uid = old_uid
         def gen_6_random_digits():
@@ -2685,8 +2686,8 @@ def look_rp_file():
 
 if __name__ == '__main__':
     #example_of_plot_rp_file_tandem()
-    example_of_plot_rp_file_first()
-    exit()
+    #example_of_plot_rp_file_first()
+    #exit()
 
     #look_rp_file()
     #exit()
