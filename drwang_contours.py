@@ -957,14 +957,14 @@ def wrap_to_rp_file(RP_OperatorsName, rs_filepath, tandem_rp_line, out_rp_filepa
 
     blockPrint()
     for idx,rp_line in enumerate(rp_lines):
-        if ( len(needle_rp_lines) == 0):
+        if (False and  len(needle_rp_lines) == 0):
             enablePrint()
             print('Case without needles')
             if (idx >= 3):
                 break
             blockPrint()
 
-        if (idx >= 1 and False): #OneTandem
+        if (False and idx >= 1): #OneTandem
             enablePrint()
             print('Debug importing RP by only tandem')
             rp_fp.ApplicationSetupSequence[0].ChannelSequence = copy.deepcopy(rp_fp.ApplicationSetupSequence[0].ChannelSequence[0:1])
@@ -995,6 +995,7 @@ def wrap_to_rp_file(RP_OperatorsName, rs_filepath, tandem_rp_line, out_rp_filepa
             rp_fp.ApplicationSetupSequence[0].ChannelSequence[idx].BrachyControlPointSequence.append(BCPEndPt)
     pydicom.write_file(out_rp_filepath, rp_fp)
     pass
+
 def get_metric_lines_representation(dicom_dict, lt_ovoid, tandem, rt_ovoid):
     #(metric_lt_ovoid, metric_tandem, metric_rt_ovoid) = get_metric_lines_representation(dicom_dict, lt_ovoid, tandem, rt_ovoid)
     new_lines = []
@@ -2298,6 +2299,7 @@ def example_of_plot_contours():
         #plot_with_contours(dicom_dict, z=sorted(dicom_dict['z'].keys())[z_idx], algo_key='algo01')
         plot_with_contours(dicom_dict, z=z, algo_key='algo01')
         continue
+
 def plot_with_needle_contours(dicom_dict, z):
     #algo_key = 'algo04'
     algo_key = 'algo06'
@@ -2332,8 +2334,9 @@ def plot_with_needle_contours(dicom_dict, z):
     plt.imshow(img[50:-50, 50:-50], cmap=plt.cm.gray)
     plt.show()
     pass
-def example_of_plot_with_needle_contours():
 
+
+def example_of_plot_with_needle_contours():
     root_folder = r'RAL_plan_new_20190905'
     print(os.listdir(root_folder))
     folders = os.listdir(root_folder)
@@ -2379,8 +2382,8 @@ def example_of_plot_with_needle_contours():
         #plot_with_contours(dicom_dict, z=sorted(dicom_dict['z'].keys())[z_idx], algo_key='algo01')
         plot_with_needle_contours(dicom_dict, z=z)
         continue
-
     pass
+
 def example_of_all_process_2():
     root_folder = r'RAL_plan_new_20190905'
     all_dicom_dict = {}
@@ -2439,6 +2442,7 @@ def example_of_all_process_2():
         print('Created {}'.format(filename))
     except Exception as ex:
         print('Create largest size dicom file failed')
+
 def example_of_all_process():
     # Make bytes files
     root_folder = r'RAL_plan_new_20190905'
@@ -2568,8 +2572,8 @@ def generate_all_rp_process(root_folder=r'RAL_plan_new_20190905', rp_output_fold
             out_rp_filepath = os.path.join(rp_output_folder_filepath, out_rp_filepath)
             time_start = datetime.datetime.now()
             print('[{}/{}] Create RP file -> {}'.format(folder_idx+1,len(folders), out_rp_filepath) ,end=' -> ', flush=True)
-            generate_brachy_rp_file_without_needle(RP_OperatorsName='cylin', dicom_dict=dicom_dict, out_rp_filepath=out_rp_filepath,is_enable_print=False)
-            #generate_brachy_rp_file(RP_OperatorsName='cylin', dicom_dict=dicom_dict, out_rp_filepath=out_rp_filepath, is_enable_print=False)
+            #generate_brachy_rp_file_without_needle(RP_OperatorsName='cylin', dicom_dict=dicom_dict, out_rp_filepath=out_rp_filepath,is_enable_print=False)
+            generate_brachy_rp_file(RP_OperatorsName='cylin', dicom_dict=dicom_dict, out_rp_filepath=out_rp_filepath, is_enable_print=False)
             #generate_brachy_rp_file(RP_OperatorsName='cylin', dicom_dict=dicom_dict, out_rp_filepath=out_rp_filepath, is_enable_print=True)
             time_end = datetime.datetime.now()
             print('{}s [{}-{}]'.format(time_end-time_start, time_start, time_end), end='\n', flush=True)
@@ -2644,8 +2648,8 @@ def look_rp_file():
 
 
 if __name__ == '__main__':
-    example_of_plot_rp_file_tandem()
-    exit()
+    #example_of_plot_rp_file_tandem()
+    #exit()
 
     #look_rp_file()
     #exit()
