@@ -2575,6 +2575,8 @@ def generate_all_rp_process(root_folder=r'RAL_plan_new_20190905', rp_output_fold
         #    continue
         #if (os.path.basename(folder) not in ['34982640']):
         #    continue
+        if (os.path.basename(folder) not in ['24460566-2']):
+            continue
 
         print('\n[{}/{}] Loop info : folder_idx = {}, folder = {}'.format(folder_idx + 1, len(folders), folder_idx, folder),flush=True)
         byte_filename = r'{}.bytes'.format(os.path.basename(folder))
