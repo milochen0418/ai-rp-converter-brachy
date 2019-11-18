@@ -936,10 +936,9 @@ def wrap_to_rp_file(RP_OperatorsName, rs_filepath, tandem_rp_line, out_rp_filepa
     #TODO rp_Ref_ROI_Numbers need to match to current RS's ROI number of three applicators
     #rp_Ref_ROI_Numbers = [17, 18, 19]
     #rp_Ref_ROI_Numbers = app_roi_num_list
-    enablePrint()
 
+    #enablePrint()
     SortedAppKeys = sorted(applicator_roi_dict.keys())
-
     app_roi_num_list = []
     print('mapping of [ROI Name => ROI Number]')
     for applicator_roi_name in SortedAppKeys:
@@ -949,18 +948,17 @@ def wrap_to_rp_file(RP_OperatorsName, rs_filepath, tandem_rp_line, out_rp_filepa
     #rp_Ref_ROI_Numbers = sorted(app_roi_num_list, reverse=True)
     rp_Ref_ROI_Numbers = app_roi_num_list
     print('rp_Ref_ROI_Numbers = {}'.format(rp_Ref_ROI_Numbers))
-    blockPrint()
+    #blockPrint()
     rp_ControlPointRelativePositions = [3.5, 3.5, 3.5] # After researching, all ControlPointRelativePositions is start in 3.5
     rp_ControlPointRelativePositions = [3.5 for item in app_roi_num_list]
 
-    enablePrint()
+    #enablePrint()
     print('Dr. Wang debug message')
     for idx, rp_line in enumerate(rp_lines):
         print('\nidx={} -> rp_line = ['.format(idx))
         for pt in rp_line:
             print('\t, {}'.format(pt))
-
-    blockPrint()
+    #blockPrint()
     for idx,rp_line in enumerate(rp_lines):
         if (False and  len(needle_rp_lines) == 0):
             enablePrint()
@@ -1095,9 +1093,7 @@ def get_dicom_dict(folder):
                 if (item.ROIName == app_name):
                     applicator_roi_dict[app_name] = item.ROINumber
                     break
-        enablePrint()
-        print('\napplicator_roi_dict = {}'.format(applicator_roi_dict))
-        blockPrint()
+        #print('\napplicator_roi_dict = {}'.format(applicator_roi_dict))
         #display(applicator_roi_dict)
         #print(applicator_roi_dict.values())
         roi_num_list = [int(num) for num in applicator_roi_dict.values()]
@@ -1655,8 +1651,6 @@ def generate_brachy_rp_file(RP_OperatorsName, dicom_dict, out_rp_filepath, is_en
     for line_idx, line in enumerate(metric_needle_lines):
         print('metric_needle_lines[{}]= {}'.format(line_idx, line))
 
-
-
     # Step 3. Reverse Order, so that first element is TIPS [from most top (z maximum) to most bottom (z minimum) ]
     metric_lt_ovoid.reverse()
     metric_tandem.reverse()
@@ -1671,14 +1665,12 @@ def generate_brachy_rp_file(RP_OperatorsName, dicom_dict, out_rp_filepath, is_en
     tandem_rp_line = get_applicator_rp_line(metric_tandem, 3, 5) # <-- change to reduce 1mm
     #tandem_rp_line = get_applicator_rp_line(metric_tandem, 13, 5)  # <-- change to reduce 1mm
 
-
     lt_ovoid_rp_line = get_applicator_rp_line(metric_lt_ovoid, 0, 5)
     rt_ovoid_rp_line = get_applicator_rp_line(metric_rt_ovoid, 0 ,5)
     rp_needle_lines = []
     for metric_line in metric_needle_lines:
         rp_needle_line = get_applicator_rp_line(metric_line, 0, 5)
         rp_needle_lines.append(rp_needle_line)
-
 
     print('lt_ovoid_rp_line = {}'.format(lt_ovoid_rp_line))
     print('tandem_rp_line = {}'.format(tandem_rp_line))
@@ -1692,9 +1684,7 @@ def generate_brachy_rp_file(RP_OperatorsName, dicom_dict, out_rp_filepath, is_en
     print(dicom_dict['pathinfo']['rs_filepath'])
     print(dicom_dict['metadata'].keys())
     #print(pydicom.read_file(dicom_dict['pathinfo']['rs_filepath']).keys())
-
     rs_filepath = dicom_dict['pathinfo']['rs_filepath']
-
     print('out_rp_filepath = {}'.format(out_rp_filepath))
 
     applicator_roi_dict = dicom_dict['metadata']['applicator_roi_dict']
@@ -2609,7 +2599,6 @@ def generate_all_rp_process(
     print('failed / total = {}/{}'.format(len(failed_folders), len(total_folders) ))
     print('success /total = {}/{}'.format(len(success_folders), len(total_folders) ))
 
-
     # Step 3. Use python_object_dump to dump it into some file
     try:
         print('Creating {} in very largest size'.format(filename))
@@ -2672,22 +2661,34 @@ if __name__ == '__main__':
     #generate_all_rp_process(root_folder=r'RAL_plan_new_20190905', rp_output_folder_filepath='RRR',bytes_dump_folder_filepath='BBB')
 
     # 10 CASE
-    #generate_all_rp_process(root_folder=r'Study-RAL-implant_20191112', rp_output_folder_filepath='Study-RAL-implant_20191112_RP_Files',bytes_dump_folder_filepath='Study-RAL-implant_20191112_Bytes_Files', is_recreate_bytes=True)
+    print('root_folder = Study-RAL-implant_20191112 -> {}'.format([os.path.basename(item) for item in os.listdir('Study-RAL-implant_20191112')]))
+    generate_all_rp_process(root_folder=r'Study-RAL-implant_20191112',
+                            rp_output_folder_filepath='Study-RAL-implant_20191112_RP_Files',bytes_dump_folder_filepath='Study-RAL-implant_20191112_Bytes_Files',
+                            is_recreate_bytes=True, debug_folders=[])
     # 31 CASE
-    #generate_all_rp_process(root_folder=r'RAL_plan_new_20190905', rp_output_folder_filepath='RAL_plan_new_20190905_RP_Files', bytes_dump_folder_filepath='RAL_plan_new_20190905_Bytes_Files', is_recreate_bytes=True)
+    print('root_folder = RAL_plan_new_20190905 -> {}'.format([os.path.basename(item) for item in os.listdir('RAL_plan_new_20190905')]))
+    generate_all_rp_process(root_folder=r'RAL_plan_new_20190905',
+                            rp_output_folder_filepath='RAL_plan_new_20190905_RP_Files', bytes_dump_folder_filepath='RAL_plan_new_20190905_Bytes_Files',
+                            is_recreate_bytes=True, debug_folders=[])
+
     # 22 CASE : the case of 33220132 is only one tandem and not with pipe. This case should be wrong
-    #generate_all_rp_process(root_folder=r'Study-RAL-20191105', rp_output_folder_filepath='Study-RAL-20191105_RP_Files', bytes_dump_folder_filepath='Study-RAL-20191105_Bytes_Files', is_recreate_bytes=True)
+    print('root_folder = Study-RAL-20191105 -> {}'.format([os.path.basename(item) for item in os.listdir('Study-RAL-20191105')]))
+    generate_all_rp_process(root_folder=r'Study-RAL-20191105',
+                            rp_output_folder_filepath='Study-RAL-20191105_RP_Files', bytes_dump_folder_filepath='Study-RAL-20191105_Bytes_Files',
+                            is_recreate_bytes=True, debug_folders=[])
 
     #generate_all_rp_process(root_folder=r'Study-RAL-20191105', rp_output_folder_filepath='Study-RAL-20191105_RP_Files',
     #                        bytes_dump_folder_filepath='Study-RAL-20191105_Bytes_Files', is_recreate_bytes=False)
 
+    exit()
     # Case from Lin-ZY
     #generate_all_rp_process(root_folder=r'Study-LinZY',rp_output_folder_filepath='Study-LinZY_RP_Files',bytes_dump_folder_filepath='Study-LinZY_Bytes_Files',is_recreate_bytes=False)
     #generate_all_rp_process(root_folder=r'Study-LinCY-vReverse', rp_output_folder_filepath='Study-LinCY-vReverse_RP_Files', bytes_dump_folder_filepath='Study-LinCY-vReverse_Bytes_Files', is_recreate_bytes=True)
     print('Study-LinCY-vReverse = {}'.format( [os.path.basename(item) for item in os.listdir('Study-LinCY-vReverse')]))
 
-    generate_all_rp_process(root_folder=r'Study-LinCY-vReverse',rp_output_folder_filepath='Study-LinCY-vReverse_RP_Files',bytes_dump_folder_filepath='Study-LinCY-vReverse_Bytes_Files',
-                            is_recreate_bytes=True, debug_folders=['24460566-2'])
+    generate_all_rp_process(root_folder=r'Study-LinCY-vReverse',
+                            rp_output_folder_filepath='Study-LinCY-vReverse_RP_Files',bytes_dump_folder_filepath='Study-LinCY-vReverse_Bytes_Files',
+                            is_recreate_bytes=False, debug_folders=['24460566-2'])
 
     #example_of_all_process_2()
     exit()
