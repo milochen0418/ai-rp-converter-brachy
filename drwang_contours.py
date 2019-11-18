@@ -10,10 +10,7 @@ import math
 from sys import exit
 import sys
 import datetime
-
-
 from IPython.display import display, HTML
-
 import openpyxl
 import csv, codecs
 from decimal import Decimal
@@ -2502,7 +2499,9 @@ def example_of_all_process():
     print('failed / total = {}/{}'.format(len(failed_folders), len(total_folders) ))
     print('success /total = {}/{}'.format(len(success_folders), len(total_folders) ))
     pass
-def generate_all_rp_process(root_folder=r'RAL_plan_new_20190905', rp_output_folder_filepath='all_rp_output',  bytes_dump_folder_filepath='contours_bytes', is_recreate_bytes=True):
+def generate_all_rp_process(
+        root_folder=r'RAL_plan_new_20190905', rp_output_folder_filepath='all_rp_output',  bytes_dump_folder_filepath='contours_bytes',
+        is_recreate_bytes=True, debug_folders=[]):
     print('Call generate_all_rp_process with the following arguments')
     print('root_folder = ', root_folder)
     print('rp_output_folder_filepath = ', rp_output_folder_filepath)
@@ -2537,8 +2536,11 @@ def generate_all_rp_process(root_folder=r'RAL_plan_new_20190905', rp_output_fold
         #    continue
         #if (os.path.basename(folder) not in ['34982640']):
         #    continue
-        if (os.path.basename(folder) not in ['24460566-2']):
-            continue
+        #if (os.path.basename(folder) not in ['24460566-2']):
+        #    continue
+        if len(debug_folders) != 0:
+            if (os.path.basename(folder) not in debug_folders):
+                continue
 
         print('\n[{}/{}] Loop info : folder_idx = {}, folder = {}'.format(folder_idx + 1, len(folders), folder_idx, folder),flush=True)
         byte_filename = r'{}.bytes'.format(os.path.basename(folder))
@@ -2670,19 +2672,23 @@ if __name__ == '__main__':
     #generate_all_rp_process(root_folder=r'RAL_plan_new_20190905', rp_output_folder_filepath='RRR',bytes_dump_folder_filepath='BBB')
 
     # 10 CASE
-    #generate_all_rp_process(root_folder=r'Study-RAL-implant_20191112', rp_output_folder_filepath='Study-RAL-implant_20191112_RP_Files',bytes_dump_folder_filepath='Study-RAL-implant_20191112_Bytes_Files', is_recreate_bytes=False)
+    #generate_all_rp_process(root_folder=r'Study-RAL-implant_20191112', rp_output_folder_filepath='Study-RAL-implant_20191112_RP_Files',bytes_dump_folder_filepath='Study-RAL-implant_20191112_Bytes_Files', is_recreate_bytes=True)
     # 31 CASE
-    #generate_all_rp_process(root_folder=r'RAL_plan_new_20190905', rp_output_folder_filepath='RAL_plan_new_20190905_RP_Files', bytes_dump_folder_filepath='RAL_plan_new_20190905_Bytes_Files', is_recreate_bytes=False)
+    #generate_all_rp_process(root_folder=r'RAL_plan_new_20190905', rp_output_folder_filepath='RAL_plan_new_20190905_RP_Files', bytes_dump_folder_filepath='RAL_plan_new_20190905_Bytes_Files', is_recreate_bytes=True)
     # 22 CASE : the case of 33220132 is only one tandem and not with pipe. This case should be wrong
-    #generate_all_rp_process(root_folder=r'Study-RAL-20191105', rp_output_folder_filepath='Study-RAL-20191105_RP_Files', bytes_dump_folder_filepath='Study-RAL-20191105_Bytes_Files', is_recreate_bytes=False)
+    #generate_all_rp_process(root_folder=r'Study-RAL-20191105', rp_output_folder_filepath='Study-RAL-20191105_RP_Files', bytes_dump_folder_filepath='Study-RAL-20191105_Bytes_Files', is_recreate_bytes=True)
 
     #generate_all_rp_process(root_folder=r'Study-RAL-20191105', rp_output_folder_filepath='Study-RAL-20191105_RP_Files',
     #                        bytes_dump_folder_filepath='Study-RAL-20191105_Bytes_Files', is_recreate_bytes=False)
 
     # Case from Lin-ZY
     #generate_all_rp_process(root_folder=r'Study-LinZY',rp_output_folder_filepath='Study-LinZY_RP_Files',bytes_dump_folder_filepath='Study-LinZY_Bytes_Files',is_recreate_bytes=False)
-    generate_all_rp_process(root_folder=r'Study-LinCY-vReverse', rp_output_folder_filepath='Study-LinCY-vReverse_RP_Files',
-                            bytes_dump_folder_filepath='Study-LinCY-vReverse_Bytes_Files', is_recreate_bytes=True)
+    #generate_all_rp_process(root_folder=r'Study-LinCY-vReverse', rp_output_folder_filepath='Study-LinCY-vReverse_RP_Files', bytes_dump_folder_filepath='Study-LinCY-vReverse_Bytes_Files', is_recreate_bytes=True)
+    print('Study-LinCY-vReverse = {}'.format( [os.path.basename(item) for item in os.listdir('Study-LinCY-vReverse')]))
+
+    generate_all_rp_process(root_folder=r'Study-LinCY-vReverse',rp_output_folder_filepath='Study-LinCY-vReverse_RP_Files',bytes_dump_folder_filepath='Study-LinCY-vReverse_Bytes_Files',
+                            is_recreate_bytes=True, debug_folders=['24460566-2'])
+
     #example_of_all_process_2()
     exit()
     #example_of_plot_15x15_needle_picture()
