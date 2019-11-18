@@ -739,7 +739,6 @@ def algo_to_get_needle_lines(dicom_dict):
 def get_applicator_rp_line(metric_line, first_purpose_distance_mm, each_purpose_distance_mm):
     if (len(metric_line) == 0):
         return []
-
     # REWRITE get_metric_pt_info_by_travel_distance, so the get_metric_pt, reduct_distance_step and get_metric_pt_info_travel_distance will not be USED
     def get_metric_pt(metric_line, pt_idx, pt_idx_remainder):
         # print('get_metric_pt(metric_line={}, pt_idx={}, pt_idx_remainder={})'.format(metric_line, pt_idx, pt_idx_remainder))
@@ -749,9 +748,8 @@ def get_applicator_rp_line(metric_line, first_purpose_distance_mm, each_purpose_
                 end_pt = metric_line[pt_idx]
             else:
                 end_pt = metric_line[pt_idx + 1]
-
         except Exception as e:
-            print('EEEEEE')
+            print('Exception in get_metric_pt() of get_applicator_rp_line()')
             print('pt_idx = {}'.format(pt_idx))
             print('pt_idx_remainder = {}'.format(pt_idx_remainder))
             print('metric_line[{}] = {}'.format(pt_idx, metric_line[pt_idx]))
@@ -1005,7 +1003,6 @@ def wrap_to_rp_file(RP_OperatorsName, rs_filepath, tandem_rp_line, out_rp_filepa
             rp_fp.ApplicationSetupSequence[0].ChannelSequence[idx].BrachyControlPointSequence.append(BCPEndPt)
     pydicom.write_file(out_rp_filepath, rp_fp)
     pass
-
 def get_metric_lines_representation(dicom_dict, lt_ovoid, tandem, rt_ovoid):
     #(metric_lt_ovoid, metric_tandem, metric_rt_ovoid) = get_metric_lines_representation(dicom_dict, lt_ovoid, tandem, rt_ovoid)
     new_lines = []
@@ -1386,7 +1383,6 @@ def generate_needle_contours_infos_to_dicom_dict(dicom_dict):
         needle_contours_infos = [info for info in ct_obj['output']['contours_infos']['algo06'] if(info['area_mm2'] < 10)]
         ct_obj['output']['needle_contours_infos'] = copy.deepcopy(needle_contours_infos)
         print('len(dicom_dict["z"][{}]["output"]["needle_contours_infos"]) = {}'.format(z, len(dicom_dict['z'][z]['output']['needle_contours_infos'])))
-
     # Step 2. pick up  15px * 15 px picture for each light point
     for z in sorted(dicom_dict['z'].keys()):
         ct_obj = dicom_dict['z'][z]
@@ -1431,7 +1427,6 @@ def generate_patient_needle_mean_area_csv_report(folder, csv_filepath = '2905981
     generate_metadata_to_dicom_dict(dicom_dict)
     generate_output_to_dicom_dict(dicom_dict)
     generate_needle_contours_infos_to_dicom_dict(dicom_dict)
-
     sheet_width = 0
     sheet_height = 0
     z_map = dicom_dict['z']
@@ -1532,8 +1527,6 @@ def generate_patient_needle_fixed_area_csv_report(folder, csv_filepath = '290598
     generate_metadata_to_dicom_dict(dicom_dict)
     generate_output_to_dicom_dict(dicom_dict)
     generate_needle_contours_infos_to_dicom_dict(dicom_dict)
-
-
     sheet_width = 0
     sheet_height = 0
     z_map = dicom_dict['z']
@@ -1630,7 +1623,6 @@ def generate_brachy_rp_file(RP_OperatorsName, dicom_dict, out_rp_filepath, is_en
         blockPrint()
     else:
         enablePrint()
-
     # Step 1. Get line of lt_ovoid, tandem, rt_ovoid by OpneCV contour material and innovated combination
     needle_lines = algo_to_get_needle_lines(dicom_dict)
     print('len(needle_lines) = {}'.format(len(needle_lines)))
@@ -1722,20 +1714,17 @@ def generate_brachy_rp_file_without_needle(RP_OperatorsName, dicom_dict, out_rp_
         blockPrint()
     else:
         enablePrint()
-
     enablePrint()
     print('Call generate_brachy_rp_file_without_needle()')
     blockPrint()
     # Step 1. Get line of lt_ovoid, tandem, rt_ovoid by OpneCV contour material and innovated combination
     (lt_ovoid, tandem, rt_ovoid) = algo_to_get_pixel_lines(dicom_dict)
-
     # Step 2. Convert line into metric representation
     # Original line is array of (x_px, y_px, z_mm) and we want to convert to (x_mm, y_mm, z_mm)
     (metric_lt_ovoid, metric_tandem, metric_rt_ovoid) = get_metric_lines_representation(dicom_dict, lt_ovoid, tandem, rt_ovoid)
     print('metric_lt_ovoid = {}'.format(metric_lt_ovoid))
     print('metric_tandem = {}'.format(metric_tandem))
     print('metric_rt_ovoid = {}'.format(metric_rt_ovoid))
-
 
     # Step 3. Reverse Order, so that first element is TIPS [from most top (z maximum) to most bottom (z minimum) ]
     metric_lt_ovoid.reverse()
@@ -1750,8 +1739,6 @@ def generate_brachy_rp_file_without_needle(RP_OperatorsName, dicom_dict, out_rp_
     tandem_rp_line = get_applicator_rp_line(metric_tandem, 13, 5)  # <-- change to reduce 1mm
     lt_ovoid_rp_line = get_applicator_rp_line(metric_lt_ovoid, 0, 5)
     rt_ovoid_rp_line = get_applicator_rp_line(metric_rt_ovoid, 0 ,5)
-
-
     print('lt_ovoid_rp_line = {}'.format(lt_ovoid_rp_line))
     print('tandem_rp_line = {}'.format(tandem_rp_line))
     print('rt_ovoid_rp_line = {}'.format(rt_ovoid_rp_line))
@@ -1772,7 +1759,6 @@ def generate_brachy_rp_file_without_needle(RP_OperatorsName, dicom_dict, out_rp_
     wrap_to_rp_file(RP_OperatorsName=RP_OperatorsName, rs_filepath=rs_filepath, tandem_rp_line=tandem_rp_line,out_rp_filepath=out_rp_filepath, lt_ovoid_rp_line=lt_ovoid_rp_line, needle_rp_lines=[], rt_ovoid_rp_line=rt_ovoid_rp_line, app_roi_num_list=app_roi_num_list)
     if (is_enable_print == False):
         enablePrint()
-
 def example_of_generate_brachy_rp_file():
     root_folder = r'RAL_plan_new_20190905'
     print(os.listdir(root_folder))
@@ -1787,7 +1773,6 @@ def example_of_generate_brachy_rp_file():
     for z_idx, z in enumerate(sorted(dicom_dict['z'].keys())) :
         #plot_with_contours(dicom_dict, z=sorted(dicom_dict['z'].keys())[z_idx], algo_key='algo01')
         continue
-
     metadata = dicom_dict['metadata']
     # out_rp_filepath format is PatientID, RS StudyDate  and the final is folder name processing by coding
     out_rp_filepath = r'RP.{}.{}.f{}.dcm'.format(  metadata['RS_PatientID'],  metadata['RS_StudyDate'],  os.path.basename(metadata['folder']) )
@@ -1799,7 +1784,6 @@ def example_of_generate_brachy_rp_file():
     #generate_brachy_rp_file(RP_OperatorsName='cylin', dicom_dict=dicom_dict, out_rp_filepath=out_rp_filepath, is_enable_print=True)
     time_end = datetime.datetime.now()
     print('{}s [{}-{}]'.format(time_end-time_start, time_start, time_end), end='\n')
-
 
 # FUNCTIONS - Some file batch processing function
 def contours_python_object_dump(root_folder, filename):
@@ -1948,8 +1932,6 @@ def example_of_plot_15x15_needle_picture():
             plt.text(0, -2, '(x_px,y_px,z_mm) = ({} ±15, {}±15, {})'.format(x, y, z), fontsize=8)
             plt.imshow( pick_picture,cmap=plt.cm.gray)
             plt.show()
-
-
 
             for contour_idx, contour in enumerate(info['pick_picture_contours']):
                 pick_picture = copy.deepcopy(info['pick_picture'])
@@ -2180,7 +2162,6 @@ def example_of_plot_xyz_mm():
         z_mm = pt[2]
         label_text='tandem_rp_line[{}]\n(x, y, z)mm = ({},{},{})'.format(pt_idx, round(x_mm,2), round(y_mm,2), round(z_mm,2))
         plot_xyz_mm(dicom_dict, x_mm, y_mm, z_mm, label_text=label_text)
-
 def plot_rp_file_tandem(dicom_dict, rp_filepath):
     print('plot_rp_file(dicom_dict, rp_filepath={})'.format(rp_filepath))
     rp_fp = pydicom.read_file(rp_filepath)
@@ -2204,7 +2185,6 @@ def plot_rp_file_tandem(dicom_dict, rp_filepath):
         z_mm = pt[2]
         label_text = '{}\n{}[{}/{}]\n(x, y, z)mm = ({},{},{})'.format(rp_file_name, rp_line_name, pt_idx,(len(rp_line) - 1), round(x_mm, 1), round(y_mm, 1),round(z_mm, 1))
         plot_xyz_mm(dicom_dict, x_mm, y_mm, z_mm, label_text=label_text)
-
 def example_of_plot_rp_file_first():
     root_folder = r'Study-LinCY-vReverse'
     print(os.listdir(root_folder))
@@ -2215,7 +2195,6 @@ def example_of_plot_rp_file_first():
     dicom_dict = python_object_load(bytes_filepath)
     print('bytes_filepath = {}'.format(bytes_filepath))
     rp_filepath = r'LinCY-RP-Compare/LastLine_RP.34765539.20190307.f34765539_20191115.dcm'
-
     print('plot_rp_file(dicom_dict, rp_filepath={})'.format(rp_filepath))
     rp_fp = pydicom.read_file(rp_filepath)
     bcpSeq = rp_fp.ApplicationSetupSequence[0].ChannelSequence[0].BrachyControlPointSequence
@@ -2237,11 +2216,6 @@ def example_of_plot_rp_file_first():
         z_mm = pt[2]
         label_text = '{}\n{}[{}/{}]\n(x, y, z)mm = ({},{},{})'.format(rp_file_name, rp_line_name, pt_idx,(len(rp_line) - 1), round(x_mm, 1), round(y_mm, 1),round(z_mm, 1))
         plot_xyz_mm(dicom_dict, x_mm, y_mm, z_mm, label_text=label_text)
-
-
-
-
-
 def example_of_plot_rp_file_tandem():
     root_folder = r'Study-LinCY-vReverse'
     print(os.listdir(root_folder))
@@ -2253,8 +2227,6 @@ def example_of_plot_rp_file_tandem():
     dicom_dict = python_object_load(bytes_filepath)
     rp_filepath = r'Study-LinCY-vReverse_RP_Files/RP.34765539.20190307.f34765539-20191114.dcm'
     plot_rp_file_tandem(dicom_dict, rp_filepath)
-
-
 def plot_rp_lines(dicom_dict):
     (lt_ovoid, tandem, rt_ovoid) = algo_to_get_pixel_lines(dicom_dict)
     (metric_lt_ovoid, metric_tandem, metric_rt_ovoid) = get_metric_lines_representation(dicom_dict, lt_ovoid, tandem, rt_ovoid)
@@ -2281,9 +2253,6 @@ def plot_rp_lines(dicom_dict):
             z_mm = pt[2]
             label_text = '{}\n{}[{}/{}]\n(x, y, z)mm = ({},{},{})'.format(rp_file_name, rp_line_name, pt_idx, (len(rp_line)-1), round(x_mm, 1), round(y_mm, 1),round(z_mm, 1))
             plot_xyz_mm(dicom_dict, x_mm, y_mm, z_mm, label_text=label_text)
-
-
-
 def example_of_plot_rp_lines():
     root_folder = r'RAL_plan_new_20190905'
     print(os.listdir(root_folder))
@@ -2354,7 +2323,6 @@ def example_of_plot_contours():
         #plot_with_contours(dicom_dict, z=sorted(dicom_dict['z'].keys())[z_idx], algo_key='algo01')
         plot_with_contours(dicom_dict, z=z, algo_key='algo01')
         continue
-
 def plot_with_needle_contours(dicom_dict, z):
     #algo_key = 'algo04'
     algo_key = 'algo06'
@@ -2389,8 +2357,6 @@ def plot_with_needle_contours(dicom_dict, z):
     plt.imshow(img[50:-50, 50:-50], cmap=plt.cm.gray)
     plt.show()
     pass
-
-
 def example_of_plot_with_needle_contours():
     root_folder = r'RAL_plan_new_20190905'
     print(os.listdir(root_folder))
@@ -2438,7 +2404,6 @@ def example_of_plot_with_needle_contours():
         plot_with_needle_contours(dicom_dict, z=z)
         continue
     pass
-
 def example_of_all_process_2():
     root_folder = r'RAL_plan_new_20190905'
     all_dicom_dict = {}
@@ -2497,7 +2462,6 @@ def example_of_all_process_2():
         print('Created {}'.format(filename))
     except Exception as ex:
         print('Create largest size dicom file failed')
-
 def example_of_all_process():
     # Make bytes files
     root_folder = r'RAL_plan_new_20190905'
@@ -2538,8 +2502,6 @@ def example_of_all_process():
     print('failed / total = {}/{}'.format(len(failed_folders), len(total_folders) ))
     print('success /total = {}/{}'.format(len(success_folders), len(total_folders) ))
     pass
-
-
 def generate_all_rp_process(root_folder=r'RAL_plan_new_20190905', rp_output_folder_filepath='all_rp_output',  bytes_dump_folder_filepath='contours_bytes', is_recreate_bytes=True):
     print('Call generate_all_rp_process with the following arguments')
     print('root_folder = ', root_folder)
@@ -2654,9 +2616,6 @@ def generate_all_rp_process(root_folder=r'RAL_plan_new_20190905', rp_output_fold
     except Exception as ex:
         print('Create largest size dicom file failed')
     print('[END] generate_all_rp_process()')
-
-
-
 def lookup_rp_fs_applicator_info(rp_fp):
     length = len(rp_fp.ApplicationSetupSequence[0].ChannelSequence)
     print('length = ', length)
@@ -2678,7 +2637,6 @@ def lookup_rp_fs_applicator_info(rp_fp):
         dict['SourceApplicatorStepSize'] = seq.SourceApplicatorStepSize
         print(dict)
         print('')
-
 def look_rp_file():
     print('REAL Example')
     import pydicom
@@ -2699,9 +2657,6 @@ def look_rp_file():
         rp_fp = pydicom.read_file(rp_filepath)
         print('rp_filepath = {}'.format(os.path.basename(rp_filepath)))
         lookup_rp_fs_applicator_info(rp_fp)
-
-
-
 
 
 if __name__ == '__main__':
@@ -2796,8 +2751,6 @@ if __name__ == '__main__':
     # example of plot_rp_lines()
     # example_of_plot_rp_lines()
     # exit(0)
-
-
 
     exit(0)
 
