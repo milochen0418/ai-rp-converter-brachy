@@ -61,7 +61,7 @@ def get_HR_CTV_min_z(rs_filepath):
     rs_fp = pydicom.read_file(rs_filepath)
     for roiSeq in rs_fp.StructureSetROISequence:
         if roiSeq.ROIName == 'HR-CTV':
-            print('ROI_Number = {}'.format(roiSeq.ROINumber))
+            #print('ROI_Number = {}'.format(roiSeq.ROINumber))
             HR_CT_ROINumber = roiSeq.ROINumber
             break
     hrctv_roicseq_idx = -1
@@ -2719,8 +2719,31 @@ def look_rp_file():
         print('rp_filepath = {}'.format(os.path.basename(rp_filepath)))
         lookup_rp_fs_applicator_info(rp_fp)
 
+def final_length_checking( output_root_folder, output_folder):
+    output_folder_filepath = os.path.join(output_root_folder, output_folder)
+    rp_filepath = ''
+    rs_filepath = ''
+    for file in os.listdir(output_folder_filepath):
+        filepath = os.path.join(output_folder_filepath, file)
+        fp = pydicom.read_file(filepath)
+        if fp.Modality == 'RTPLAN':
+            rp_filepath = filepath
+        elif fp.Modality == 'RTSTRUCT':
+            rs_filepath = filepath
+    print('rs_filepath = {}'.format(rs_filepath))
+    print('rp_filepath = {}'.format(rp_filepath))
+    print('HR_CTV min z = {} mm'.format(format(get_HR_CTV_min_z(rs_filepath))))
+    print('z_target = {} mm'.format(get_HR_CTV_min_z(rs_filepath) - 20))
+    rp_fp = pydicom.read_file(rp_filepath)
+    rs_fp = pydicom.read_file(rs_filepath)
+    for idx, item in enumerate(rp_fp.ApplicationSetupSequence[0].ChannelSequence):
+        print('\nSourceApplicatorID = {} , ChannelSequence idx {}'.format(item.SourceApplicatorID, idx))
+        print(rp_fp.ApplicationSetupSequence[0].ChannelSequence[idx].BrachyControlPointSequence[-1])
+
 
 if __name__ == '__main__':
+    final_length_checking(r'import_output', r'804045.20190326.f804045')
+    exit()
     #example_of_plot_rp_file_tandem()
     #example_of_plot_rp_file_first()
     #exit()
