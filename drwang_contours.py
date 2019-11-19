@@ -960,6 +960,7 @@ def wrap_to_rp_file(RP_OperatorsName, rs_filepath, tandem_rp_line, out_rp_filepa
         for pt in rp_line:
             print('\t, {}'.format(pt))
     #blockPrint()
+    max_idx = 0
     for idx,rp_line in enumerate(rp_lines):
         if (False and  len(needle_rp_lines) == 0):
             enablePrint()
@@ -997,6 +998,8 @@ def wrap_to_rp_file(RP_OperatorsName, rs_filepath, tandem_rp_line, out_rp_filepa
             BCPEndPt.ControlPointIndex = 2 * pt_idx + 1
             rp_fp.ApplicationSetupSequence[0].ChannelSequence[idx].BrachyControlPointSequence.append(BCPStartPt)
             rp_fp.ApplicationSetupSequence[0].ChannelSequence[idx].BrachyControlPointSequence.append(BCPEndPt)
+        max_idx = idx
+    rp_fp.ApplicationSetupSequence[0].ChannelSequence = copy.deepcopy(rp_fp.ApplicationSetupSequence[0].ChannelSequence[0:max_idx+1])
     pydicom.write_file(out_rp_filepath, rp_fp)
     pass
 def get_metric_lines_representation(dicom_dict, lt_ovoid, tandem, rt_ovoid):
@@ -2682,18 +2685,18 @@ if __name__ == '__main__':
     print('root_folder = Study-RAL-implant_20191112 -> {}'.format([os.path.basename(item) for item in os.listdir('Study-RAL-implant_20191112')]))
     generate_all_rp_process(root_folder=r'Study-RAL-implant_20191112',
                             rp_output_folder_filepath='Study-RAL-implant_20191112_RP_Files',bytes_dump_folder_filepath='Study-RAL-implant_20191112_Bytes_Files',
-                            is_recreate_bytes=False, debug_folders=[])
+                            is_recreate_bytes=True, debug_folders=[])
     # 31 CASE
     print('root_folder = RAL_plan_new_20190905 -> {}'.format([os.path.basename(item) for item in os.listdir('RAL_plan_new_20190905')]))
     generate_all_rp_process(root_folder=r'RAL_plan_new_20190905',
                             rp_output_folder_filepath='RAL_plan_new_20190905_RP_Files', bytes_dump_folder_filepath='RAL_plan_new_20190905_Bytes_Files',
-                            is_recreate_bytes=False, debug_folders=[])
+                            is_recreate_bytes=True, debug_folders=[])
 
     # 22 CASE : the case of 33220132 is only one tandem and not with pipe. This case should be wrong
     print('root_folder = Study-RAL-20191105 -> {}'.format([os.path.basename(item) for item in os.listdir('Study-RAL-20191105')]))
     generate_all_rp_process(root_folder=r'Study-RAL-20191105',
                             rp_output_folder_filepath='Study-RAL-20191105_RP_Files', bytes_dump_folder_filepath='Study-RAL-20191105_Bytes_Files',
-                            is_recreate_bytes=False, debug_folders=[])
+                            is_recreate_bytes=True, debug_folders=[])
 
     #generate_all_rp_process(root_folder=r'Study-RAL-20191105', rp_output_folder_filepath='Study-RAL-20191105_RP_Files',
     #                        bytes_dump_folder_filepath='Study-RAL-20191105_Bytes_Files', is_recreate_bytes=False)
