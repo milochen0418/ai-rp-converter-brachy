@@ -718,6 +718,30 @@ def algo_to_get_needle_lines(dicom_dict):
             if( needle_line_idx >= len(center_pts_dict[z]) ):
                 # It's mean there is no more point, so continue
                 continue
+            #argmin_idx = 0
+            potential_list = []
+            for pt_idx, pt in enumerate(center_pts_dict[z]):
+                x_mm = center_pts_dict[z][pt_idx][0] * ps_x
+                y_mm = center_pts_dict[z][pt_idx][1] * ps_y
+                dist_mm = math.sqrt((x_mm - prev_x_mm) ** 2 + (y_mm - prev_y_mm) ** 2)
+                if dist_mm < allowed_distance_mm:
+                    potential_list.append( (pt_idx , dist_mm) )
+            sorted_potential_list = sorted(potential_list, key=lambda item:item[1])
+            if len(sorted_potential_list) <= 0 :
+                print('There is not closed point')
+                break
+            pt_idx = sorted_potential_list[0][0]
+            prev_pt = (center_pts_dict[z][pt_idx][0], center_pts_dict[z][pt_idx][1], float(z))
+            prev_info['pt'] = prev_pt
+            prev_info['ps_x'] = ps_x
+            prev_info['ps_y'] = ps_y
+            #lt_ovoid.append(prev_pt)
+            needle_line.append(prev_pt)
+            print('needle_line (with idx={})  = {}'.format(needle_line_idx, needle_line))
+
+
+
+            """
             x_mm = center_pts_dict[z][needle_line_idx][0] * ps_x #Error
             #y_mm = center_pts_dict[z][0][1] * ps_y
             y_mm = center_pts_dict[z][needle_line_idx][1] * ps_y
@@ -731,7 +755,10 @@ def algo_to_get_needle_lines(dicom_dict):
                 needle_line.append(prev_pt)
                 print('needle_line (with idx={})  = {}'.format(needle_line_idx, needle_line))
             else:
+                print('allowed_distance_mm = {}'.format(allowed_distance_mm))
+                print('math.sqrt( (x_mm-prev_x_mm)**2 + (y_mm-prev_y_mm)**2) = {}'.format(math.sqrt( (x_mm-prev_x_mm)**2 + (y_mm-prev_y_mm)**2)))
                 break
+            """
         needle_lines.append(needle_line)
     return needle_lines
 def get_applicator_rp_line(metric_line, first_purpose_distance_mm, each_purpose_distance_mm):
@@ -1616,6 +1643,7 @@ def generate_all_patient_needle_fixed_area_csv_report(root_folder = r'RAL_plan_n
         print('', end='\n', flush=True)
     pass
 def generate_brachy_rp_file(RP_OperatorsName, dicom_dict, out_rp_filepath, is_enable_print=False):
+    is_enable_print=True
     if (is_enable_print == False):
         blockPrint()
     else:
@@ -2523,16 +2551,6 @@ def generate_all_rp_process(
     #for folder_idx, folder in enumerate(sorted(f_list)):
     for folder_idx, folder in enumerate(sorted_f_list):
         enablePrint()
-        #if (os.path.basename(folder) not in ['21569696', '33220132']):
-        #    continue
-        #if (os.path.basename(folder) not in ['21569696']):
-        #    continue
-        #if (os.path.basename(folder) not in ['487961']): # One Needle case
-        #    continue
-        #if (os.path.basename(folder) not in ['34982640']):
-        #    continue
-        #if (os.path.basename(folder) not in ['24460566-2']):
-        #    continue
         if len(debug_folders) != 0:
             if (os.path.basename(folder) not in debug_folders):
                 continue
@@ -2685,7 +2703,8 @@ if __name__ == '__main__':
     print('root_folder = Study-RAL-implant_20191112 -> {}'.format([os.path.basename(item) for item in os.listdir('Study-RAL-implant_20191112')]))
     generate_all_rp_process(root_folder=r'Study-RAL-implant_20191112',
                             rp_output_folder_filepath='Study-RAL-implant_20191112_RP_Files',bytes_dump_folder_filepath='Study-RAL-implant_20191112_Bytes_Files',
-                            is_recreate_bytes=True, debug_folders=[])
+                            is_recreate_bytes=False, debug_folders=['804045'])
+    exit(0)
     # 31 CASE
     print('root_folder = RAL_plan_new_20190905 -> {}'.format([os.path.basename(item) for item in os.listdir('RAL_plan_new_20190905')]))
     generate_all_rp_process(root_folder=r'RAL_plan_new_20190905',
