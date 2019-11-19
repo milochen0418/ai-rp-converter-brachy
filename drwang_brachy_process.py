@@ -854,148 +854,6 @@ def get_applicator_rp_line(metric_line, first_purpose_distance_mm, each_purpose_
         tandem_rp_line.append(t_pt)
 
     return tandem_rp_line
-def wrap_to_rp_file(RP_OperatorsName, rs_filepath, tandem_rp_line, out_rp_filepath, lt_ovoid_rp_line, rt_ovoid_rp_line, needle_rp_lines=[], applicator_roi_dict={}):
-    # TODO wrap needles
-    print('len(needle_rp_lines)={}'.format(len(needle_rp_lines)))
-    # rp_template_filepath = r'RP_Template/Brachy_RP.1.2.246.352.71.5.417454940236.2063186.20191015164204.dcm'
-    # rp_template_filepath = r'RP_Template_Brachy_24460566_implant-5_20191113/RP.1.2.246.352.71.5.417454940236.2060926.20191008103753.dcm'
-    rp_template_filepath = r'RP_Template_34135696_20191115/RP.1.2.246.352.71.5.417454940236.2077416.20191115161213.dcm'
-    def get_new_uid(old_uid='1.2.246.352.71.5.417454940236.2063186.20191015164204', study_date='20190923'):
-        uid = old_uid
-        def gen_6_random_digits():
-            ret_str = ""
-            for i in range(6):
-                ch = chr(random.randrange(ord('0'), ord('9') + 1))
-                ret_str += ch
-            return ret_str
-        theStudyDate = study_date
-        uid_list = uid.split('.')
-        uid_list[-1] = theStudyDate + gen_6_random_digits()
-        new_uid = '.'.join(uid_list)
-        return new_uid
-
-    # Read RS file as input
-    rs_fp = pydicom.read_file(rs_filepath)
-    # read RP tempalte into rp_fp
-    rp_fp = pydicom.read_file(rp_template_filepath)
-
-    rp_fp.OperatorsName = RP_OperatorsName
-
-    rp_fp.FrameOfReferenceUID = rs_fp.ReferencedFrameOfReferenceSequence[0].FrameOfReferenceUID
-    rp_fp.ReferencedStructureSetSequence[0].ReferencedSOPClassUID = rs_fp.SOPClassUID
-    rp_fp.ReferencedStructureSetSequence[0].ReferencedSOPInstanceUID = rs_fp.SOPInstanceUID
-
-    directAttrSet = [
-        'PhysiciansOfRecord', 'PatientName', 'PatientID',
-        'PatientBirthDate', 'PatientBirthTime', 'PatientSex',
-        'DeviceSerialNumber', 'SoftwareVersions', 'StudyID',
-        'StudyDate', 'StudyTime', 'StudyInstanceUID']
-    for attr in directAttrSet:
-        #rs_val = getattr(rs_fp, attr)
-        #rp_val = getattr(rp_fp, attr)
-        #print('attr={}, \n In RS->{} \n In RP->{}'.format(attr, rs_val, rp_val))
-        try:
-            val = getattr(rs_fp, attr)
-            setattr(rp_fp, attr, val)
-        except Exception as ex:
-            print('Error is happend in for attr in directAttrSet. Sometimes RS file is out of control')
-            print(ex)
-        #new_rp_val = getattr(rp_fp, attr)
-        #print('after update, RP->{}\n'.format(new_rp_val))
-
-    newSeriesInstanceUID = get_new_uid(old_uid=rp_fp.SeriesInstanceUID, study_date=rp_fp.StudyDate)
-    newSOPInstanceUID = get_new_uid(old_uid=rp_fp.SOPInstanceUID, study_date=rp_fp.StudyDate)
-    rp_fp.SeriesInstanceUID = newSeriesInstanceUID
-    rp_fp.SOPInstanceUID = newSOPInstanceUID
-    rp_fp.InstanceCreationDate = rp_fp.RTPlanDate = rp_fp.StudyDate = rs_fp.StudyDate
-    rp_fp.RTPlanTime = str(float(rs_fp.StudyTime) + 0.001)
-    rp_fp.InstanceCreationTime = str(float(rs_fp.InstanceCreationTime) + 0.001)
-
-    # Clean Dose Reference
-    rp_fp.DoseReferenceSequence.clear()
-
-
-    # The template structure for applicator
-    # Tandem -> rp_fp.ApplicationSetupSequence[0].ChannelSequence[0]
-    # Rt Ovoid -> rp_fp.ApplicationSetupSequence[0].ChannelSequence[1]
-    # Lt OVoid -> rp_fp.ApplicationSetupSequence[0].ChannelSequence[2]
-    # For each applicator .NumberOfControlPoints is mean number of point
-    # For each applicator .BrachyControlPointSequence is mean the array of points
-
-
-    BCPItemTemplate = copy.deepcopy(rp_fp.ApplicationSetupSequence[0].ChannelSequence[0].BrachyControlPointSequence[0])
-    rp_lines = [tandem_rp_line, rt_ovoid_rp_line, lt_ovoid_rp_line]
-    rp_lines = rp_lines + needle_rp_lines
-
-    for idx, rp_line in enumerate(rp_lines):
-        print('rp_line[{}] = {}'.format(idx, rp_line))
-
-
-    #TODO rp_Ref_ROI_Numbers need to match to current RS's ROI number of three applicators
-    #rp_Ref_ROI_Numbers = [17, 18, 19]
-    #rp_Ref_ROI_Numbers = app_roi_num_list
-
-    #enablePrint()
-    SortedAppKeys = sorted(applicator_roi_dict.keys())
-    app_roi_num_list = []
-    print('mapping of [ROI Name => ROI Number]')
-    for applicator_roi_name in SortedAppKeys:
-        print('{}->{}'.format(applicator_roi_name, applicator_roi_dict[applicator_roi_name]))
-        app_roi_num_list.append(applicator_roi_dict[applicator_roi_name])
-    print('app_roi_num_list = {}'.format(app_roi_num_list))
-    #rp_Ref_ROI_Numbers = sorted(app_roi_num_list, reverse=True)
-    rp_Ref_ROI_Numbers = app_roi_num_list
-    print('rp_Ref_ROI_Numbers = {}'.format(rp_Ref_ROI_Numbers))
-    #blockPrint()
-    rp_ControlPointRelativePositions = [3.5, 3.5, 3.5] # After researching, all ControlPointRelativePositions is start in 3.5
-    rp_ControlPointRelativePositions = [3.5 for item in app_roi_num_list]
-
-    #enablePrint()
-    print('Dr. Wang debug message')
-    for idx, rp_line in enumerate(rp_lines):
-        print('\nidx={} -> rp_line = ['.format(idx))
-        for pt in rp_line:
-            print('\t, {}'.format(pt))
-    #blockPrint()
-    for idx,rp_line in enumerate(rp_lines):
-        if (False and  len(needle_rp_lines) == 0):
-            enablePrint()
-            print('Case without needles')
-            if (idx >= 3):
-                break
-            blockPrint()
-
-        if (False and idx >= 1): #OneTandem
-            enablePrint()
-            print('Debug importing RP by only tandem')
-            rp_fp.ApplicationSetupSequence[0].ChannelSequence = copy.deepcopy(rp_fp.ApplicationSetupSequence[0].ChannelSequence[0:1])
-            blockPrint()
-            break
-        if (idx >= len(rp_Ref_ROI_Numbers)):
-            print('the number of rp_line is larger than len(rp_Ref_ROI_Numbers)')
-            break
-        if (idx >= len(rp_fp.ApplicationSetupSequence[0].ChannelSequence) ):
-            print('the number of rp_line is larger than len(rp_fp.ApplicationSetupSequence[0].ChannelSequence)')
-            break
-        # Change ROINumber of RP_Template_TestData RS into output RP output file
-        # Do  I need to fit ROINumber in RS or not? I still have no answer
-        rp_fp.ApplicationSetupSequence[0].ChannelSequence[idx].ReferencedROINumber = rp_Ref_ROI_Numbers[idx]
-        rp_fp.ApplicationSetupSequence[0].ChannelSequence[idx].NumberOfControlPoints = len(rp_line)
-        rp_fp.ApplicationSetupSequence[0].ChannelSequence[idx].BrachyControlPointSequence.clear()
-        for pt_idx, pt in enumerate(rp_line):
-            BCPPt = copy.deepcopy(BCPItemTemplate)
-            BCPPt.ControlPointRelativePosition = rp_ControlPointRelativePositions[idx] + pt_idx * 5
-            BCPPt.ControlPoint3DPosition[0] = pt[0]
-            BCPPt.ControlPoint3DPosition[1] = pt[1]
-            BCPPt.ControlPoint3DPosition[2] = pt[2]
-            BCPStartPt = copy.deepcopy(BCPPt)
-            BCPEndPt = copy.deepcopy(BCPPt)
-            BCPStartPt.ControlPointIndex = 2 * pt_idx
-            BCPEndPt.ControlPointIndex = 2 * pt_idx + 1
-            rp_fp.ApplicationSetupSequence[0].ChannelSequence[idx].BrachyControlPointSequence.append(BCPStartPt)
-            rp_fp.ApplicationSetupSequence[0].ChannelSequence[idx].BrachyControlPointSequence.append(BCPEndPt)
-    pydicom.write_file(out_rp_filepath, rp_fp)
-    pass
 def get_metric_lines_representation(dicom_dict, lt_ovoid, tandem, rt_ovoid):
     #(metric_lt_ovoid, metric_tandem, metric_rt_ovoid) = get_metric_lines_representation(dicom_dict, lt_ovoid, tandem, rt_ovoid)
     new_lines = []
@@ -1024,39 +882,39 @@ def get_metric_needle_lines_representation(dicom_dict, needle_lines):
     return metric_needle_lines
 
 # FUNCTIONS - DICOM data processing Functions
-def get_dicom_folder_pathinfo(folder):
-    dicom_folder = {}
-    ct_filelist = []
-    rs_filepath = None
-    rd_filepath = None
-    rp_filepath = None
-    for file in os.listdir(folder):
-        filepath = os.path.join(folder ,file)
-        try:
-            ct_dicom = pydicom.read_file(filepath)
-            """
-            CT Computed Tomography
-            RTDOSE Radiotherapy Dose
-            RTPLAN Radiotherapy Plan
-            RTSTRUCT Radiotherapy Structure Set
-            """
-            m = ct_dicom.Modality
-            if (m == 'CT'):
-                ct_filelist.append(filepath)
-            elif (m == 'RTDOSE'):
-                rd_filepath = filepath
-            elif (m == 'RTSTRUCT'):
-                rs_filepath = filepath
-            elif (m == 'RTPLAN'):
-                rp_filepath = filepath
-        except Exception as e:
-            pass
-    dicom_folder['ct_filelist'] = ct_filelist
-    dicom_folder['rs_filepath'] = rs_filepath
-    dicom_folder['rd_filepath'] = rd_filepath
-    dicom_folder['rp_filepath'] = rp_filepath
-    return dicom_folder
 def get_dicom_dict(folder):
+    def get_dicom_folder_pathinfo(folder):
+        dicom_folder = {}
+        ct_filelist = []
+        rs_filepath = None
+        rd_filepath = None
+        rp_filepath = None
+        for file in os.listdir(folder):
+            filepath = os.path.join(folder, file)
+            try:
+                ct_dicom = pydicom.read_file(filepath)
+                """
+                CT Computed Tomography
+                RTDOSE Radiotherapy Dose
+                RTPLAN Radiotherapy Plan
+                RTSTRUCT Radiotherapy Structure Set
+                """
+                m = ct_dicom.Modality
+                if (m == 'CT'):
+                    ct_filelist.append(filepath)
+                elif (m == 'RTDOSE'):
+                    rd_filepath = filepath
+                elif (m == 'RTSTRUCT'):
+                    rs_filepath = filepath
+                elif (m == 'RTPLAN'):
+                    rp_filepath = filepath
+            except Exception as e:
+                pass
+        dicom_folder['ct_filelist'] = ct_filelist
+        dicom_folder['rs_filepath'] = rs_filepath
+        dicom_folder['rd_filepath'] = rd_filepath
+        dicom_folder['rp_filepath'] = rp_filepath
+        return dicom_folder
     z_map = {}
     ct_filepath_map = {}
     out_dict = {}
@@ -1138,9 +996,218 @@ def generate_metadata_to_dicom_dict(dicom_dict):
 
     # metadata['view_scope'] = (view_min_y, view_max_y, view_min_x, view_max_x)
     #(contours_without_filter, constant) = get_max_contours(img, ContourRetrievalMode=cv2.RETR_TREE)
+def wrap_to_rp_file(RP_OperatorsName, rs_filepath, tandem_rp_line, out_rp_filepath, lt_ovoid_rp_line,
+                    rt_ovoid_rp_line, needle_rp_lines=[], applicator_roi_dict={}):
+    # TODO wrap needles
+    print('len(needle_rp_lines)={}'.format(len(needle_rp_lines)))
+    # rp_template_filepath = r'RP_Template/Brachy_RP.1.2.246.352.71.5.417454940236.2063186.20191015164204.dcm'
+    # rp_template_filepath = r'RP_Template_Brachy_24460566_implant-5_20191113/RP.1.2.246.352.71.5.417454940236.2060926.20191008103753.dcm'
+    rp_template_filepath = r'RP_Template_34135696_20191115/RP.1.2.246.352.71.5.417454940236.2077416.20191115161213.dcm'
+
+    def get_new_uid(old_uid='1.2.246.352.71.5.417454940236.2063186.20191015164204', study_date='20190923'):
+        uid = old_uid
+
+        def gen_6_random_digits():
+            ret_str = ""
+            for i in range(6):
+                ch = chr(random.randrange(ord('0'), ord('9') + 1))
+                ret_str += ch
+            return ret_str
+
+        theStudyDate = study_date
+        uid_list = uid.split('.')
+        uid_list[-1] = theStudyDate + gen_6_random_digits()
+        new_uid = '.'.join(uid_list)
+        return new_uid
+
+    # Read RS file as input
+    rs_fp = pydicom.read_file(rs_filepath)
+    # read RP tempalte into rp_fp
+    rp_fp = pydicom.read_file(rp_template_filepath)
+
+    rp_fp.OperatorsName = RP_OperatorsName
+
+    rp_fp.FrameOfReferenceUID = rs_fp.ReferencedFrameOfReferenceSequence[0].FrameOfReferenceUID
+    rp_fp.ReferencedStructureSetSequence[0].ReferencedSOPClassUID = rs_fp.SOPClassUID
+    rp_fp.ReferencedStructureSetSequence[0].ReferencedSOPInstanceUID = rs_fp.SOPInstanceUID
+
+    directAttrSet = [
+        'PhysiciansOfRecord', 'PatientName', 'PatientID',
+        'PatientBirthDate', 'PatientBirthTime', 'PatientSex',
+        'DeviceSerialNumber', 'SoftwareVersions', 'StudyID',
+        'StudyDate', 'StudyTime', 'StudyInstanceUID']
+    for attr in directAttrSet:
+        # rs_val = getattr(rs_fp, attr)
+        # rp_val = getattr(rp_fp, attr)
+        # print('attr={}, \n In RS->{} \n In RP->{}'.format(attr, rs_val, rp_val))
+        try:
+            val = getattr(rs_fp, attr)
+            setattr(rp_fp, attr, val)
+        except Exception as ex:
+            print('Error is happend in for attr in directAttrSet. Sometimes RS file is out of control')
+            print(ex)
+        # new_rp_val = getattr(rp_fp, attr)
+        # print('after update, RP->{}\n'.format(new_rp_val))
+
+    newSeriesInstanceUID = get_new_uid(old_uid=rp_fp.SeriesInstanceUID, study_date=rp_fp.StudyDate)
+    newSOPInstanceUID = get_new_uid(old_uid=rp_fp.SOPInstanceUID, study_date=rp_fp.StudyDate)
+    rp_fp.SeriesInstanceUID = newSeriesInstanceUID
+    rp_fp.SOPInstanceUID = newSOPInstanceUID
+    rp_fp.InstanceCreationDate = rp_fp.RTPlanDate = rp_fp.StudyDate = rs_fp.StudyDate
+    rp_fp.RTPlanTime = str(float(rs_fp.StudyTime) + 0.001)
+    rp_fp.InstanceCreationTime = str(float(rs_fp.InstanceCreationTime) + 0.001)
+
+    # Clean Dose Reference
+    rp_fp.DoseReferenceSequence.clear()
+
+    # The template structure for applicator
+    # Tandem -> rp_fp.ApplicationSetupSequence[0].ChannelSequence[0]
+    # Rt Ovoid -> rp_fp.ApplicationSetupSequence[0].ChannelSequence[1]
+    # Lt OVoid -> rp_fp.ApplicationSetupSequence[0].ChannelSequence[2]
+    # For each applicator .NumberOfControlPoints is mean number of point
+    # For each applicator .BrachyControlPointSequence is mean the array of points
+
+    BCPItemTemplate = copy.deepcopy(
+        rp_fp.ApplicationSetupSequence[0].ChannelSequence[0].BrachyControlPointSequence[0])
+    rp_lines = [tandem_rp_line, rt_ovoid_rp_line, lt_ovoid_rp_line]
+    rp_lines = rp_lines + needle_rp_lines
+
+    for idx, rp_line in enumerate(rp_lines):
+        print('rp_line[{}] = {}'.format(idx, rp_line))
+
+    # TODO rp_Ref_ROI_Numbers need to match to current RS's ROI number of three applicators
+    # rp_Ref_ROI_Numbers = [17, 18, 19]
+    # rp_Ref_ROI_Numbers = app_roi_num_list
+
+    # enablePrint()
+    SortedAppKeys = sorted(applicator_roi_dict.keys())
+    app_roi_num_list = []
+    print('mapping of [ROI Name => ROI Number]')
+    for applicator_roi_name in SortedAppKeys:
+        print('{}->{}'.format(applicator_roi_name, applicator_roi_dict[applicator_roi_name]))
+        app_roi_num_list.append(applicator_roi_dict[applicator_roi_name])
+    print('app_roi_num_list = {}'.format(app_roi_num_list))
+    # rp_Ref_ROI_Numbers = sorted(app_roi_num_list, reverse=True)
+    rp_Ref_ROI_Numbers = app_roi_num_list
+    print('rp_Ref_ROI_Numbers = {}'.format(rp_Ref_ROI_Numbers))
+    # blockPrint()
+    rp_ControlPointRelativePositions = [3.5, 3.5,
+                                        3.5]  # After researching, all ControlPointRelativePositions is start in 3.5
+    rp_ControlPointRelativePositions = [3.5 for item in app_roi_num_list]
+
+    # enablePrint()
+    print('Dr. Wang debug message')
+    for idx, rp_line in enumerate(rp_lines):
+        print('\nidx={} -> rp_line = ['.format(idx))
+        for pt in rp_line:
+            print('\t, {}'.format(pt))
+    # blockPrint()
+    for idx, rp_line in enumerate(rp_lines):
+        if (False and len(needle_rp_lines) == 0):
+            enablePrint()
+            print('Case without needles')
+            if (idx >= 3):
+                break
+            blockPrint()
+
+        if (False and idx >= 1):  # OneTandem
+            enablePrint()
+            print('Debug importing RP by only tandem')
+            rp_fp.ApplicationSetupSequence[0].ChannelSequence = copy.deepcopy(
+                rp_fp.ApplicationSetupSequence[0].ChannelSequence[0:1])
+            blockPrint()
+            break
+        if (idx >= len(rp_Ref_ROI_Numbers)):
+            print('the number of rp_line is larger than len(rp_Ref_ROI_Numbers)')
+            break
+        if (idx >= len(rp_fp.ApplicationSetupSequence[0].ChannelSequence)):
+            print('the number of rp_line is larger than len(rp_fp.ApplicationSetupSequence[0].ChannelSequence)')
+            break
+        # Change ROINumber of RP_Template_TestData RS into output RP output file
+        # Do  I need to fit ROINumber in RS or not? I still have no answer
+        rp_fp.ApplicationSetupSequence[0].ChannelSequence[idx].ReferencedROINumber = rp_Ref_ROI_Numbers[idx]
+        rp_fp.ApplicationSetupSequence[0].ChannelSequence[idx].NumberOfControlPoints = len(rp_line)
+        rp_fp.ApplicationSetupSequence[0].ChannelSequence[idx].BrachyControlPointSequence.clear()
+        for pt_idx, pt in enumerate(rp_line):
+            BCPPt = copy.deepcopy(BCPItemTemplate)
+            BCPPt.ControlPointRelativePosition = rp_ControlPointRelativePositions[idx] + pt_idx * 5
+            BCPPt.ControlPoint3DPosition[0] = pt[0]
+            BCPPt.ControlPoint3DPosition[1] = pt[1]
+            BCPPt.ControlPoint3DPosition[2] = pt[2]
+            BCPStartPt = copy.deepcopy(BCPPt)
+            BCPEndPt = copy.deepcopy(BCPPt)
+            BCPStartPt.ControlPointIndex = 2 * pt_idx
+            BCPEndPt.ControlPointIndex = 2 * pt_idx + 1
+            rp_fp.ApplicationSetupSequence[0].ChannelSequence[idx].BrachyControlPointSequence.append(BCPStartPt)
+            rp_fp.ApplicationSetupSequence[0].ChannelSequence[idx].BrachyControlPointSequence.append(BCPEndPt)
+    pydicom.write_file(out_rp_filepath, rp_fp)
+    pass
 
 # FUNCTIONS - generate our expected output for each ct_obj in dicom_dict['z'].   (PS:z_map)
 def generate_output_to_dicom_dict(dicom_dict):
+    def generate_output_to_ct_obj(ct_obj):
+        out = ct_obj['output']
+        rescale_pixel_array = ct_obj['rescale_pixel_array']
+        (view_min_y, view_max_y, view_min_x, view_max_x) = ct_obj['dicom_dict']['metadata']['view_scope']
+        global_max_contour_constant_value = ct_obj['dicom_dict']['metadata']['global_max_contour_constant_value']
+
+        # view_pixel_array = rescale_pixel_array[view_min_y:view_max_y, view_min_x:view_max_x]
+        img = ct_obj['rescale_pixel_array']
+        gray_img = convert_to_gray_image(img)
+        gray_img = gray_img[view_min_y: view_max_y, view_min_x:view_max_x]
+        img = img[view_min_y: view_max_y, view_min_x:view_max_x]
+        rescale_pixel_array = ct_obj['rescale_pixel_array']
+        rescale_pixel_array = rescale_pixel_array[view_min_y: view_max_y, view_min_x:view_max_x]
+        filter_img = cv2.adaptiveThreshold(gray_img, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 15, -22)
+        ps_x = ct_obj['ps_x']
+        ps_y = ct_obj['ps_y']
+        ct_obj['output']['contours'] = {}
+        ct_obj['output']['contours']['algo01'] = get_contours_from_edge_detection_algo_01(img, filter_img)
+        ct_obj['output']['contours']['algo02'] = get_contours_from_edge_detection_algo_02(img, filter_img)
+        ct_obj['output']['contours']['algo03'] = get_contours_from_edge_detection_algo_03(img)
+        ct_obj['output']['contours']['algo04'] = get_contours_from_edge_detection_algo_04(img)
+        contour_constant_value = ct_obj['dicom_dict']['metadata']['global_max_contour_constant_value']
+        ct_obj['output']['contours']['algo05'] = get_contours_from_edge_detection_algo_05(rescale_pixel_array,
+                                                                                          contour_constant_value)
+        ct_obj['output']['contours']['algo06'] = get_contours_from_edge_detection_algo_06(rescale_pixel_array,
+                                                                                          contour_constant_value)
+        ct_obj['output']['contours']['algo07'] = get_contours_from_edge_detection_algo_07(rescale_pixel_array,
+                                                                                          contour_constant_value, ps_x,
+                                                                                          ps_y)
+
+        # ct_obj['output']['contours']['algo05'] = get_contours_from_edge_detection_algo_05(img, contour_constant_vlaue = global_max_contour_constant_value)
+        # ct_obj['output']['contours']['algo06'] = get_contours_from_edge_detection_algo_06(img, contour_constant_value = global_max_contour_constant_value)
+
+        # Process to contours to fit global pixel img
+        ct_obj['output']['contours512'] = {}
+        for algo_key in sorted(ct_obj['output']['contours'].keys()):
+            ct_obj['output']['contours512'][algo_key] = copy.deepcopy(ct_obj['output']['contours'][algo_key])
+            contours = ct_obj['output']['contours512'][algo_key]
+            for contour in contours:
+                for [pt] in contour:
+                    pt[0] = view_min_x + pt[0]
+                    pt[1] = view_min_y + pt[1]
+
+        # Generate contours infos like x,y mean and area_mm
+        ct_obj['output']['contours_infos'] = {}
+        ps_x = ct_obj['ps_x']
+        ps_y = ct_obj['ps_y']
+        for algo_key in (ct_obj['output']['contours'].keys()):
+            contours = ct_obj['output']['contours'][algo_key]
+            contours_infos = []
+            for contour in contours:
+                contours_info = {}
+                # contours_infos.append(contours_info)
+                (x, y) = get_contour_xy_mean(contour)
+                global_x_pixel = x + view_min_x
+                global_y_pixel = y + view_min_y
+                area_mm2 = get_contour_area_mm2(contour, ps_x, ps_y)
+                contours_info['mean'] = [global_x_pixel, global_y_pixel]
+                contours_info['area_mm2'] = area_mm2
+                contours_info['contour'] = contour
+                contours_infos.append(contours_info)
+            ct_obj['output']['contours_infos'][algo_key] = contours_infos
+        pass
     folder = dicom_dict['metadata']['folder']
     z_map = dicom_dict['z']
     for z_idx, z in enumerate(sorted(z_map.keys())):
@@ -1148,66 +1215,7 @@ def generate_output_to_dicom_dict(dicom_dict):
         #print('z={}, {}'.format(z, ct_obj.keys()))
         generate_output_to_ct_obj(ct_obj)
         # information is in ct_obj['output']
-def generate_output_to_ct_obj(ct_obj):
-    out = ct_obj['output']
-    rescale_pixel_array = ct_obj['rescale_pixel_array']
-    (view_min_y, view_max_y, view_min_x, view_max_x) = ct_obj['dicom_dict']['metadata']['view_scope']
-    global_max_contour_constant_value = ct_obj['dicom_dict']['metadata']['global_max_contour_constant_value']
 
-    #view_pixel_array = rescale_pixel_array[view_min_y:view_max_y, view_min_x:view_max_x]
-    img = ct_obj['rescale_pixel_array']
-    gray_img = convert_to_gray_image(img)
-    gray_img = gray_img[view_min_y: view_max_y, view_min_x:view_max_x]
-    img = img[view_min_y: view_max_y, view_min_x:view_max_x]
-    rescale_pixel_array = ct_obj['rescale_pixel_array']
-    rescale_pixel_array = rescale_pixel_array[view_min_y: view_max_y, view_min_x:view_max_x]
-    filter_img = cv2.adaptiveThreshold(gray_img, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 15, -22)
-    ps_x = ct_obj['ps_x']
-    ps_y = ct_obj['ps_y']
-    ct_obj['output']['contours'] = {}
-    ct_obj['output']['contours']['algo01'] = get_contours_from_edge_detection_algo_01(img, filter_img)
-    ct_obj['output']['contours']['algo02'] = get_contours_from_edge_detection_algo_02(img, filter_img)
-    ct_obj['output']['contours']['algo03'] = get_contours_from_edge_detection_algo_03(img)
-    ct_obj['output']['contours']['algo04'] = get_contours_from_edge_detection_algo_04(img)
-    contour_constant_value = ct_obj['dicom_dict']['metadata']['global_max_contour_constant_value']
-    ct_obj['output']['contours']['algo05'] = get_contours_from_edge_detection_algo_05(rescale_pixel_array, contour_constant_value)
-    ct_obj['output']['contours']['algo06'] = get_contours_from_edge_detection_algo_06(rescale_pixel_array, contour_constant_value)
-    ct_obj['output']['contours']['algo07'] = get_contours_from_edge_detection_algo_07(rescale_pixel_array, contour_constant_value, ps_x, ps_y)
-
-    #ct_obj['output']['contours']['algo05'] = get_contours_from_edge_detection_algo_05(img, contour_constant_vlaue = global_max_contour_constant_value)
-    #ct_obj['output']['contours']['algo06'] = get_contours_from_edge_detection_algo_06(img, contour_constant_value = global_max_contour_constant_value)
-
-
-    # Process to contours to fit global pixel img
-    ct_obj['output']['contours512'] = {}
-    for algo_key in sorted(ct_obj['output']['contours'].keys()):
-        ct_obj['output']['contours512'][algo_key] =  copy.deepcopy(ct_obj['output']['contours'][algo_key] )
-        contours = ct_obj['output']['contours512'][algo_key]
-        for contour in contours:
-            for [pt] in contour:
-                pt[0] = view_min_x + pt[0]
-                pt[1] = view_min_y + pt[1]
-
-    # Generate contours infos like x,y mean and area_mm
-    ct_obj['output']['contours_infos'] = {}
-    ps_x = ct_obj['ps_x']
-    ps_y = ct_obj['ps_y']
-    for algo_key in (ct_obj['output']['contours'].keys()):
-        contours = ct_obj['output']['contours'][algo_key]
-        contours_infos = []
-        for contour in contours:
-            contours_info = {}
-            #contours_infos.append(contours_info)
-            (x,y) = get_contour_xy_mean(contour)
-            global_x_pixel = x + view_min_x
-            global_y_pixel = y + view_min_y
-            area_mm2 = get_contour_area_mm2(contour, ps_x, ps_y)
-            contours_info['mean'] = [global_x_pixel, global_y_pixel]
-            contours_info['area_mm2'] = area_mm2
-            contours_info['contour'] = contour
-            contours_infos.append(contours_info)
-        ct_obj['output']['contours_infos'][algo_key] = contours_infos
-    pass
 
 # FUNCTIONS - main genearte function
 def generate_brachy_rp_file(RP_OperatorsName, dicom_dict, out_rp_filepath, is_enable_print=False):
@@ -1285,11 +1293,7 @@ def generate_brachy_rp_file(RP_OperatorsName, dicom_dict, out_rp_filepath, is_en
     #print(pydicom.read_file(dicom_dict['pathinfo']['rs_filepath']).keys())
     rs_filepath = dicom_dict['pathinfo']['rs_filepath']
     print('out_rp_filepath = {}'.format(out_rp_filepath))
-
     applicator_roi_dict = dicom_dict['metadata']['applicator_roi_dict']
-    # TODO will change the wrap_to_rp_file function, because we will wrap needle information into RP files
-    #wrap_to_rp_file(RP_OperatorsName=RP_OperatorsName, rs_filepath=rs_filepath, tandem_rp_line=tandem_rp_line, out_rp_filepath=out_rp_filepath, lt_ovoid_rp_line=lt_ovoid_rp_line, rt_ovoid_rp_line=rt_ovoid_rp_line, app_roi_num_list=app_roi_num_list)
-    #wrap_to_rp_file(RP_OperatorsName=RP_OperatorsName, rs_filepath=rs_filepath, tandem_rp_line=tandem_rp_line,out_rp_filepath=out_rp_filepath, lt_ovoid_rp_line=lt_ovoid_rp_line, needle_rp_lines=rp_needle_lines,rt_ovoid_rp_line=rt_ovoid_rp_line, app_roi_num_list=app_roi_num_list)
     wrap_to_rp_file(RP_OperatorsName=RP_OperatorsName, rs_filepath=rs_filepath, tandem_rp_line=tandem_rp_line,
                     out_rp_filepath=out_rp_filepath, lt_ovoid_rp_line=lt_ovoid_rp_line, needle_rp_lines=rp_needle_lines,
                     rt_ovoid_rp_line=rt_ovoid_rp_line, applicator_roi_dict=applicator_roi_dict)
@@ -1478,7 +1482,7 @@ if __name__ == '__main__':
     print('root_folder = Study-RAL-implant_20191112 -> {}'.format([os.path.basename(item) for item in os.listdir('Study-RAL-implant_20191112')]))
     generate_all_rp_process(root_folder=r'Study-RAL-implant_20191112',
                             rp_output_folder_filepath='Study-RAL-implant_20191112_RP_Files',bytes_dump_folder_filepath='Study-RAL-implant_20191112_Bytes_Files',
-                            is_recreate_bytes=True, debug_folders=['24460566'])
+                            is_recreate_bytes=True, debug_folders=[])
     # 31 CASE
     #print('root_folder = RAL_plan_new_20190905 -> {}'.format([os.path.basename(item) for item in os.listdir('RAL_plan_new_20190905')]))
     #generate_all_rp_process(root_folder=r'RAL_plan_new_20190905',
