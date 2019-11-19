@@ -139,22 +139,22 @@ def get_dicom_dict(folder):
         ct_filepath_map[ct_filepath] = ct_obj
         #print('ct_obj={}'.format(ct_obj))
     return out_dict
-def generate_metadata_to_dicom_dict(dicom_dict):
-    (view_min_y, view_max_y, view_min_x, view_max_x) = get_view_scope_by_dicom_dict(dicom_dict)
-    metadata = dicom_dict['metadata']
-    metadata['view_scope'] = (view_min_y, view_max_y, view_min_x, view_max_x)
-
-    # Figure out global_max_contour_constant_value
-    A = dicom_dict['z'][ sorted(dicom_dict['z'].keys())[0] ]['rescale_pixel_array']
-    data = A.ravel()
-    sorted_data = np.copy(data)
-    sorted_data.sort()
-    global_max_contour_constant_value = sorted_data[-20] - 100
-    metadata['global_max_contour_constant_value'] = global_max_contour_constant_value
-
-    # metadata['view_scope'] = (view_min_y, view_max_y, view_min_x, view_max_x)
-    #(contours_without_filter, constant) = get_max_contours(img, ContourRetrievalMode=cv2.RETR_TREE)
 def generate_output_to_dicom_dict(dicom_dict):
+    def generate_metadata_to_dicom_dict(dicom_dict):
+        (view_min_y, view_max_y, view_min_x, view_max_x) = get_view_scope_by_dicom_dict(dicom_dict)
+        metadata = dicom_dict['metadata']
+        metadata['view_scope'] = (view_min_y, view_max_y, view_min_x, view_max_x)
+
+        # Figure out global_max_contour_constant_value
+        A = dicom_dict['z'][sorted(dicom_dict['z'].keys())[0]]['rescale_pixel_array']
+        data = A.ravel()
+        sorted_data = np.copy(data)
+        sorted_data.sort()
+        global_max_contour_constant_value = sorted_data[-20] - 100
+        metadata['global_max_contour_constant_value'] = global_max_contour_constant_value
+
+        # metadata['view_scope'] = (view_min_y, view_max_y, view_min_x, view_max_x)
+        # (contours_without_filter, constant) = get_max_contours(img, ContourRetrievalMode=cv2.RETR_TREE)
     def get_contour_xy_mean(cv_contour):
         rect_info = get_rect_info_from_cv_contour(cv_contour)
         (x_mean, y_mean) = rect_info[2]
@@ -290,6 +290,8 @@ def generate_output_to_dicom_dict(dicom_dict):
                 contours_infos.append(contours_info)
             ct_obj['output']['contours_infos'][algo_key] = contours_infos
         pass
+
+    generate_metadata_to_dicom_dict(dicom_dict)
     folder = dicom_dict['metadata']['folder']
     z_map = dicom_dict['z']
     for z_idx, z in enumerate(sorted(z_map.keys())):
@@ -1552,7 +1554,6 @@ def generate_all_rp_process(
             time_start = datetime.datetime.now()
             print('[{}/{}] Create bytes file {} '.format(folder_idx + 1, len(folders), dump_filepath), end=' -> ',flush=True)
             dicom_dict = get_dicom_dict(folder)
-            generate_metadata_to_dicom_dict(dicom_dict)
             generate_output_to_dicom_dict(dicom_dict)
             all_dicom_dict[folder] = dicom_dict
             python_object_dump(dicom_dict, dump_filepath)
@@ -1569,7 +1570,6 @@ def generate_all_rp_process(
                 time_start = datetime.datetime.now()
                 print('[{}/{}] Create bytes file {} '.format(folder_idx + 1, len(folders), dump_filepath), end=' -> ',flush=True)
                 dicom_dict = get_dicom_dict(folder)
-                generate_metadata_to_dicom_dict(dicom_dict)
                 generate_output_to_dicom_dict(dicom_dict)
                 all_dicom_dict[folder] = dicom_dict
                 python_object_dump(dicom_dict, dump_filepath)
