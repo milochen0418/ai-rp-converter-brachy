@@ -1210,51 +1210,6 @@ def generate_output_to_ct_obj(ct_obj):
     pass
 
 # FUNCTIONS - main genearte function
-def generate_needle_contours_infos_to_dicom_dict(dicom_dict):
-    # Process to make needle_contours_infos
-    # Step 1. find out the needle contour that focus on most light part
-    for z in sorted(dicom_dict['z'].keys()):
-        ct_obj = dicom_dict['z'][z]
-        #needle_contours_infos = [info for info in ct_obj['output']['contours_infos']['algo04'] if (info['area_mm2'] < 10) ]
-        needle_contours_infos = [info for info in ct_obj['output']['contours_infos']['algo06'] if(info['area_mm2'] < 10)]
-        ct_obj['output']['needle_contours_infos'] = copy.deepcopy(needle_contours_infos)
-        print('len(dicom_dict["z"][{}]["output"]["needle_contours_infos"]) = {}'.format(z, len(dicom_dict['z'][z]['output']['needle_contours_infos'])))
-    # Step 2. pick up  15px * 15 px picture for each light point
-    for z in sorted(dicom_dict['z'].keys()):
-        ct_obj = dicom_dict['z'][z]
-        ps_x = ct_obj['ps_x']
-        ps_y = ct_obj['ps_y']
-        for info in ct_obj['output']['needle_contours_infos']:
-            print('({}, {}, {})'.format(info['mean'][0], info['mean'][1], z))
-            mean_x = info['mean'][0]
-            mean_y = info['mean'][1]
-            rescale_pixel_array = ct_obj['rescale_pixel_array']
-            x_min = mean_x - 7
-            x_max = mean_x + 7
-            y_min = mean_y - 7
-            y_max = mean_y + 7
-            if x_min < 0:
-                x_min = 0
-            if x_max >= 512:
-                x_max = 512
-            if y_min < 0:
-                y_min = 0
-            if y_max >= 512:
-                y_max = 512
-            #pick_picture = rescale_pixel_array[x_min:x_max, y_min:y_max]
-            pick_picture = rescale_pixel_array[y_min:y_max, x_min:x_max]
-            info['pick_picture'] = pick_picture
-            img = pick_picture
-            gray_img = convert_to_gray_image(img)
-            filter_img = cv2.adaptiveThreshold(gray_img, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 15, -22)
-            contours = get_max_contours_by_filter_img(img, filter_img, ContourRetrievalMode=cv2.RETR_EXTERNAL)
-            info['pick_picture_contours'] = contours
-            info['pick_picture_contour_area_mm2s'] = [(cv2.contourArea(contour) * ps_x * ps_y) for contour in contours]
-
-
-
-
-            #pick_area_mm2 = cv2.contourArea(contour) * ps_x * ps_y
 def generate_brachy_rp_file(RP_OperatorsName, dicom_dict, out_rp_filepath, is_enable_print=False):
     if (is_enable_print == False):
         blockPrint()
@@ -1423,23 +1378,12 @@ def generate_all_rp_process(
     #for folder_idx, folder in enumerate(sorted(f_list)):
     for folder_idx, folder in enumerate(sorted_f_list):
         enablePrint()
-        #if (os.path.basename(folder) not in ['21569696', '33220132']):
-        #    continue
-        #if (os.path.basename(folder) not in ['21569696']):
-        #    continue
-        #if (os.path.basename(folder) not in ['487961']): # One Needle case
-        #    continue
-        #if (os.path.basename(folder) not in ['34982640']):
-        #    continue
-        #if (os.path.basename(folder) not in ['24460566-2']):
-        #    continue
         if len(debug_folders) != 0:
             if (os.path.basename(folder) not in debug_folders):
                 continue
 
         print('\n[{}/{}] Loop info : folder_idx = {}, folder = {}'.format(folder_idx + 1, len(folders), folder_idx, folder),flush=True)
         byte_filename = r'{}.bytes'.format(os.path.basename(folder))
-        #dump_filepath = os.path.join('contours_bytes', byte_filename)
         dump_filepath = os.path.join(bytes_dump_folder_filepath, byte_filename)
 
         if (is_recreate_bytes == True):
@@ -1474,7 +1418,6 @@ def generate_all_rp_process(
         folder = os.path.basename(folder)
         total_folders.append(folder)
         try:
-            #bytes_filepath = os.path.join('contours_bytes', r'{}.bytes'.format(folder))
             bytes_filepath = os.path.join(bytes_dump_folder_filepath, r'{}.bytes'.format(folder))
             dicom_dict = python_object_load(bytes_filepath)
 
@@ -1483,7 +1426,6 @@ def generate_all_rp_process(
 
             metadata = dicom_dict['metadata']
             # out_rp_filepath format is PatientID, RS StudyDate  and the final is folder name processing by coding
-
 
             out_rp_filepath = r'RP.{}.{}.f{}.dcm'.format(  metadata['RS_PatientID'],  metadata['RS_StudyDate'],  os.path.basename(metadata['folder']) )
             #out_rp_filepath = os.path.join('all_rp_output', out_rp_filepath)
