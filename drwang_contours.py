@@ -1660,7 +1660,7 @@ def generate_all_patient_needle_fixed_area_csv_report(root_folder = r'RAL_plan_n
         print('', end='\n', flush=True)
     pass
 def generate_brachy_rp_file(RP_OperatorsName, dicom_dict, out_rp_filepath, is_enable_print=False):
-    #is_enable_print=True
+    is_enable_print=True
     if (is_enable_print == False):
         blockPrint()
     else:
@@ -1731,7 +1731,10 @@ def generate_brachy_rp_file(RP_OperatorsName, dicom_dict, out_rp_filepath, is_en
 
     # Step 4.2 Delete the point in the rp lines that z < z_target
     z_target = get_HR_CTV_min_z(dicom_dict['pathinfo']['rs_filepath']) - 20
+    print('ErrorDebug')
+    print(tandem_rp_line)
     tandem_rp_line = [pt for pt in tandem_rp_line if (pt[2] > z_target)]
+    print(tandem_rp_line)
     lt_ovoid_rp_line = [pt for pt in lt_ovoid_rp_line if (pt[2] > z_target)]
     rt_ovoid_rp_line = [pt for pt in rt_ovoid_rp_line if (pt[2] > z_target)]
     for r_idx in range(len(rp_needle_lines)):
@@ -2732,6 +2735,7 @@ if __name__ == '__main__':
                             rp_output_folder_filepath='Study-RAL-implant_20191112_RP_Files',bytes_dump_folder_filepath='Study-RAL-implant_20191112_Bytes_Files',
                             is_recreate_bytes=False, debug_folders=[])
     #'804045'
+
     # 31 CASE
     print('root_folder = RAL_plan_new_20190905 -> {}'.format([os.path.basename(item) for item in os.listdir('RAL_plan_new_20190905')]))
     generate_all_rp_process(root_folder=r'RAL_plan_new_20190905',
