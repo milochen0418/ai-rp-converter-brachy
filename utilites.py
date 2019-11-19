@@ -625,6 +625,7 @@ def wrap_to_rp_file(RP_OperatorsName, rs_filepath, tandem_rp_line, out_rp_filepa
         for pt in rp_line:
             print('\t, {}'.format(pt))
     # blockPrint()
+    max_idx = 0
     for idx, rp_line in enumerate(rp_lines):
         if (False and len(needle_rp_lines) == 0):
             enablePrint()
@@ -663,5 +664,7 @@ def wrap_to_rp_file(RP_OperatorsName, rs_filepath, tandem_rp_line, out_rp_filepa
             BCPEndPt.ControlPointIndex = 2 * pt_idx + 1
             rp_fp.ApplicationSetupSequence[0].ChannelSequence[idx].BrachyControlPointSequence.append(BCPStartPt)
             rp_fp.ApplicationSetupSequence[0].ChannelSequence[idx].BrachyControlPointSequence.append(BCPEndPt)
+        max_idx = idx
+    rp_fp.ApplicationSetupSequence[0].ChannelSequence = copy.deepcopy(rp_fp.ApplicationSetupSequence[0].ChannelSequence[0:max_idx + 1])
     pydicom.write_file(out_rp_filepath, rp_fp)
     pass
