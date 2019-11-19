@@ -1391,30 +1391,6 @@ def generate_brachy_rp_file_without_needle(RP_OperatorsName, dicom_dict, out_rp_
     if (is_enable_print == False):
         enablePrint()
 
-# FUNCTIONS - Some file batch processing function
-def contours_python_object_dump(root_folder, filename):
-    # Step 1. declare all_dicom_dict
-    all_dicom_dict = {}
-    # Step 2. Generate all our target
-    #root_folder = r'RAL_plan_new_20190905'
-    f_list = [ os.path.join(root_folder, file) for file in os.listdir(root_folder) ]
-    for folder in sorted(f_list):
-        dicom_dict = get_dicom_dict(folder)
-        generate_metadata_to_dicom_dict(dicom_dict)
-        generate_output_to_dicom_dict(dicom_dict)
-        all_dicom_dict[folder] = dicom_dict
-        byte_filename = r'{}.bytes'.format(os.path.basename(folder))
-        dump_filepath = os.path.join('contours_bytes', byte_filename)
-        python_object_dump(dicom_dict, dump_filepath)
-        print('Create {}'.format(dump_filepath))
-    # Step 3. Use python_object_dump to dump it into some file
-    print('Creating {} in very largest size'.format(filename))
-    python_object_dump(all_dicom_dict, filename)
-    print('Created {}'.format(filename))
-def contours_python_object_load(filename):
-    # load the file to load all contours algo's result
-    obj = python_object_load(filename)
-    return obj
 
 # FUNCTIONS - Some ploting utility functions support for you to check CT pictures with data
 def generate_all_rp_process(
@@ -1560,7 +1536,7 @@ if __name__ == '__main__':
     print('root_folder = Study-RAL-implant_20191112 -> {}'.format([os.path.basename(item) for item in os.listdir('Study-RAL-implant_20191112')]))
     generate_all_rp_process(root_folder=r'Study-RAL-implant_20191112',
                             rp_output_folder_filepath='Study-RAL-implant_20191112_RP_Files',bytes_dump_folder_filepath='Study-RAL-implant_20191112_Bytes_Files',
-                            is_recreate_bytes=True, debug_folders=[])
+                            is_recreate_bytes=True, debug_folders=['24460566'])
     # 31 CASE
     #print('root_folder = RAL_plan_new_20190905 -> {}'.format([os.path.basename(item) for item in os.listdir('RAL_plan_new_20190905')]))
     #generate_all_rp_process(root_folder=r'RAL_plan_new_20190905',
