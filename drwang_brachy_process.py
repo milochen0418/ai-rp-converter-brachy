@@ -37,22 +37,268 @@ def blockPrint(): # Disable printing
     sys.stdout = open(os.devnull, 'w')
 def enablePrint(): # Restore for printing
     sys.stdout = sys.__stdout__
-def create_directory_if_not_exists(path):
-    """
-    Creates 'path' if it does not exist
-    If creation fails, an exception will be thrown
-    :param path:    the path to ensure it exists
-    """
-    try:
-        os.makedirs(path)
-    except OSError as ex:
-        if ex.errno == errno.EEXIST and os.path.isdir(path):
-            pass
-        else:
-            print('An error happened trying to create ' + path)
-            raise
 
-# FUNCTIONS - Algorithm processing Fucntions
+
+# FUNCTIONS - Horizontal Algorithm for each ct slice by open cv
+def get_dicom_dict(folder):
+    def get_dicom_folder_pathinfo(folder):
+        dicom_folder = {}
+        ct_filelist = []
+        rs_filepath = None
+        rd_filepath = None
+        rp_filepath = None
+        for file in os.listdir(folder):
+            filepath = os.path.join(folder, file)
+            try:
+                ct_dicom = pydicom.read_file(filepath)
+                """
+                CT Computed Tomography
+                RTDOSE Radiotherapy Dose
+                RTPLAN Radiotherapy Plan
+                RTSTRUCT Radiotherapy Structure Set
+                """
+                m = ct_dicom.Modality
+                if (m == 'CT'):
+                    ct_filelist.append(filepath)
+                elif (m == 'RTDOSE'):
+                    rd_filepath = filepath
+                elif (m == 'RTSTRUCT'):
+                    rs_filepath = filepath
+                elif (m == 'RTPLAN'):
+                    rp_filepath = filepath
+            except Exception as e:
+                pass
+        dicom_folder['ct_filelist'] = ct_filelist
+        dicom_folder['rs_filepath'] = rs_filepath
+        dicom_folder['rd_filepath'] = rd_filepath
+        dicom_folder['rp_filepath'] = rp_filepath
+        return dicom_folder
+    z_map = {}
+    ct_filepath_map = {}
+    out_dict = {}
+    out_dict['z'] = z_map
+    out_dict['ct_filepath'] = ct_filepath_map
+    out_dict['metadata'] = {}
+    out_dict['metadata']['folder'] = folder
+    pathinfo = get_dicom_folder_pathinfo(folder)
+    out_dict['pathinfo'] = pathinfo
+
+    rs_filepath = out_dict['pathinfo']['rs_filepath']
+    rs_fp = pydicom.read_file(rs_filepath)
+    out_dict['metadata']['RS_StudyDate'] = rs_fp.StudyDate
+    out_dict['metadata']['RS_PatientID'] = rs_fp.PatientID
+    out_dict['metadata']['RS_SOPInstanceUID'] = rs_fp.SOPInstanceUID
+
+    # Set metadata for ROINumber list (for wrap rp data)
+    rs_fp = pydicom.read_file(rs_filepath)
+    if (rs_fp != None):
+
+        # applicator_target_list = ['Applicator1', 'Applicator2', 'Applicator3']
+        # Process to get applicator_target_list
+        applicator_target_list = []
+        for item in rs_fp.StructureSetROISequence:
+            if 'Applicator' in item.ROIName:
+                applicator_target_list.append(item.ROIName)
+
+
+        applicator_roi_dict = {}
+        for app_name in applicator_target_list:
+            for item in rs_fp.StructureSetROISequence:
+                if (item.ROIName == app_name):
+                    applicator_roi_dict[app_name] = item.ROINumber
+                    break
+        #print('\napplicator_roi_dict = {}'.format(applicator_roi_dict))
+        #display(applicator_roi_dict)
+        #print(applicator_roi_dict.values())
+        roi_num_list = [int(num) for num in applicator_roi_dict.values()]
+        #print(roi_num_list)
+        out_dict['metadata']['applicator123_roi_numbers'] = roi_num_list.copy()
+        out_dict['metadata']['applicator_roi_dict'] = applicator_roi_dict
+
+    ct_filelist = pathinfo['ct_filelist']
+    for ct_filepath in ct_filelist:
+        # print('ct_filepath = ', ct_filepath)
+        ct_fp = pydicom.read_file(ct_filepath)
+        ct_obj = {}
+        ct_obj['dicom_dict'] = out_dict
+        ct_obj['filepath'] = ct_filepath
+        ct_obj["pixel_array"] = copy.deepcopy(ct_fp.pixel_array)
+        ct_obj["RescaleSlope"] = ct_fp.RescaleSlope
+        ct_obj["RescaleIntercept"] = ct_fp.RescaleIntercept
+        ct_obj["rescale_pixel_array"] = ct_fp.pixel_array * ct_fp.RescaleSlope + ct_fp.RescaleIntercept
+        ct_obj['ps_x'] = ct_fp.PixelSpacing[0]
+        ct_obj['ps_y'] = ct_fp.PixelSpacing[1]
+        ct_obj['origin_x'] = ct_fp.ImagePositionPatient[0]
+        ct_obj['origin_y'] = ct_fp.ImagePositionPatient[1]
+        ct_obj['origin_z'] = ct_fp.ImagePositionPatient[2]
+        ct_obj['SliceLocation'] = ct_fp.SliceLocation
+        ct_obj['output'] = {} # put your output result in here
+
+        z = ct_obj['SliceLocation']
+        z_map[ z ] = ct_obj
+        ct_filepath_map[ct_filepath] = ct_obj
+        #print('ct_obj={}'.format(ct_obj))
+    return out_dict
+def generate_metadata_to_dicom_dict(dicom_dict):
+    (view_min_y, view_max_y, view_min_x, view_max_x) = get_view_scope_by_dicom_dict(dicom_dict)
+    metadata = dicom_dict['metadata']
+    metadata['view_scope'] = (view_min_y, view_max_y, view_min_x, view_max_x)
+
+    # Figure out global_max_contour_constant_value
+    A = dicom_dict['z'][ sorted(dicom_dict['z'].keys())[0] ]['rescale_pixel_array']
+    data = A.ravel()
+    sorted_data = np.copy(data)
+    sorted_data.sort()
+    global_max_contour_constant_value = sorted_data[-20] - 100
+    metadata['global_max_contour_constant_value'] = global_max_contour_constant_value
+
+    # metadata['view_scope'] = (view_min_y, view_max_y, view_min_x, view_max_x)
+    #(contours_without_filter, constant) = get_max_contours(img, ContourRetrievalMode=cv2.RETR_TREE)
+def generate_output_to_dicom_dict(dicom_dict):
+    def get_contour_xy_mean(cv_contour):
+        rect_info = get_rect_info_from_cv_contour(cv_contour)
+        (x_mean, y_mean) = rect_info[2]
+        return (x_mean, y_mean)
+    def get_contour_area_mm2(contour, ps_x, ps_y):
+        area_mm2 = cv2.contourArea(contour) * ps_x * ps_y
+        return area_mm2
+    def convert_to_gray_image(pixel_array):
+        img = np.copy(pixel_array)
+        # Convert to float to avoid overflow or underflow losses.
+        img_2d = img.astype(float)
+        # Rescaling grey scale between 0-255
+        img_2d_scaled = (np.maximum(img_2d, 0) / img_2d.max()) * 255.0
+        # Convert to uint
+        img_2d_scaled = np.uint8(img_2d_scaled)
+        return img_2d_scaled
+    def get_max_contours(A, constant_value=None, ContourRetrievalMode=cv2.RETR_EXTERNAL):
+        constant = None
+        if constant_value == None:
+            # Algoruthm to find constant value
+            data = A.ravel()
+            sorted_data = np.copy(data)
+            sorted_data.sort()
+            constant = sorted_data[-20] - 100
+        else:
+            constant = constant_value
+        filter_img = np.zeros((A.shape[0], A.shape[1], 3), np.uint8)
+        filter_img[A <= constant] = (0, 0, 0)
+        filter_img[A > constant] = (255, 255, 255)
+        gray_image = cv2.cvtColor(filter_img, cv2.COLOR_RGB2GRAY)
+        _, contours, _ = cv2.findContours(gray_image, ContourRetrievalMode, cv2.CHAIN_APPROX_NONE)
+        return (contours, constant)
+    def get_max_contours_by_filter_img(A, filter_img, ContourRetrievalMode=cv2.RETR_EXTERNAL):
+        # gray_image = cv2.cvtColor(filter_img, cv2.COLOR_RGB2GRAY)
+        gray_image = filter_img
+        # findContours
+        # _, contours, _ = cv2.findContours(gray_image, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
+        # _, contours, _ = cv2.findContours(gray_image, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+        _, contours, _ = cv2.findContours(gray_image, ContourRetrievalMode, cv2.CHAIN_APPROX_NONE)
+        return contours
+    def get_contours_from_edge_detection_algo_01(img, filter_img):
+        contours = get_max_contours_by_filter_img(img, filter_img, ContourRetrievalMode=cv2.RETR_TREE)
+        return contours
+    def get_contours_from_edge_detection_algo_02(img, filter_img):
+        contours = get_max_contours_by_filter_img(img, filter_img, ContourRetrievalMode=cv2.RETR_EXTERNAL)
+        return contours
+    def get_contours_from_edge_detection_algo_03(img):
+        (contours_without_filter, constant) = get_max_contours(img, ContourRetrievalMode=cv2.RETR_TREE)
+        contours = contours_without_filter
+        return contours
+    def get_contours_from_edge_detection_algo_04(img):
+        (contours_without_filter, constant) = get_max_contours(img, ContourRetrievalMode=cv2.RETR_EXTERNAL)
+        contours = contours_without_filter
+        return contours
+    def get_contours_from_edge_detection_algo_05(img, contour_constant_value):
+        (contours_without_filter, constant) = get_max_contours(img, constant_value=contour_constant_value,
+                                                               ContourRetrievalMode=cv2.RETR_TREE)
+        contours = contours_without_filter
+        return contours
+    def get_contours_from_edge_detection_algo_06(img, contour_constant_value):
+        # the img should be rescale_pixel_array
+        (contours_without_filter, constant) = get_max_contours(img, constant_value=contour_constant_value,
+                                                               ContourRetrievalMode=cv2.RETR_EXTERNAL)
+        contours = contours_without_filter
+        return contours
+    def get_contours_from_edge_detection_algo_07(img, contour_constant_value, ps_x, ps_y):
+        (contours_without_filter, constant) = get_max_contours(img, constant_value=contour_constant_value,
+                                                               ContourRetrievalMode=cv2.RETR_EXTERNAL)
+        needle_allowed_area_mm2 = 10
+        needle_contours = [contour for contour in contours_without_filter if
+                           (get_contour_area_mm2(contour, ps_x, ps_y) < needle_allowed_area_mm2)]
+        return needle_contours
+    def generate_output_to_ct_obj(ct_obj):
+        out = ct_obj['output']
+        rescale_pixel_array = ct_obj['rescale_pixel_array']
+        (view_min_y, view_max_y, view_min_x, view_max_x) = ct_obj['dicom_dict']['metadata']['view_scope']
+        global_max_contour_constant_value = ct_obj['dicom_dict']['metadata']['global_max_contour_constant_value']
+
+        # view_pixel_array = rescale_pixel_array[view_min_y:view_max_y, view_min_x:view_max_x]
+        img = ct_obj['rescale_pixel_array']
+        gray_img = convert_to_gray_image(img)
+        gray_img = gray_img[view_min_y: view_max_y, view_min_x:view_max_x]
+        img = img[view_min_y: view_max_y, view_min_x:view_max_x]
+        rescale_pixel_array = ct_obj['rescale_pixel_array']
+        rescale_pixel_array = rescale_pixel_array[view_min_y: view_max_y, view_min_x:view_max_x]
+        filter_img = cv2.adaptiveThreshold(gray_img, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 15, -22)
+        ps_x = ct_obj['ps_x']
+        ps_y = ct_obj['ps_y']
+        ct_obj['output']['contours'] = {}
+        ct_obj['output']['contours']['algo01'] = get_contours_from_edge_detection_algo_01(img, filter_img)
+        ct_obj['output']['contours']['algo02'] = get_contours_from_edge_detection_algo_02(img, filter_img)
+        ct_obj['output']['contours']['algo03'] = get_contours_from_edge_detection_algo_03(img)
+        ct_obj['output']['contours']['algo04'] = get_contours_from_edge_detection_algo_04(img)
+        contour_constant_value = ct_obj['dicom_dict']['metadata']['global_max_contour_constant_value']
+        ct_obj['output']['contours']['algo05'] = get_contours_from_edge_detection_algo_05(rescale_pixel_array,
+                                                                                          contour_constant_value)
+        ct_obj['output']['contours']['algo06'] = get_contours_from_edge_detection_algo_06(rescale_pixel_array,
+                                                                                          contour_constant_value)
+        ct_obj['output']['contours']['algo07'] = get_contours_from_edge_detection_algo_07(rescale_pixel_array,
+                                                                                          contour_constant_value, ps_x,
+                                                                                          ps_y)
+
+        # ct_obj['output']['contours']['algo05'] = get_contours_from_edge_detection_algo_05(img, contour_constant_vlaue = global_max_contour_constant_value)
+        # ct_obj['output']['contours']['algo06'] = get_contours_from_edge_detection_algo_06(img, contour_constant_value = global_max_contour_constant_value)
+
+        # Process to contours to fit global pixel img
+        ct_obj['output']['contours512'] = {}
+        for algo_key in sorted(ct_obj['output']['contours'].keys()):
+            ct_obj['output']['contours512'][algo_key] = copy.deepcopy(ct_obj['output']['contours'][algo_key])
+            contours = ct_obj['output']['contours512'][algo_key]
+            for contour in contours:
+                for [pt] in contour:
+                    pt[0] = view_min_x + pt[0]
+                    pt[1] = view_min_y + pt[1]
+
+        # Generate contours infos like x,y mean and area_mm
+        ct_obj['output']['contours_infos'] = {}
+        ps_x = ct_obj['ps_x']
+        ps_y = ct_obj['ps_y']
+        for algo_key in (ct_obj['output']['contours'].keys()):
+            contours = ct_obj['output']['contours'][algo_key]
+            contours_infos = []
+            for contour in contours:
+                contours_info = {}
+                # contours_infos.append(contours_info)
+                (x, y) = get_contour_xy_mean(contour)
+                global_x_pixel = x + view_min_x
+                global_y_pixel = y + view_min_y
+                area_mm2 = get_contour_area_mm2(contour, ps_x, ps_y)
+                contours_info['mean'] = [global_x_pixel, global_y_pixel]
+                contours_info['area_mm2'] = area_mm2
+                contours_info['contour'] = contour
+                contours_infos.append(contours_info)
+            ct_obj['output']['contours_infos'][algo_key] = contours_infos
+        pass
+    folder = dicom_dict['metadata']['folder']
+    z_map = dicom_dict['z']
+    for z_idx, z in enumerate(sorted(z_map.keys())):
+        ct_obj = z_map[z]
+        #print('z={}, {}'.format(z, ct_obj.keys()))
+        generate_output_to_ct_obj(ct_obj)
+        # information is in ct_obj['output']
+
+# FUNCTIONS - Utility for Vertical Algorithm
 def distance(pt1, pt2):
     axis_num = len(pt1)
     # Assume maximum of axis number of pt is 3
@@ -65,39 +311,6 @@ def distance(pt1, pt2):
         sum = sum + (pt1[idx] - pt2[idx]) ** 2
     ans = math.sqrt(sum)
     return ans
-def convert_to_gray_image(pixel_array):
-    img = np.copy(pixel_array)
-    # Convert to float to avoid overflow or underflow losses.
-    img_2d = img.astype(float)
-    # Rescaling grey scale between 0-255
-    img_2d_scaled = (np.maximum(img_2d, 0) / img_2d.max()) * 255.0
-    # Convert to uint
-    img_2d_scaled = np.uint8(img_2d_scaled)
-    return img_2d_scaled
-def get_max_contours(A, constant_value=None, ContourRetrievalMode=cv2.RETR_EXTERNAL):
-    constant = None
-    if constant_value == None:
-        # Algoruthm to find constant value
-        data = A.ravel()
-        sorted_data = np.copy(data)
-        sorted_data.sort()
-        constant = sorted_data[-20] - 100
-    else:
-        constant = constant_value
-    filter_img = np.zeros((A.shape[0], A.shape[1], 3), np.uint8)
-    filter_img[A <= constant] = (0, 0, 0)
-    filter_img[A > constant] = (255, 255, 255)
-    gray_image = cv2.cvtColor(filter_img, cv2.COLOR_RGB2GRAY)
-    _, contours, _ = cv2.findContours(gray_image, ContourRetrievalMode, cv2.CHAIN_APPROX_NONE)
-    return (contours, constant)
-def get_max_contours_by_filter_img(A, filter_img, ContourRetrievalMode=cv2.RETR_EXTERNAL):
-    # gray_image = cv2.cvtColor(filter_img, cv2.COLOR_RGB2GRAY)
-    gray_image = filter_img
-    # findContours
-    # _, contours, _ = cv2.findContours(gray_image, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
-    # _, contours, _ = cv2.findContours(gray_image, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
-    _, contours, _ = cv2.findContours(gray_image, ContourRetrievalMode, cv2.CHAIN_APPROX_NONE)
-    return contours
 def get_view_scope_by_dicom_dict(dicom_dict):
     #return (156, 356, 156, 356)
     return (0, 512, 0, 512)
@@ -198,56 +411,6 @@ def get_view_scope_by_dicom_dict(dicom_dict):
     #return (50, 50, 462, 462)
     #return (view_min_y=156, view_max_y=356, view_min_x=156, view_max_x=356)
     return (view_min_y, view_max_y, view_min_x, view_max_x)
-def get_contours_from_edge_detection_algo_01(img, filter_img):
-    contours = get_max_contours_by_filter_img(img, filter_img, ContourRetrievalMode=cv2.RETR_TREE)
-    return contours
-def get_contours_from_edge_detection_algo_02(img, filter_img):
-    contours = get_max_contours_by_filter_img(img, filter_img, ContourRetrievalMode=cv2.RETR_EXTERNAL)
-    return contours
-def get_contours_from_edge_detection_algo_03(img):
-    (contours_without_filter, constant) = get_max_contours(img, ContourRetrievalMode=cv2.RETR_TREE)
-    contours = contours_without_filter
-    return contours
-def get_contours_from_edge_detection_algo_04(img):
-    (contours_without_filter, constant) = get_max_contours(img, ContourRetrievalMode=cv2.RETR_EXTERNAL)
-    contours = contours_without_filter
-    return contours
-def get_contours_from_edge_detection_algo_05(img, contour_constant_value):
-    (contours_without_filter, constant) = get_max_contours(img, constant_value=contour_constant_value, ContourRetrievalMode=cv2.RETR_TREE)
-    contours = contours_without_filter
-    return contours
-def get_contours_from_edge_detection_algo_06(img, contour_constant_value):
-    # the img should be rescale_pixel_array
-    (contours_without_filter, constant) = get_max_contours(img, constant_value=contour_constant_value, ContourRetrievalMode=cv2.RETR_EXTERNAL)
-    contours = contours_without_filter
-    return contours
-def get_contours_from_edge_detection_algo_07(img, contour_constant_value, ps_x, ps_y):
-    (contours_without_filter, constant) = get_max_contours(img, constant_value=contour_constant_value, ContourRetrievalMode=cv2.RETR_EXTERNAL)
-    needle_allowed_area_mm2 = 10
-    needle_contours = [contour for contour in contours_without_filter if (get_contour_area_mm2(contour, ps_x, ps_y) < needle_allowed_area_mm2)]
-    return needle_contours
-def get_rect_info_from_cv_contour(cv_contour):
-    i = cv_contour
-    con = i.reshape(i.shape[0], i.shape[2])
-    x_min = con[:, 0].min()
-    x_max = con[:, 0].max()
-    x_mean = con[:, 0].mean()
-    y_min = con[:, 1].min()
-    y_max = con[:, 1].max()
-    y_mean = con[:, 1].mean()
-    h = y_max - y_min
-    w = x_max - x_min
-    x_mean = int(x_mean)
-    y_mean = int(y_mean)
-    rect_info = [(x_min, x_max, y_min, y_max), (w, h), (x_mean, y_mean)]
-    return rect_info
-def get_contour_xy_mean(cv_contour):
-    rect_info = get_rect_info_from_cv_contour(cv_contour)
-    (x_mean, y_mean) = rect_info[2]
-    return (x_mean, y_mean)
-def get_contour_area_mm2(contour,ps_x, ps_y) :
-    area_mm2  = cv2.contourArea(contour) * ps_x * ps_y
-    return area_mm2
 def get_minimum_rect_from_contours(contours, padding=2):
     rect = (x_min, x_max, y_min, y_max) = (0, 0, 0, 0)
     is_first = True
@@ -327,6 +490,8 @@ def get_most_closed_pt(src_pt, pts, allowed_distance=100):
                 dst_pt = pt
         pass
     return dst_pt
+
+# FUNCTIONS - Vertial Algorithms
 def algo_to_get_pixel_lines(dicom_dict, needle_lines = []):
     # type: (dicom_dict) -> (lt_ovoid, tandem, rt_ovoid)
     # Step 1. Use algo05 to get center point of inner contour
@@ -731,271 +896,8 @@ def algo_to_get_needle_lines(dicom_dict):
                 break
         needle_lines.append(needle_line)
     return needle_lines
-def get_applicator_rp_line(metric_line, first_purpose_distance_mm, each_purpose_distance_mm):
-    if (len(metric_line) == 0):
-        return []
-    # REWRITE get_metric_pt_info_by_travel_distance, so the get_metric_pt, reduct_distance_step and get_metric_pt_info_travel_distance will not be USED
-    def get_metric_pt(metric_line, pt_idx, pt_idx_remainder):
-        # print('get_metric_pt(metric_line={}, pt_idx={}, pt_idx_remainder={})'.format(metric_line, pt_idx, pt_idx_remainder))
-        pt = metric_line[pt_idx].copy()
-        try:
-            if (pt_idx + 1 >= len(metric_line)):
-                end_pt = metric_line[pt_idx]
-            else:
-                end_pt = metric_line[pt_idx + 1]
-        except Exception as e:
-            print('Exception in get_metric_pt() of get_applicator_rp_line()')
-            print('pt_idx = {}'.format(pt_idx))
-            print('pt_idx_remainder = {}'.format(pt_idx_remainder))
-            print('metric_line[{}] = {}'.format(pt_idx, metric_line[pt_idx]))
-            raise
 
-        for axis_idx in range(3):
-            # diff = end_pt[axis_idx] - pt[axis_idx]
-            # diff_with_ratio = diff * pt_idx_remainder
-            # print('axis_idx = {} ->  diff_with_ratio = {}'.format(axis_idx, diff_with_ratio) )
-            pt[axis_idx] += ((end_pt[axis_idx] - pt[axis_idx]) * pt_idx_remainder)
-            # pt[axis_idx] = pt[axis_idx] + diff_with_ratio
-        return pt
-    def reduce_distance_step(metric_line, pt_idx, pt_idx_remainder, dist):
-        # reduce dist and move further more step for (pt_idx, pt_idx_remainder)
-        # ret_dist = ??  reduce dist into ret_dist
-        # Just implement code here , so that the data move a little distance. (mean reduce dist and move more)
-
-        start_pt_idx = pt_idx
-        start_pt_idx_remainder = pt_idx_remainder
-        start_pt = get_metric_pt(metric_line, start_pt_idx, start_pt_idx_remainder)
-
-        # To figure out what distance we perfer to reduce in this step
-        # And the idea is seperate int to two case
-        if start_pt_idx < len(metric_line) - 1:
-            # CASE: there is a next pt_idx for start_pt_idx
-            # In this case, we let end_pt_idx be the next pt_idx of start_pt_idx
-            # So it start_pt_idx +1. and don't forget to reset remainder in to zero
-            end_pt_idx = start_pt_idx + 1
-            end_pt_idx_remainder = 0
-
-        else:
-            # CASE there is no any next _pt_idx for start_pt_idx
-            # In this case, we let end_pt_idx point to end idx of line and let remainder be in maximum value (1.0)
-            # So the end_pt with idx and remainder can represent the most far point in the metric line.
-            end_pt_idx = start_pt_idx
-            end_pt_idx_remainder = 1
-
-        end_pt = get_metric_pt(metric_line, end_pt_idx, end_pt_idx_remainder)
-        max_reducable_dist = distance(start_pt, end_pt)  # max_reducable_dist in this iteration
-
-        # We have start_pt and end_pt , and we have the dist value
-        # So we can try to walk from start_pt to some point which belong to [start_pt, end_pt)
-        # There are two cases for this walking
-        # CASE 1: the end_pt is not enough to walking dist , so just walking to the end_pt
-        # CASE 2: the end_pt is enough and we just need to figure where to stop between [start_pt, end_pt)
-        # PS: 'is enough' is mean distance will be reduced to zero, so the end of travel is in  [start_pt, end_pt)
-        if dist > max_reducable_dist:  # CASE 1 the end_pt is not enough to walking dist
-            dist_after_walking = dist - max_reducable_dist
-            walking_stop_pt_idx = end_pt_idx
-            walking_stop_pt_idx_remainder = end_pt_idx_remainder
-            # return (dist, end_pt_idx, end_pt_idx_remainder)
-            return (dist_after_walking, walking_stop_pt_idx, walking_stop_pt_idx_remainder)
-        else:  # CASE 2 the end_pt is enough, so walking_stop_pt is between [start_pt, end_pt)
-            walking_stop_pt_idx = start_pt_idx
-            # Figure out walking_stop_pt_idx_remainder
-            segment_dist = distance(start_pt, end_pt)
-            if (segment_dist == 0):
-                # To solve bug of divide zero, Sometimes the segment_dist will be zero
-                segment_dist = 0.000000001
-            ratio = dist / segment_dist
-            walking_stop_pt_idx_remainder = start_pt_idx_remainder + (1 - start_pt_idx_remainder) * ratio
-            dist_after_walking = 0
-            return (dist_after_walking, walking_stop_pt_idx, walking_stop_pt_idx_remainder)
-
-        pass
-        # return (ret_dist, ret_pt_idx, ret_pt_idx_remainder)
-    def get_metric_pt_info_by_travel_distance(metric_line, pt_idx, pt_idx_remainder, travel_dist):
-        dist = travel_dist
-        count_max = len(metric_line)
-        count = 0
-        while (True):
-            (t_dist, t_pt_idx, t_pt_idx_remainder) = reduce_distance_step(metric_line, pt_idx, pt_idx_remainder, dist)
-
-            if pt_idx == len(metric_line) - 1 and pt_idx_remainder == 1:
-                # CASE 0: This is mean the distanced point will out of the line
-                print('out of line and remaind unproces distance = ', t_dist)
-                t_pt = metric_line[-1].copy()
-                return (t_pt, t_pt_idx, t_pt_idx_remainder, t_dist)
-                break
-            if t_dist == 0:
-                # CASE 1: All distance have been reduced
-                t_pt = get_metric_pt(metric_line, t_pt_idx, t_pt_idx_remainder)
-                return (t_pt, t_pt_idx, t_pt_idx_remainder, t_dist)
-
-            count += 1
-            if count > count_max:
-                # CASE 2: over looping of what we expect. This is case of bug in my source code
-                print('The out of counting in loop is happended. this is a bug')
-                t_pt = get_metric_pt(metric_line, t_pt_idx, t_pt_idx_remainder)
-                return (t_pt, t_pt_idx, t_pt_idx_remainder, t_dist)
-            pt_idx = t_pt_idx
-            pt_idx_remainder = t_pt_idx_remainder
-            dist = t_dist
-
-    tandem_rp_line = []
-    pt_idx = 0
-    pt_idx_remainder = 0
-    travel_dist = first_purpose_distance_mm
-    (t_pt, t_pt_idx, t_pt_idx_remainder, t_dist) = get_metric_pt_info_by_travel_distance(metric_line, pt_idx,pt_idx_remainder, travel_dist)
-    tandem_rp_line.append(t_pt)
-    for i in range(100):
-        travel_dist = each_purpose_distance_mm
-        (pt_idx, pt_idx_remainder) = (t_pt_idx, t_pt_idx_remainder)
-        (t_pt, t_pt_idx, t_pt_idx_remainder, t_dist) = get_metric_pt_info_by_travel_distance(metric_line, pt_idx,pt_idx_remainder,travel_dist)
-        if (t_pt == tandem_rp_line[-1]):
-            break
-        tandem_rp_line.append(t_pt)
-
-    return tandem_rp_line
-def get_metric_lines_representation(dicom_dict, lt_ovoid, tandem, rt_ovoid):
-    #(metric_lt_ovoid, metric_tandem, metric_rt_ovoid) = get_metric_lines_representation(dicom_dict, lt_ovoid, tandem, rt_ovoid)
-    new_lines = []
-    for line in [lt_ovoid, tandem, rt_ovoid]:
-        new_line = []
-        for pt in line:
-            z = pt[2]
-            ct_obj = dicom_dict['z'][z]
-            x = pt[0] * ct_obj['ps_x'] + ct_obj['origin_x']
-            y = pt[1] * ct_obj['ps_y'] + ct_obj['origin_y']
-            new_line.append([x,y,z])
-        new_lines.append(new_line)
-    (metric_lt_ovoid, metric_tandem, metric_rt_ovoid) = (new_lines[0], new_lines[1], new_lines[2])
-    return (metric_lt_ovoid, metric_tandem, metric_rt_ovoid)
-def get_metric_needle_lines_representation(dicom_dict, needle_lines):
-    metric_needle_lines = []
-    for line in needle_lines:
-        metric_needle_line = []
-        for pt in line:
-            z = pt[2]
-            ct_obj = dicom_dict['z'][z]
-            x = pt[0] * ct_obj['ps_x'] + ct_obj['origin_x']
-            y = pt[1] * ct_obj['ps_y'] + ct_obj['origin_y']
-            metric_needle_line.append([x, y, z])
-        metric_needle_lines.append(metric_needle_line)
-    return metric_needle_lines
-
-# FUNCTIONS - DICOM data processing Functions
-def get_dicom_dict(folder):
-    def get_dicom_folder_pathinfo(folder):
-        dicom_folder = {}
-        ct_filelist = []
-        rs_filepath = None
-        rd_filepath = None
-        rp_filepath = None
-        for file in os.listdir(folder):
-            filepath = os.path.join(folder, file)
-            try:
-                ct_dicom = pydicom.read_file(filepath)
-                """
-                CT Computed Tomography
-                RTDOSE Radiotherapy Dose
-                RTPLAN Radiotherapy Plan
-                RTSTRUCT Radiotherapy Structure Set
-                """
-                m = ct_dicom.Modality
-                if (m == 'CT'):
-                    ct_filelist.append(filepath)
-                elif (m == 'RTDOSE'):
-                    rd_filepath = filepath
-                elif (m == 'RTSTRUCT'):
-                    rs_filepath = filepath
-                elif (m == 'RTPLAN'):
-                    rp_filepath = filepath
-            except Exception as e:
-                pass
-        dicom_folder['ct_filelist'] = ct_filelist
-        dicom_folder['rs_filepath'] = rs_filepath
-        dicom_folder['rd_filepath'] = rd_filepath
-        dicom_folder['rp_filepath'] = rp_filepath
-        return dicom_folder
-    z_map = {}
-    ct_filepath_map = {}
-    out_dict = {}
-    out_dict['z'] = z_map
-    out_dict['ct_filepath'] = ct_filepath_map
-    out_dict['metadata'] = {}
-    out_dict['metadata']['folder'] = folder
-    pathinfo = get_dicom_folder_pathinfo(folder)
-    out_dict['pathinfo'] = pathinfo
-
-    rs_filepath = out_dict['pathinfo']['rs_filepath']
-    rs_fp = pydicom.read_file(rs_filepath)
-    out_dict['metadata']['RS_StudyDate'] = rs_fp.StudyDate
-    out_dict['metadata']['RS_PatientID'] = rs_fp.PatientID
-    out_dict['metadata']['RS_SOPInstanceUID'] = rs_fp.SOPInstanceUID
-
-    # Set metadata for ROINumber list (for wrap rp data)
-    rs_fp = pydicom.read_file(rs_filepath)
-    if (rs_fp != None):
-
-        # applicator_target_list = ['Applicator1', 'Applicator2', 'Applicator3']
-        # Process to get applicator_target_list
-        applicator_target_list = []
-        for item in rs_fp.StructureSetROISequence:
-            if 'Applicator' in item.ROIName:
-                applicator_target_list.append(item.ROIName)
-
-
-        applicator_roi_dict = {}
-        for app_name in applicator_target_list:
-            for item in rs_fp.StructureSetROISequence:
-                if (item.ROIName == app_name):
-                    applicator_roi_dict[app_name] = item.ROINumber
-                    break
-        #print('\napplicator_roi_dict = {}'.format(applicator_roi_dict))
-        #display(applicator_roi_dict)
-        #print(applicator_roi_dict.values())
-        roi_num_list = [int(num) for num in applicator_roi_dict.values()]
-        #print(roi_num_list)
-        out_dict['metadata']['applicator123_roi_numbers'] = roi_num_list.copy()
-        out_dict['metadata']['applicator_roi_dict'] = applicator_roi_dict
-
-    ct_filelist = pathinfo['ct_filelist']
-    for ct_filepath in ct_filelist:
-        # print('ct_filepath = ', ct_filepath)
-        ct_fp = pydicom.read_file(ct_filepath)
-        ct_obj = {}
-        ct_obj['dicom_dict'] = out_dict
-        ct_obj['filepath'] = ct_filepath
-        ct_obj["pixel_array"] = copy.deepcopy(ct_fp.pixel_array)
-        ct_obj["RescaleSlope"] = ct_fp.RescaleSlope
-        ct_obj["RescaleIntercept"] = ct_fp.RescaleIntercept
-        ct_obj["rescale_pixel_array"] = ct_fp.pixel_array * ct_fp.RescaleSlope + ct_fp.RescaleIntercept
-        ct_obj['ps_x'] = ct_fp.PixelSpacing[0]
-        ct_obj['ps_y'] = ct_fp.PixelSpacing[1]
-        ct_obj['origin_x'] = ct_fp.ImagePositionPatient[0]
-        ct_obj['origin_y'] = ct_fp.ImagePositionPatient[1]
-        ct_obj['origin_z'] = ct_fp.ImagePositionPatient[2]
-        ct_obj['SliceLocation'] = ct_fp.SliceLocation
-        ct_obj['output'] = {} # put your output result in here
-
-        z = ct_obj['SliceLocation']
-        z_map[ z ] = ct_obj
-        ct_filepath_map[ct_filepath] = ct_obj
-        #print('ct_obj={}'.format(ct_obj))
-    return out_dict
-def generate_metadata_to_dicom_dict(dicom_dict):
-    (view_min_y, view_max_y, view_min_x, view_max_x) = get_view_scope_by_dicom_dict(dicom_dict)
-    metadata = dicom_dict['metadata']
-    metadata['view_scope'] = (view_min_y, view_max_y, view_min_x, view_max_x)
-
-    # Figure out global_max_contour_constant_value
-    A = dicom_dict['z'][ sorted(dicom_dict['z'].keys())[0] ]['rescale_pixel_array']
-    data = A.ravel()
-    sorted_data = np.copy(data)
-    sorted_data.sort()
-    global_max_contour_constant_value = sorted_data[-20] - 100
-    metadata['global_max_contour_constant_value'] = global_max_contour_constant_value
-
-    # metadata['view_scope'] = (view_min_y, view_max_y, view_min_x, view_max_x)
-    #(contours_without_filter, constant) = get_max_contours(img, ContourRetrievalMode=cv2.RETR_TREE)
+# FUNCTIONS - Wrap RP file
 def wrap_to_rp_file(RP_OperatorsName, rs_filepath, tandem_rp_line, out_rp_filepath, lt_ovoid_rp_line,
                     rt_ovoid_rp_line, needle_rp_lines=[], applicator_roi_dict={}):
     # TODO wrap needles
@@ -1143,82 +1045,166 @@ def wrap_to_rp_file(RP_OperatorsName, rs_filepath, tandem_rp_line, out_rp_filepa
     pydicom.write_file(out_rp_filepath, rp_fp)
     pass
 
-# FUNCTIONS - generate our expected output for each ct_obj in dicom_dict['z'].   (PS:z_map)
-def generate_output_to_dicom_dict(dicom_dict):
-    def generate_output_to_ct_obj(ct_obj):
-        out = ct_obj['output']
-        rescale_pixel_array = ct_obj['rescale_pixel_array']
-        (view_min_y, view_max_y, view_min_x, view_max_x) = ct_obj['dicom_dict']['metadata']['view_scope']
-        global_max_contour_constant_value = ct_obj['dicom_dict']['metadata']['global_max_contour_constant_value']
-
-        # view_pixel_array = rescale_pixel_array[view_min_y:view_max_y, view_min_x:view_max_x]
-        img = ct_obj['rescale_pixel_array']
-        gray_img = convert_to_gray_image(img)
-        gray_img = gray_img[view_min_y: view_max_y, view_min_x:view_max_x]
-        img = img[view_min_y: view_max_y, view_min_x:view_max_x]
-        rescale_pixel_array = ct_obj['rescale_pixel_array']
-        rescale_pixel_array = rescale_pixel_array[view_min_y: view_max_y, view_min_x:view_max_x]
-        filter_img = cv2.adaptiveThreshold(gray_img, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 15, -22)
-        ps_x = ct_obj['ps_x']
-        ps_y = ct_obj['ps_y']
-        ct_obj['output']['contours'] = {}
-        ct_obj['output']['contours']['algo01'] = get_contours_from_edge_detection_algo_01(img, filter_img)
-        ct_obj['output']['contours']['algo02'] = get_contours_from_edge_detection_algo_02(img, filter_img)
-        ct_obj['output']['contours']['algo03'] = get_contours_from_edge_detection_algo_03(img)
-        ct_obj['output']['contours']['algo04'] = get_contours_from_edge_detection_algo_04(img)
-        contour_constant_value = ct_obj['dicom_dict']['metadata']['global_max_contour_constant_value']
-        ct_obj['output']['contours']['algo05'] = get_contours_from_edge_detection_algo_05(rescale_pixel_array,
-                                                                                          contour_constant_value)
-        ct_obj['output']['contours']['algo06'] = get_contours_from_edge_detection_algo_06(rescale_pixel_array,
-                                                                                          contour_constant_value)
-        ct_obj['output']['contours']['algo07'] = get_contours_from_edge_detection_algo_07(rescale_pixel_array,
-                                                                                          contour_constant_value, ps_x,
-                                                                                          ps_y)
-
-        # ct_obj['output']['contours']['algo05'] = get_contours_from_edge_detection_algo_05(img, contour_constant_vlaue = global_max_contour_constant_value)
-        # ct_obj['output']['contours']['algo06'] = get_contours_from_edge_detection_algo_06(img, contour_constant_value = global_max_contour_constant_value)
-
-        # Process to contours to fit global pixel img
-        ct_obj['output']['contours512'] = {}
-        for algo_key in sorted(ct_obj['output']['contours'].keys()):
-            ct_obj['output']['contours512'][algo_key] = copy.deepcopy(ct_obj['output']['contours'][algo_key])
-            contours = ct_obj['output']['contours512'][algo_key]
-            for contour in contours:
-                for [pt] in contour:
-                    pt[0] = view_min_x + pt[0]
-                    pt[1] = view_min_y + pt[1]
-
-        # Generate contours infos like x,y mean and area_mm
-        ct_obj['output']['contours_infos'] = {}
-        ps_x = ct_obj['ps_x']
-        ps_y = ct_obj['ps_y']
-        for algo_key in (ct_obj['output']['contours'].keys()):
-            contours = ct_obj['output']['contours'][algo_key]
-            contours_infos = []
-            for contour in contours:
-                contours_info = {}
-                # contours_infos.append(contours_info)
-                (x, y) = get_contour_xy_mean(contour)
-                global_x_pixel = x + view_min_x
-                global_y_pixel = y + view_min_y
-                area_mm2 = get_contour_area_mm2(contour, ps_x, ps_y)
-                contours_info['mean'] = [global_x_pixel, global_y_pixel]
-                contours_info['area_mm2'] = area_mm2
-                contours_info['contour'] = contour
-                contours_infos.append(contours_info)
-            ct_obj['output']['contours_infos'][algo_key] = contours_infos
-        pass
-    folder = dicom_dict['metadata']['folder']
-    z_map = dicom_dict['z']
-    for z_idx, z in enumerate(sorted(z_map.keys())):
-        ct_obj = z_map[z]
-        #print('z={}, {}'.format(z, ct_obj.keys()))
-        generate_output_to_ct_obj(ct_obj)
-        # information is in ct_obj['output']
-
-
-# FUNCTIONS - main genearte function
+# FUNCTIONS - main generate function
 def generate_brachy_rp_file(RP_OperatorsName, dicom_dict, out_rp_filepath, is_enable_print=False):
+    def get_applicator_rp_line(metric_line, first_purpose_distance_mm, each_purpose_distance_mm):
+        if (len(metric_line) == 0):
+            return []
+
+        # REWRITE get_metric_pt_info_by_travel_distance, so the get_metric_pt, reduct_distance_step and get_metric_pt_info_travel_distance will not be USED
+        def get_metric_pt(metric_line, pt_idx, pt_idx_remainder):
+            # print('get_metric_pt(metric_line={}, pt_idx={}, pt_idx_remainder={})'.format(metric_line, pt_idx, pt_idx_remainder))
+            pt = metric_line[pt_idx].copy()
+            try:
+                if (pt_idx + 1 >= len(metric_line)):
+                    end_pt = metric_line[pt_idx]
+                else:
+                    end_pt = metric_line[pt_idx + 1]
+            except Exception as e:
+                print('Exception in get_metric_pt() of get_applicator_rp_line()')
+                print('pt_idx = {}'.format(pt_idx))
+                print('pt_idx_remainder = {}'.format(pt_idx_remainder))
+                print('metric_line[{}] = {}'.format(pt_idx, metric_line[pt_idx]))
+                raise
+
+            for axis_idx in range(3):
+                # diff = end_pt[axis_idx] - pt[axis_idx]
+                # diff_with_ratio = diff * pt_idx_remainder
+                # print('axis_idx = {} ->  diff_with_ratio = {}'.format(axis_idx, diff_with_ratio) )
+                pt[axis_idx] += ((end_pt[axis_idx] - pt[axis_idx]) * pt_idx_remainder)
+                # pt[axis_idx] = pt[axis_idx] + diff_with_ratio
+            return pt
+
+        def reduce_distance_step(metric_line, pt_idx, pt_idx_remainder, dist):
+            # reduce dist and move further more step for (pt_idx, pt_idx_remainder)
+            # ret_dist = ??  reduce dist into ret_dist
+            # Just implement code here , so that the data move a little distance. (mean reduce dist and move more)
+
+            start_pt_idx = pt_idx
+            start_pt_idx_remainder = pt_idx_remainder
+            start_pt = get_metric_pt(metric_line, start_pt_idx, start_pt_idx_remainder)
+
+            # To figure out what distance we perfer to reduce in this step
+            # And the idea is seperate int to two case
+            if start_pt_idx < len(metric_line) - 1:
+                # CASE: there is a next pt_idx for start_pt_idx
+                # In this case, we let end_pt_idx be the next pt_idx of start_pt_idx
+                # So it start_pt_idx +1. and don't forget to reset remainder in to zero
+                end_pt_idx = start_pt_idx + 1
+                end_pt_idx_remainder = 0
+
+            else:
+                # CASE there is no any next _pt_idx for start_pt_idx
+                # In this case, we let end_pt_idx point to end idx of line and let remainder be in maximum value (1.0)
+                # So the end_pt with idx and remainder can represent the most far point in the metric line.
+                end_pt_idx = start_pt_idx
+                end_pt_idx_remainder = 1
+
+            end_pt = get_metric_pt(metric_line, end_pt_idx, end_pt_idx_remainder)
+            max_reducable_dist = distance(start_pt, end_pt)  # max_reducable_dist in this iteration
+
+            # We have start_pt and end_pt , and we have the dist value
+            # So we can try to walk from start_pt to some point which belong to [start_pt, end_pt)
+            # There are two cases for this walking
+            # CASE 1: the end_pt is not enough to walking dist , so just walking to the end_pt
+            # CASE 2: the end_pt is enough and we just need to figure where to stop between [start_pt, end_pt)
+            # PS: 'is enough' is mean distance will be reduced to zero, so the end of travel is in  [start_pt, end_pt)
+            if dist > max_reducable_dist:  # CASE 1 the end_pt is not enough to walking dist
+                dist_after_walking = dist - max_reducable_dist
+                walking_stop_pt_idx = end_pt_idx
+                walking_stop_pt_idx_remainder = end_pt_idx_remainder
+                # return (dist, end_pt_idx, end_pt_idx_remainder)
+                return (dist_after_walking, walking_stop_pt_idx, walking_stop_pt_idx_remainder)
+            else:  # CASE 2 the end_pt is enough, so walking_stop_pt is between [start_pt, end_pt)
+                walking_stop_pt_idx = start_pt_idx
+                # Figure out walking_stop_pt_idx_remainder
+                segment_dist = distance(start_pt, end_pt)
+                if (segment_dist == 0):
+                    # To solve bug of divide zero, Sometimes the segment_dist will be zero
+                    segment_dist = 0.000000001
+                ratio = dist / segment_dist
+                walking_stop_pt_idx_remainder = start_pt_idx_remainder + (1 - start_pt_idx_remainder) * ratio
+                dist_after_walking = 0
+                return (dist_after_walking, walking_stop_pt_idx, walking_stop_pt_idx_remainder)
+
+            pass
+            # return (ret_dist, ret_pt_idx, ret_pt_idx_remainder)
+
+        def get_metric_pt_info_by_travel_distance(metric_line, pt_idx, pt_idx_remainder, travel_dist):
+            dist = travel_dist
+            count_max = len(metric_line)
+            count = 0
+            while (True):
+                (t_dist, t_pt_idx, t_pt_idx_remainder) = reduce_distance_step(metric_line, pt_idx, pt_idx_remainder,
+                                                                              dist)
+
+                if pt_idx == len(metric_line) - 1 and pt_idx_remainder == 1:
+                    # CASE 0: This is mean the distanced point will out of the line
+                    print('out of line and remaind unproces distance = ', t_dist)
+                    t_pt = metric_line[-1].copy()
+                    return (t_pt, t_pt_idx, t_pt_idx_remainder, t_dist)
+                    break
+                if t_dist == 0:
+                    # CASE 1: All distance have been reduced
+                    t_pt = get_metric_pt(metric_line, t_pt_idx, t_pt_idx_remainder)
+                    return (t_pt, t_pt_idx, t_pt_idx_remainder, t_dist)
+
+                count += 1
+                if count > count_max:
+                    # CASE 2: over looping of what we expect. This is case of bug in my source code
+                    print('The out of counting in loop is happended. this is a bug')
+                    t_pt = get_metric_pt(metric_line, t_pt_idx, t_pt_idx_remainder)
+                    return (t_pt, t_pt_idx, t_pt_idx_remainder, t_dist)
+                pt_idx = t_pt_idx
+                pt_idx_remainder = t_pt_idx_remainder
+                dist = t_dist
+
+        tandem_rp_line = []
+        pt_idx = 0
+        pt_idx_remainder = 0
+        travel_dist = first_purpose_distance_mm
+        (t_pt, t_pt_idx, t_pt_idx_remainder, t_dist) = get_metric_pt_info_by_travel_distance(metric_line, pt_idx,
+                                                                                             pt_idx_remainder,
+                                                                                             travel_dist)
+        tandem_rp_line.append(t_pt)
+        for i in range(100):
+            travel_dist = each_purpose_distance_mm
+            (pt_idx, pt_idx_remainder) = (t_pt_idx, t_pt_idx_remainder)
+            (t_pt, t_pt_idx, t_pt_idx_remainder, t_dist) = get_metric_pt_info_by_travel_distance(metric_line, pt_idx,
+                                                                                                 pt_idx_remainder,
+                                                                                                 travel_dist)
+            if (t_pt == tandem_rp_line[-1]):
+                break
+            tandem_rp_line.append(t_pt)
+
+        return tandem_rp_line
+    def get_metric_lines_representation(dicom_dict, lt_ovoid, tandem, rt_ovoid):
+        # (metric_lt_ovoid, metric_tandem, metric_rt_ovoid) = get_metric_lines_representation(dicom_dict, lt_ovoid, tandem, rt_ovoid)
+        new_lines = []
+        for line in [lt_ovoid, tandem, rt_ovoid]:
+            new_line = []
+            for pt in line:
+                z = pt[2]
+                ct_obj = dicom_dict['z'][z]
+                x = pt[0] * ct_obj['ps_x'] + ct_obj['origin_x']
+                y = pt[1] * ct_obj['ps_y'] + ct_obj['origin_y']
+                new_line.append([x, y, z])
+            new_lines.append(new_line)
+        (metric_lt_ovoid, metric_tandem, metric_rt_ovoid) = (new_lines[0], new_lines[1], new_lines[2])
+        return (metric_lt_ovoid, metric_tandem, metric_rt_ovoid)
+    def get_metric_needle_lines_representation(dicom_dict, needle_lines):
+        metric_needle_lines = []
+        for line in needle_lines:
+            metric_needle_line = []
+            for pt in line:
+                z = pt[2]
+                ct_obj = dicom_dict['z'][z]
+                x = pt[0] * ct_obj['ps_x'] + ct_obj['origin_x']
+                y = pt[1] * ct_obj['ps_y'] + ct_obj['origin_y']
+                metric_needle_line.append([x, y, z])
+            metric_needle_lines.append(metric_needle_line)
+        return metric_needle_lines
+
     if (is_enable_print == False):
         blockPrint()
     else:
@@ -1300,6 +1286,164 @@ def generate_brachy_rp_file(RP_OperatorsName, dicom_dict, out_rp_filepath, is_en
     if (is_enable_print == False):
         enablePrint()
 def generate_brachy_rp_file_without_needle(RP_OperatorsName, dicom_dict, out_rp_filepath, is_enable_print=False):
+    def get_applicator_rp_line(metric_line, first_purpose_distance_mm, each_purpose_distance_mm):
+        if (len(metric_line) == 0):
+            return []
+
+        # REWRITE get_metric_pt_info_by_travel_distance, so the get_metric_pt, reduct_distance_step and get_metric_pt_info_travel_distance will not be USED
+        def get_metric_pt(metric_line, pt_idx, pt_idx_remainder):
+            # print('get_metric_pt(metric_line={}, pt_idx={}, pt_idx_remainder={})'.format(metric_line, pt_idx, pt_idx_remainder))
+            pt = metric_line[pt_idx].copy()
+            try:
+                if (pt_idx + 1 >= len(metric_line)):
+                    end_pt = metric_line[pt_idx]
+                else:
+                    end_pt = metric_line[pt_idx + 1]
+            except Exception as e:
+                print('Exception in get_metric_pt() of get_applicator_rp_line()')
+                print('pt_idx = {}'.format(pt_idx))
+                print('pt_idx_remainder = {}'.format(pt_idx_remainder))
+                print('metric_line[{}] = {}'.format(pt_idx, metric_line[pt_idx]))
+                raise
+
+            for axis_idx in range(3):
+                # diff = end_pt[axis_idx] - pt[axis_idx]
+                # diff_with_ratio = diff * pt_idx_remainder
+                # print('axis_idx = {} ->  diff_with_ratio = {}'.format(axis_idx, diff_with_ratio) )
+                pt[axis_idx] += ((end_pt[axis_idx] - pt[axis_idx]) * pt_idx_remainder)
+                # pt[axis_idx] = pt[axis_idx] + diff_with_ratio
+            return pt
+
+        def reduce_distance_step(metric_line, pt_idx, pt_idx_remainder, dist):
+            # reduce dist and move further more step for (pt_idx, pt_idx_remainder)
+            # ret_dist = ??  reduce dist into ret_dist
+            # Just implement code here , so that the data move a little distance. (mean reduce dist and move more)
+
+            start_pt_idx = pt_idx
+            start_pt_idx_remainder = pt_idx_remainder
+            start_pt = get_metric_pt(metric_line, start_pt_idx, start_pt_idx_remainder)
+
+            # To figure out what distance we perfer to reduce in this step
+            # And the idea is seperate int to two case
+            if start_pt_idx < len(metric_line) - 1:
+                # CASE: there is a next pt_idx for start_pt_idx
+                # In this case, we let end_pt_idx be the next pt_idx of start_pt_idx
+                # So it start_pt_idx +1. and don't forget to reset remainder in to zero
+                end_pt_idx = start_pt_idx + 1
+                end_pt_idx_remainder = 0
+
+            else:
+                # CASE there is no any next _pt_idx for start_pt_idx
+                # In this case, we let end_pt_idx point to end idx of line and let remainder be in maximum value (1.0)
+                # So the end_pt with idx and remainder can represent the most far point in the metric line.
+                end_pt_idx = start_pt_idx
+                end_pt_idx_remainder = 1
+
+            end_pt = get_metric_pt(metric_line, end_pt_idx, end_pt_idx_remainder)
+            max_reducable_dist = distance(start_pt, end_pt)  # max_reducable_dist in this iteration
+
+            # We have start_pt and end_pt , and we have the dist value
+            # So we can try to walk from start_pt to some point which belong to [start_pt, end_pt)
+            # There are two cases for this walking
+            # CASE 1: the end_pt is not enough to walking dist , so just walking to the end_pt
+            # CASE 2: the end_pt is enough and we just need to figure where to stop between [start_pt, end_pt)
+            # PS: 'is enough' is mean distance will be reduced to zero, so the end of travel is in  [start_pt, end_pt)
+            if dist > max_reducable_dist:  # CASE 1 the end_pt is not enough to walking dist
+                dist_after_walking = dist - max_reducable_dist
+                walking_stop_pt_idx = end_pt_idx
+                walking_stop_pt_idx_remainder = end_pt_idx_remainder
+                # return (dist, end_pt_idx, end_pt_idx_remainder)
+                return (dist_after_walking, walking_stop_pt_idx, walking_stop_pt_idx_remainder)
+            else:  # CASE 2 the end_pt is enough, so walking_stop_pt is between [start_pt, end_pt)
+                walking_stop_pt_idx = start_pt_idx
+                # Figure out walking_stop_pt_idx_remainder
+                segment_dist = distance(start_pt, end_pt)
+                if (segment_dist == 0):
+                    # To solve bug of divide zero, Sometimes the segment_dist will be zero
+                    segment_dist = 0.000000001
+                ratio = dist / segment_dist
+                walking_stop_pt_idx_remainder = start_pt_idx_remainder + (1 - start_pt_idx_remainder) * ratio
+                dist_after_walking = 0
+                return (dist_after_walking, walking_stop_pt_idx, walking_stop_pt_idx_remainder)
+
+            pass
+            # return (ret_dist, ret_pt_idx, ret_pt_idx_remainder)
+
+        def get_metric_pt_info_by_travel_distance(metric_line, pt_idx, pt_idx_remainder, travel_dist):
+            dist = travel_dist
+            count_max = len(metric_line)
+            count = 0
+            while (True):
+                (t_dist, t_pt_idx, t_pt_idx_remainder) = reduce_distance_step(metric_line, pt_idx, pt_idx_remainder,
+                                                                              dist)
+
+                if pt_idx == len(metric_line) - 1 and pt_idx_remainder == 1:
+                    # CASE 0: This is mean the distanced point will out of the line
+                    print('out of line and remaind unproces distance = ', t_dist)
+                    t_pt = metric_line[-1].copy()
+                    return (t_pt, t_pt_idx, t_pt_idx_remainder, t_dist)
+                    break
+                if t_dist == 0:
+                    # CASE 1: All distance have been reduced
+                    t_pt = get_metric_pt(metric_line, t_pt_idx, t_pt_idx_remainder)
+                    return (t_pt, t_pt_idx, t_pt_idx_remainder, t_dist)
+
+                count += 1
+                if count > count_max:
+                    # CASE 2: over looping of what we expect. This is case of bug in my source code
+                    print('The out of counting in loop is happended. this is a bug')
+                    t_pt = get_metric_pt(metric_line, t_pt_idx, t_pt_idx_remainder)
+                    return (t_pt, t_pt_idx, t_pt_idx_remainder, t_dist)
+                pt_idx = t_pt_idx
+                pt_idx_remainder = t_pt_idx_remainder
+                dist = t_dist
+
+        tandem_rp_line = []
+        pt_idx = 0
+        pt_idx_remainder = 0
+        travel_dist = first_purpose_distance_mm
+        (t_pt, t_pt_idx, t_pt_idx_remainder, t_dist) = get_metric_pt_info_by_travel_distance(metric_line, pt_idx,
+                                                                                             pt_idx_remainder,
+                                                                                             travel_dist)
+        tandem_rp_line.append(t_pt)
+        for i in range(100):
+            travel_dist = each_purpose_distance_mm
+            (pt_idx, pt_idx_remainder) = (t_pt_idx, t_pt_idx_remainder)
+            (t_pt, t_pt_idx, t_pt_idx_remainder, t_dist) = get_metric_pt_info_by_travel_distance(metric_line, pt_idx,
+                                                                                                 pt_idx_remainder,
+                                                                                                 travel_dist)
+            if (t_pt == tandem_rp_line[-1]):
+                break
+            tandem_rp_line.append(t_pt)
+
+        return tandem_rp_line
+    def get_metric_lines_representation(dicom_dict, lt_ovoid, tandem, rt_ovoid):
+        # (metric_lt_ovoid, metric_tandem, metric_rt_ovoid) = get_metric_lines_representation(dicom_dict, lt_ovoid, tandem, rt_ovoid)
+        new_lines = []
+        for line in [lt_ovoid, tandem, rt_ovoid]:
+            new_line = []
+            for pt in line:
+                z = pt[2]
+                ct_obj = dicom_dict['z'][z]
+                x = pt[0] * ct_obj['ps_x'] + ct_obj['origin_x']
+                y = pt[1] * ct_obj['ps_y'] + ct_obj['origin_y']
+                new_line.append([x, y, z])
+            new_lines.append(new_line)
+        (metric_lt_ovoid, metric_tandem, metric_rt_ovoid) = (new_lines[0], new_lines[1], new_lines[2])
+        return (metric_lt_ovoid, metric_tandem, metric_rt_ovoid)
+    def get_metric_needle_lines_representation(dicom_dict, needle_lines):
+        metric_needle_lines = []
+        for line in needle_lines:
+            metric_needle_line = []
+            for pt in line:
+                z = pt[2]
+                ct_obj = dicom_dict['z'][z]
+                x = pt[0] * ct_obj['ps_x'] + ct_obj['origin_x']
+                y = pt[1] * ct_obj['ps_y'] + ct_obj['origin_y']
+                metric_needle_line.append([x, y, z])
+            metric_needle_lines.append(metric_needle_line)
+        return metric_needle_lines
+
     if (is_enable_print == False):
         blockPrint()
     else:
@@ -1351,7 +1495,7 @@ def generate_brachy_rp_file_without_needle(RP_OperatorsName, dicom_dict, out_rp_
         enablePrint()
 
 
-# FUNCTIONS - Some ploting utility functions support for you to check CT pictures with data
+# FUNCTIONS - Major rp process function for root_folder
 def generate_all_rp_process(
         root_folder=r'RAL_plan_new_20190905', rp_output_folder_filepath='all_rp_output',  bytes_dump_folder_filepath='contours_bytes',
         is_recreate_bytes=True, debug_folders=[]):
@@ -1360,6 +1504,20 @@ def generate_all_rp_process(
     print('rp_output_folder_filepath = ', rp_output_folder_filepath)
     print('bytes_dump_folder_filepath = ', bytes_dump_folder_filepath)
 
+    def create_directory_if_not_exists(path):
+        """
+        Creates 'path' if it does not exist
+        If creation fails, an exception will be thrown
+        :param path:    the path to ensure it exists
+        """
+        try:
+            os.makedirs(path)
+        except OSError as ex:
+            if ex.errno == errno.EEXIST and os.path.isdir(path):
+                pass
+            else:
+                print('An error happened trying to create ' + path)
+                raise
 
     create_directory_if_not_exists(bytes_dump_folder_filepath)
     create_directory_if_not_exists(rp_output_folder_filepath)
