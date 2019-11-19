@@ -1728,6 +1728,16 @@ def generate_brachy_rp_file(RP_OperatorsName, dicom_dict, out_rp_filepath, is_en
     for line_idx, line in enumerate(rp_needle_lines):
         print('rp_needle_lines[{}]= {}'.format(line_idx, line))
 
+
+    # Step 4.2 Delete the point in the rp lines that z < z_target
+    z_target = get_HR_CTV_min_z(dicom_dict['pathinfo']['rs_filepath']) - 20
+    tandem_rp_line = [pt for pt in tandem_rp_line if (pt[2] > z_target)]
+    lt_ovoid_rp_line = [pt for pt in lt_ovoid_rp_line if (pt[2] > z_target)]
+    rt_ovoid_rp_line = [pt for pt in rt_ovoid_rp_line if (pt[2] > z_target)]
+    for r_idx in range(len(rp_needle_lines)):
+        rp_needle_lines[r_idx] = copy.deepcopy([pt for pt in rp_needle_lines[r_idx] if (pt[2] > z_target)])
+
+
     # Step 5. Wrap to RP file
     # TODO for wrap rp_needle_lines into RP file
     print(dicom_dict['pathinfo']['rs_filepath'])
