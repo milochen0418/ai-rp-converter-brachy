@@ -585,16 +585,14 @@ def algo_to_get_needle_lines(dicom_dict):
 
 # FUNCTIONS - main rp generate function
 def generate_brachy_rp_file(RP_OperatorsName, dicom_dict, out_rp_filepath, is_enable_print=False):
-    from utilites import get_metric_lines_representation
-    from utilites import get_metric_needle_lines_representation
-    from utilites import get_applicator_rp_line
-    from utilites import wrap_to_rp_file
+    #is_enable_print=True
     if (is_enable_print == False):
         blockPrint()
     else:
         enablePrint()
     # Step 1. Get line of lt_ovoid, tandem, rt_ovoid by OpneCV contour material and innovated combination
     needle_lines = algo_to_get_needle_lines(dicom_dict)
+
     print('len(needle_lines) = {}'.format(len(needle_lines)))
     if len(needle_lines) > 0 :
         for idx, needle_line in enumerate(needle_lines):
@@ -656,6 +654,19 @@ def generate_brachy_rp_file(RP_OperatorsName, dicom_dict, out_rp_filepath, is_en
     for line_idx, line in enumerate(rp_needle_lines):
         print('rp_needle_lines[{}]= {}'.format(line_idx, line))
 
+
+    # Step 4.2 Delete the point in the rp lines that z < z_target
+    z_target = get_HR_CTV_min_z(dicom_dict['pathinfo']['rs_filepath']) - 20
+    print('ErrorDebug')
+    print(tandem_rp_line)
+    tandem_rp_line = [pt for pt in tandem_rp_line if (pt[2] > z_target)]
+    print(tandem_rp_line)
+    lt_ovoid_rp_line = [pt for pt in lt_ovoid_rp_line if (pt[2] > z_target)]
+    rt_ovoid_rp_line = [pt for pt in rt_ovoid_rp_line if (pt[2] > z_target)]
+    for r_idx in range(len(rp_needle_lines)):
+        rp_needle_lines[r_idx] = copy.deepcopy([pt for pt in rp_needle_lines[r_idx] if (pt[2] > z_target)])
+
+
     # Step 5. Wrap to RP file
     # TODO for wrap rp_needle_lines into RP file
     print(dicom_dict['pathinfo']['rs_filepath'])
@@ -663,7 +674,11 @@ def generate_brachy_rp_file(RP_OperatorsName, dicom_dict, out_rp_filepath, is_en
     #print(pydicom.read_file(dicom_dict['pathinfo']['rs_filepath']).keys())
     rs_filepath = dicom_dict['pathinfo']['rs_filepath']
     print('out_rp_filepath = {}'.format(out_rp_filepath))
+
     applicator_roi_dict = dicom_dict['metadata']['applicator_roi_dict']
+    # TODO will change the wrap_to_rp_file function, because we will wrap needle information into RP files
+    #wrap_to_rp_file(RP_OperatorsName=RP_OperatorsName, rs_filepath=rs_filepath, tandem_rp_line=tandem_rp_line, out_rp_filepath=out_rp_filepath, lt_ovoid_rp_line=lt_ovoid_rp_line, rt_ovoid_rp_line=rt_ovoid_rp_line, app_roi_num_list=app_roi_num_list)
+    #wrap_to_rp_file(RP_OperatorsName=RP_OperatorsName, rs_filepath=rs_filepath, tandem_rp_line=tandem_rp_line,out_rp_filepath=out_rp_filepath, lt_ovoid_rp_line=lt_ovoid_rp_line, needle_rp_lines=rp_needle_lines,rt_ovoid_rp_line=rt_ovoid_rp_line, app_roi_num_list=app_roi_num_list)
     wrap_to_rp_file(RP_OperatorsName=RP_OperatorsName, rs_filepath=rs_filepath, tandem_rp_line=tandem_rp_line,
                     out_rp_filepath=out_rp_filepath, lt_ovoid_rp_line=lt_ovoid_rp_line, needle_rp_lines=rp_needle_lines,
                     rt_ovoid_rp_line=rt_ovoid_rp_line, applicator_roi_dict=applicator_roi_dict)

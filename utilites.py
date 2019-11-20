@@ -519,24 +519,20 @@ def get_applicator_rp_line(metric_line, first_purpose_distance_mm, each_purpose_
         tandem_rp_line.append(t_pt)
 
     return tandem_rp_line
-def wrap_to_rp_file(RP_OperatorsName, rs_filepath, tandem_rp_line, out_rp_filepath, lt_ovoid_rp_line,
-                    rt_ovoid_rp_line, needle_rp_lines=[], applicator_roi_dict={}):
+def wrap_to_rp_file(RP_OperatorsName, rs_filepath, tandem_rp_line, out_rp_filepath, lt_ovoid_rp_line, rt_ovoid_rp_line, needle_rp_lines=[], applicator_roi_dict={}):
     # TODO wrap needles
     print('len(needle_rp_lines)={}'.format(len(needle_rp_lines)))
     # rp_template_filepath = r'RP_Template/Brachy_RP.1.2.246.352.71.5.417454940236.2063186.20191015164204.dcm'
     # rp_template_filepath = r'RP_Template_Brachy_24460566_implant-5_20191113/RP.1.2.246.352.71.5.417454940236.2060926.20191008103753.dcm'
     rp_template_filepath = r'RP_Template_34135696_20191115/RP.1.2.246.352.71.5.417454940236.2077416.20191115161213.dcm'
-
     def get_new_uid(old_uid='1.2.246.352.71.5.417454940236.2063186.20191015164204', study_date='20190923'):
         uid = old_uid
-
         def gen_6_random_digits():
             ret_str = ""
             for i in range(6):
                 ch = chr(random.randrange(ord('0'), ord('9') + 1))
                 ret_str += ch
             return ret_str
-
         theStudyDate = study_date
         uid_list = uid.split('.')
         uid_list[-1] = theStudyDate + gen_6_random_digits()
@@ -560,17 +556,17 @@ def wrap_to_rp_file(RP_OperatorsName, rs_filepath, tandem_rp_line, out_rp_filepa
         'DeviceSerialNumber', 'SoftwareVersions', 'StudyID',
         'StudyDate', 'StudyTime', 'StudyInstanceUID']
     for attr in directAttrSet:
-        # rs_val = getattr(rs_fp, attr)
-        # rp_val = getattr(rp_fp, attr)
-        # print('attr={}, \n In RS->{} \n In RP->{}'.format(attr, rs_val, rp_val))
+        #rs_val = getattr(rs_fp, attr)
+        #rp_val = getattr(rp_fp, attr)
+        #print('attr={}, \n In RS->{} \n In RP->{}'.format(attr, rs_val, rp_val))
         try:
             val = getattr(rs_fp, attr)
             setattr(rp_fp, attr, val)
         except Exception as ex:
             print('Error is happend in for attr in directAttrSet. Sometimes RS file is out of control')
             print(ex)
-        # new_rp_val = getattr(rp_fp, attr)
-        # print('after update, RP->{}\n'.format(new_rp_val))
+        #new_rp_val = getattr(rp_fp, attr)
+        #print('after update, RP->{}\n'.format(new_rp_val))
 
     newSeriesInstanceUID = get_new_uid(old_uid=rp_fp.SeriesInstanceUID, study_date=rp_fp.StudyDate)
     newSOPInstanceUID = get_new_uid(old_uid=rp_fp.SOPInstanceUID, study_date=rp_fp.StudyDate)
@@ -583,6 +579,7 @@ def wrap_to_rp_file(RP_OperatorsName, rs_filepath, tandem_rp_line, out_rp_filepa
     # Clean Dose Reference
     rp_fp.DoseReferenceSequence.clear()
 
+
     # The template structure for applicator
     # Tandem -> rp_fp.ApplicationSetupSequence[0].ChannelSequence[0]
     # Rt Ovoid -> rp_fp.ApplicationSetupSequence[0].ChannelSequence[1]
@@ -590,19 +587,20 @@ def wrap_to_rp_file(RP_OperatorsName, rs_filepath, tandem_rp_line, out_rp_filepa
     # For each applicator .NumberOfControlPoints is mean number of point
     # For each applicator .BrachyControlPointSequence is mean the array of points
 
-    BCPItemTemplate = copy.deepcopy(
-        rp_fp.ApplicationSetupSequence[0].ChannelSequence[0].BrachyControlPointSequence[0])
+
+    BCPItemTemplate = copy.deepcopy(rp_fp.ApplicationSetupSequence[0].ChannelSequence[0].BrachyControlPointSequence[0])
     rp_lines = [tandem_rp_line, rt_ovoid_rp_line, lt_ovoid_rp_line]
     rp_lines = rp_lines + needle_rp_lines
 
     for idx, rp_line in enumerate(rp_lines):
         print('rp_line[{}] = {}'.format(idx, rp_line))
 
-    # TODO rp_Ref_ROI_Numbers need to match to current RS's ROI number of three applicators
-    # rp_Ref_ROI_Numbers = [17, 18, 19]
-    # rp_Ref_ROI_Numbers = app_roi_num_list
 
-    # enablePrint()
+    #TODO rp_Ref_ROI_Numbers need to match to current RS's ROI number of three applicators
+    #rp_Ref_ROI_Numbers = [17, 18, 19]
+    #rp_Ref_ROI_Numbers = app_roi_num_list
+
+    #enablePrint()
     SortedAppKeys = sorted(applicator_roi_dict.keys())
     app_roi_num_list = []
     print('mapping of [ROI Name => ROI Number]')
@@ -610,41 +608,39 @@ def wrap_to_rp_file(RP_OperatorsName, rs_filepath, tandem_rp_line, out_rp_filepa
         print('{}->{}'.format(applicator_roi_name, applicator_roi_dict[applicator_roi_name]))
         app_roi_num_list.append(applicator_roi_dict[applicator_roi_name])
     print('app_roi_num_list = {}'.format(app_roi_num_list))
-    # rp_Ref_ROI_Numbers = sorted(app_roi_num_list, reverse=True)
+    #rp_Ref_ROI_Numbers = sorted(app_roi_num_list, reverse=True)
     rp_Ref_ROI_Numbers = app_roi_num_list
     print('rp_Ref_ROI_Numbers = {}'.format(rp_Ref_ROI_Numbers))
-    # blockPrint()
-    rp_ControlPointRelativePositions = [3.5, 3.5,
-                                        3.5]  # After researching, all ControlPointRelativePositions is start in 3.5
+    #blockPrint()
+    rp_ControlPointRelativePositions = [3.5, 3.5, 3.5] # After researching, all ControlPointRelativePositions is start in 3.5
     rp_ControlPointRelativePositions = [3.5 for item in app_roi_num_list]
 
-    # enablePrint()
+    #enablePrint()
     print('Dr. Wang debug message')
     for idx, rp_line in enumerate(rp_lines):
         print('\nidx={} -> rp_line = ['.format(idx))
         for pt in rp_line:
             print('\t, {}'.format(pt))
-    # blockPrint()
+    #blockPrint()
     max_idx = 0
-    for idx, rp_line in enumerate(rp_lines):
-        if (False and len(needle_rp_lines) == 0):
+    for idx,rp_line in enumerate(rp_lines):
+        if (False and  len(needle_rp_lines) == 0):
             enablePrint()
             print('Case without needles')
             if (idx >= 3):
                 break
             blockPrint()
 
-        if (False and idx >= 1):  # OneTandem
+        if (False and idx >= 1): #OneTandem
             enablePrint()
             print('Debug importing RP by only tandem')
-            rp_fp.ApplicationSetupSequence[0].ChannelSequence = copy.deepcopy(
-                rp_fp.ApplicationSetupSequence[0].ChannelSequence[0:1])
+            rp_fp.ApplicationSetupSequence[0].ChannelSequence = copy.deepcopy(rp_fp.ApplicationSetupSequence[0].ChannelSequence[0:1])
             blockPrint()
             break
         if (idx >= len(rp_Ref_ROI_Numbers)):
             print('the number of rp_line is larger than len(rp_Ref_ROI_Numbers)')
             break
-        if (idx >= len(rp_fp.ApplicationSetupSequence[0].ChannelSequence)):
+        if (idx >= len(rp_fp.ApplicationSetupSequence[0].ChannelSequence) ):
             print('the number of rp_line is larger than len(rp_fp.ApplicationSetupSequence[0].ChannelSequence)')
             break
         # Change ROINumber of RP_Template_TestData RS into output RP output file
@@ -665,6 +661,6 @@ def wrap_to_rp_file(RP_OperatorsName, rs_filepath, tandem_rp_line, out_rp_filepa
             rp_fp.ApplicationSetupSequence[0].ChannelSequence[idx].BrachyControlPointSequence.append(BCPStartPt)
             rp_fp.ApplicationSetupSequence[0].ChannelSequence[idx].BrachyControlPointSequence.append(BCPEndPt)
         max_idx = idx
-    rp_fp.ApplicationSetupSequence[0].ChannelSequence = copy.deepcopy(rp_fp.ApplicationSetupSequence[0].ChannelSequence[0:max_idx + 1])
+    rp_fp.ApplicationSetupSequence[0].ChannelSequence = copy.deepcopy(rp_fp.ApplicationSetupSequence[0].ChannelSequence[0:max_idx+1])
     pydicom.write_file(out_rp_filepath, rp_fp)
     pass
