@@ -70,6 +70,25 @@ def search_keyword_in_all_dcm(root_folder, search_str):
         else:
             pass
     return ret_filelist
+def show_dcm_search_word_part(filepath, search_str):
+    red_search_str = "\x1b[31m" + search_str + "\x1b[0m"
+    fp = pydicom.read_file(filepath)
+    fpstrs = fp.__str__().split('\n')
+    for thestr in fpstrs:
+        if search_str in thestr:
+            colorful_thestr = thestr.replace(search_str, red_search_str)
+            print(colorful_thestr)
+def example_of_search_tool():
+    search_str = r'1.2.840.113619.2.290.3.2198477267.613.1571121477.489.11'  # SOPIntanceUID
+    search_str = r'1.2.840.113619.2.290.3.2198477267.613.1571121477.189.15'  # SeriesInstanceUID
+    # search_str = r'1.2.840.113619.2.290.3.2198477267.613.1571121476.8821' # StudyInstanceUID
+    path = r"C:\Users\Milo\Desktop\35025594-change2"
+    filelist = search_keyword_in_all_dcm(path, search_str)
+    for filepath in filelist:
+        print(filepath)
+        show_dcm_search_word_part(filepath, search_str)
+        print('')
+
 
 # FUNCTIONS - Algorithm processing Fucntions
 def get_HR_CTV_min_z(rs_filepath):
