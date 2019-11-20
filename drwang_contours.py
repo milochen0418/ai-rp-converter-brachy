@@ -54,6 +54,22 @@ def create_directory_if_not_exists(path):
         else:
             print('An error happened trying to create ' + path)
             raise
+def search_keyword_in_all_dcm(root_folder, search_str):
+    ret_filelist = []
+    path = root_folder
+    filelist = []
+    for dirpath, subdirs, files in os.walk(path):
+        for x in files:
+            if x.endswith(".dcm"):
+                filelist.append(os.path.join(dirpath, x))
+    for filepath in filelist:
+        fp = pydicom.read_file(filepath)
+        scope_str = fp.__str__()
+        if search_str in scope_str:
+            ret_filelist.append(filepath)
+        else:
+            pass
+    return ret_filelist
 
 # FUNCTIONS - Algorithm processing Fucntions
 def get_HR_CTV_min_z(rs_filepath):
@@ -71,8 +87,6 @@ def get_HR_CTV_min_z(rs_filepath):
             break
     min_z = rs_fp.ROIContourSequence[hrctv_roicseq_idx].ContourSequence[0].ContourData[2]
     return min_z
-
-
 def distance(pt1, pt2):
     axis_num = len(pt1)
     # Assume maximum of axis number of pt is 3
@@ -2757,8 +2771,9 @@ if __name__ == '__main__':
     print('root_folder = Study-RAL-implant_20191112 -> {}'.format([os.path.basename(item) for item in os.listdir('Study-RAL-implant_20191112')]))
     generate_all_rp_process(root_folder=r'Study-RAL-implant_20191112',
                             rp_output_folder_filepath='Study-RAL-implant_20191112_RP_Files',bytes_dump_folder_filepath='Study-RAL-implant_20191112_Bytes_Files',
-                            is_recreate_bytes=True, debug_folders=[])
+                            is_recreate_bytes=False, debug_folders=['804045'])
     #'804045'
+    exit()
 
     # 31 CASE
     print('root_folder = RAL_plan_new_20190905 -> {}'.format([os.path.basename(item) for item in os.listdir('RAL_plan_new_20190905')]))
