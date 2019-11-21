@@ -14,6 +14,39 @@ from shutil import copyfile
 import random
 import pickle
 
+# Another utility
+def python_object_dump(obj, filename):
+    file_w = open(filename, "wb")
+    pickle.dump(obj, file_w)
+    file_w.close()
+def python_object_load(filename):
+    try:
+        file_r = open(filename, "rb")
+        obj2 = pickle.load(file_r)
+        file_r.close()
+    except:
+        try:
+            file_r.close()
+            return None
+        except:
+            return None
+    return obj2
+def create_directory_if_not_exists(path):
+    """
+    Creates 'path' if it does not exist
+    If creation fails, an exception will be thrown
+    :param path:    the path to ensure it exists
+    """
+    try:
+        os.makedirs(path)
+    except OSError as ex:
+        if ex.errno == errno.EEXIST and os.path.isdir(path):
+            pass
+        else:
+            print('An error happened trying to create ' + path)
+            raise
+
+
 # FUNCTIONS - Utility of Horizontal Algorithms
 def generate_metadata_to_dicom_dict(dicom_dict):
     (view_min_y, view_max_y, view_min_x, view_max_x) = get_view_scope_by_dicom_dict(dicom_dict)

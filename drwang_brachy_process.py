@@ -20,40 +20,10 @@ import pickle
 
 
 # FUNCTIONS - Utility
-def python_object_dump(obj, filename):
-    file_w = open(filename, "wb")
-    pickle.dump(obj, file_w)
-    file_w.close()
-def python_object_load(filename):
-    try:
-        file_r = open(filename, "rb")
-        obj2 = pickle.load(file_r)
-        file_r.close()
-    except:
-        try:
-            file_r.close()
-            return None
-        except:
-            return None
-    return obj2
 def blockPrint(): # Disable printing
     sys.stdout = open(os.devnull, 'w')
 def enablePrint(): # Restore for printing
     sys.stdout = sys.__stdout__
-def create_directory_if_not_exists(path):
-    """
-    Creates 'path' if it does not exist
-    If creation fails, an exception will be thrown
-    :param path:    the path to ensure it exists
-    """
-    try:
-        os.makedirs(path)
-    except OSError as ex:
-        if ex.errno == errno.EEXIST and os.path.isdir(path):
-            pass
-        else:
-            print('An error happened trying to create ' + path)
-            raise
 
 
 # FUNCTIONS - Horizontal Algorithm for each CT slice. Use OpenCV to make contours
@@ -766,12 +736,14 @@ def generate_all_rp_process(
         root_folder=r'RAL_plan_new_20190905', rp_output_folder_filepath='all_rp_output',  bytes_dump_folder_filepath='contours_bytes',
         is_recreate_bytes=True, debug_folders=[]):
     from utilities import generate_metadata_to_dicom_dict
+    from utilities import create_directory_if_not_exists
+    from utilities import python_object_dump
+    from utilities import python_object_load
 
     print('Call generate_all_rp_process with the following arguments')
     print('root_folder = ', root_folder)
     print('rp_output_folder_filepath = ', rp_output_folder_filepath)
     print('bytes_dump_folder_filepath = ', bytes_dump_folder_filepath)
-
 
     create_directory_if_not_exists(bytes_dump_folder_filepath)
     create_directory_if_not_exists(rp_output_folder_filepath)
