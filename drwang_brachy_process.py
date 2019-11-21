@@ -138,20 +138,20 @@ def get_dicom_dict(folder):
         #print('ct_obj={}'.format(ct_obj))
     return out_dict
 def generate_output_to_dicom_dict(dicom_dict):
-    from utilites import generate_metadata_to_dicom_dict
-    from utilites import get_contour_xy_mean
-    from utilites import get_contour_area_mm2
-    from utilites import convert_to_gray_image
-    from utilites import get_max_contours
-    from utilites import get_max_contours_by_filter_img
-    from utilites import get_contours_from_edge_detection_algo_01
-    from utilites import get_contours_from_edge_detection_algo_02
-    from utilites import get_contours_from_edge_detection_algo_03
-    from utilites import get_contours_from_edge_detection_algo_04
-    from utilites import get_contours_from_edge_detection_algo_05
-    from utilites import get_contours_from_edge_detection_algo_06
-    from utilites import get_contours_from_edge_detection_algo_07
-    from utilites import generate_output_to_ct_obj
+    from utilities import generate_metadata_to_dicom_dict
+    from utilities import get_contour_xy_mean
+    from utilities import get_contour_area_mm2
+    from utilities import convert_to_gray_image
+    from utilities import get_max_contours
+    from utilities import get_max_contours_by_filter_img
+    from utilities import get_contours_from_edge_detection_algo_01
+    from utilities import get_contours_from_edge_detection_algo_02
+    from utilities import get_contours_from_edge_detection_algo_03
+    from utilities import get_contours_from_edge_detection_algo_04
+    from utilities import get_contours_from_edge_detection_algo_05
+    from utilities import get_contours_from_edge_detection_algo_06
+    from utilities import get_contours_from_edge_detection_algo_07
+    from utilities import generate_output_to_ct_obj
 
     generate_metadata_to_dicom_dict(dicom_dict)
     folder = dicom_dict['metadata']['folder']
@@ -164,13 +164,13 @@ def generate_output_to_dicom_dict(dicom_dict):
 
 # FUNCTIONS - Vertial Algorithms
 def algo_to_get_pixel_lines(dicom_dict, needle_lines = []):
-    from utilites import distance
-    from utilites import get_view_scope_by_dicom_dict
-    from utilites import get_minimum_rect_from_contours
-    from utilites import is_point_in_rect
-    from utilites import is_contour_in_rect
-    from utilites import get_rect_info_from_cv_contour
-    from utilites import get_most_closed_pt
+    from utilities import distance
+    from utilities import get_view_scope_by_dicom_dict
+    from utilities import get_minimum_rect_from_contours
+    from utilities import is_point_in_rect
+    from utilities import is_contour_in_rect
+    from utilities import get_rect_info_from_cv_contour
+    from utilities import get_most_closed_pt
 
     # type: (dicom_dict) -> (lt_ovoid, tandem, rt_ovoid)
     # Step 1. Use algo05 to get center point of inner contour
@@ -514,13 +514,13 @@ def algo_to_get_pixel_lines(dicom_dict, needle_lines = []):
             print('tandem = {}'.format(tandem))
     return (lt_ovoid, tandem, rt_ovoid)
 def algo_to_get_needle_lines(dicom_dict):
-    from utilites import distance
-    from utilites import get_view_scope_by_dicom_dict
-    from utilites import get_minimum_rect_from_contours
-    from utilites import is_point_in_rect
-    from utilites import is_contour_in_rect
-    from utilites import get_rect_info_from_cv_contour
-    from utilites import get_most_closed_pt
+    from utilities import distance
+    from utilities import get_view_scope_by_dicom_dict
+    from utilities import get_minimum_rect_from_contours
+    from utilities import is_point_in_rect
+    from utilities import is_contour_in_rect
+    from utilities import get_rect_info_from_cv_contour
+    from utilities import get_most_closed_pt
     needle_lines = []
     # Step 1. Use algo07 to get center point of inner contour
     last_z_in_step1 = sorted(dicom_dict['z'].keys())[0]
@@ -585,6 +585,9 @@ def algo_to_get_needle_lines(dicom_dict):
 
 # FUNCTIONS - main rp generate function
 def generate_brachy_rp_file(RP_OperatorsName, dicom_dict, out_rp_filepath, is_enable_print=False):
+    from utilities import get_metric_needle_lines_representation
+    from utilities import get_metric_lines_representation
+    from utilities import get_applicator_rp_line
     #is_enable_print=True
     if (is_enable_print == False):
         blockPrint()
@@ -685,10 +688,10 @@ def generate_brachy_rp_file(RP_OperatorsName, dicom_dict, out_rp_filepath, is_en
     if (is_enable_print == False):
         enablePrint()
 def generate_brachy_rp_file_without_needle(RP_OperatorsName, dicom_dict, out_rp_filepath, is_enable_print=False):
-    from utilites import get_metric_lines_representation
-    from utilites import get_metric_needle_lines_representation
-    from utilites import get_applicator_rp_line
-    from utilites import wrap_to_rp_file
+    from utilities import get_metric_lines_representation
+    from utilities import get_metric_needle_lines_representation
+    from utilities import get_applicator_rp_line
+    from utilities import wrap_to_rp_file
 
     if (is_enable_print == False):
         blockPrint()
@@ -744,6 +747,7 @@ def generate_brachy_rp_file_without_needle(RP_OperatorsName, dicom_dict, out_rp_
 def generate_all_rp_process(
         root_folder=r'RAL_plan_new_20190905', rp_output_folder_filepath='all_rp_output',  bytes_dump_folder_filepath='contours_bytes',
         is_recreate_bytes=True, debug_folders=[]):
+
     print('Call generate_all_rp_process with the following arguments')
     print('root_folder = ', root_folder)
     print('rp_output_folder_filepath = ', rp_output_folder_filepath)
@@ -881,7 +885,7 @@ if __name__ == '__main__':
     print('root_folder = Study-RAL-implant_20191112 -> {}'.format([os.path.basename(item) for item in os.listdir('Study-RAL-implant_20191112')]))
     generate_all_rp_process(root_folder=r'Study-RAL-implant_20191112',
                             rp_output_folder_filepath='Study-RAL-implant_20191112_RP_Files',bytes_dump_folder_filepath='Study-RAL-implant_20191112_Bytes_Files',
-                            is_recreate_bytes=True, debug_folders=[])
+                            is_recreate_bytes=True, debug_folders=['804045'])
     # 31 CASE
     #print('root_folder = RAL_plan_new_20190905 -> {}'.format([os.path.basename(item) for item in os.listdir('RAL_plan_new_20190905')]))
     #generate_all_rp_process(root_folder=r'RAL_plan_new_20190905',
