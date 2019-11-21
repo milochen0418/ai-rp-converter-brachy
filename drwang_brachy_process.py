@@ -591,7 +591,6 @@ def generate_brachy_rp_file(RP_OperatorsName, dicom_dict, out_rp_filepath, is_en
     print('len(needle_lines) = {}'.format(len(needle_lines)))
     if len(needle_lines) > 0 :
         for idx, needle_line in enumerate(needle_lines):
-            #print('needle_lines[0] = {}'.format(needle_lines[0]))
             print('needle_lines[{}] = {}'.format(idx, needle_lines[idx]))
 
     (lt_ovoid, tandem, rt_ovoid) = algo_to_get_pixel_lines(dicom_dict, needle_lines)
@@ -633,7 +632,6 @@ def generate_brachy_rp_file(RP_OperatorsName, dicom_dict, out_rp_filepath, is_en
 
     # for debug , so change about testing rp import correct or not. So change tandem start from 3mm to 13mm
     tandem_rp_line = get_applicator_rp_line(metric_tandem, 3, 5) # <-- change to reduce 1mm
-    #tandem_rp_line = get_applicator_rp_line(metric_tandem, 13, 5)  # <-- change to reduce 1mm
 
     lt_ovoid_rp_line = get_applicator_rp_line(metric_lt_ovoid, 0, 5)
     rt_ovoid_rp_line = get_applicator_rp_line(metric_rt_ovoid, 0 ,5)
@@ -663,17 +661,9 @@ def generate_brachy_rp_file(RP_OperatorsName, dicom_dict, out_rp_filepath, is_en
 
 
     # Step 5. Wrap to RP file
-    # TODO for wrap rp_needle_lines into RP file
-    print(dicom_dict['pathinfo']['rs_filepath'])
-    print(dicom_dict['metadata'].keys())
-    #print(pydicom.read_file(dicom_dict['pathinfo']['rs_filepath']).keys())
     rs_filepath = dicom_dict['pathinfo']['rs_filepath']
     print('out_rp_filepath = {}'.format(out_rp_filepath))
-
     applicator_roi_dict = dicom_dict['metadata']['applicator_roi_dict']
-    # TODO will change the wrap_to_rp_file function, because we will wrap needle information into RP files
-    #wrap_to_rp_file(RP_OperatorsName=RP_OperatorsName, rs_filepath=rs_filepath, tandem_rp_line=tandem_rp_line, out_rp_filepath=out_rp_filepath, lt_ovoid_rp_line=lt_ovoid_rp_line, rt_ovoid_rp_line=rt_ovoid_rp_line, app_roi_num_list=app_roi_num_list)
-    #wrap_to_rp_file(RP_OperatorsName=RP_OperatorsName, rs_filepath=rs_filepath, tandem_rp_line=tandem_rp_line,out_rp_filepath=out_rp_filepath, lt_ovoid_rp_line=lt_ovoid_rp_line, needle_rp_lines=rp_needle_lines,rt_ovoid_rp_line=rt_ovoid_rp_line, app_roi_num_list=app_roi_num_list)
     wrap_to_rp_file(RP_OperatorsName=RP_OperatorsName, rs_filepath=rs_filepath, tandem_rp_line=tandem_rp_line,
                     out_rp_filepath=out_rp_filepath, lt_ovoid_rp_line=lt_ovoid_rp_line, needle_rp_lines=rp_needle_lines,
                     rt_ovoid_rp_line=rt_ovoid_rp_line, applicator_roi_dict=applicator_roi_dict)

@@ -558,7 +558,26 @@ def get_HR_CTV_min_z(rs_filepath):
     min_z = rs_fp.ROIContourSequence[hrctv_roicseq_idx].ContourSequence[0].ContourData[2]
     return min_z
 def wrap_to_rp_file(RP_OperatorsName, rs_filepath, tandem_rp_line, out_rp_filepath, lt_ovoid_rp_line, rt_ovoid_rp_line, needle_rp_lines=[], applicator_roi_dict={}):
-    # TODO wrap needles
+    """
+    :param RP_OperatorsName:
+        The name that you want to write into the OperatorName's field in new RP file
+    :param rs_filepath:
+        The RS file which is together with CT files. Write some field from RS into new RP.
+    :param tandem_rp_line:
+        The list of tandem's points that format is fit to RP file
+    :param out_rp_filepath:
+        wrap_to_rp_file() will wrap file to RP file. And the file path of this RP file is  out_rp_filepath.
+    :param lt_ovoid_rp_line:
+        The list of Lt'Ovoid's points that format is fit to RP file
+    :param rt_ovoid_rp_line:
+        The list of Rt'Ovoid's points that format is fit to RP file
+    :param needle_rp_lines:
+        The list of RP needle lines. Each RP line of these lines is a list of specific needle's points that format is fit to RP file
+    :param applicator_roi_dict:
+
+    :return:
+    """
+
     print('len(needle_rp_lines)={}'.format(len(needle_rp_lines)))
     # rp_template_filepath = r'RP_Template/Brachy_RP.1.2.246.352.71.5.417454940236.2063186.20191015164204.dcm'
     # rp_template_filepath = r'RP_Template_Brachy_24460566_implant-5_20191113/RP.1.2.246.352.71.5.417454940236.2060926.20191008103753.dcm'
