@@ -25,7 +25,6 @@ def blockPrint(): # Disable printing
 def enablePrint(): # Restore for printing
     sys.stdout = sys.__stdout__
 
-
 # FUNCTIONS - Horizontal Algorithm for each CT slice. Use OpenCV to make contours
 def get_dicom_dict(folder):
     def get_dicom_folder_pathinfo(folder):
@@ -681,6 +680,12 @@ def generate_brachy_rp_file(RP_OperatorsName, dicom_dict, out_rp_filepath, is_en
     if (is_enable_print == False):
         enablePrint()
 def generate_brachy_rp_file_without_needle(RP_OperatorsName, dicom_dict, out_rp_filepath, is_enable_print=False):
+    from utilities import wrap_to_rp_file
+    from utilities import get_metric_lines_representation
+    from utilities import get_metric_needle_lines_representation
+    from utilities import get_applicator_rp_line
+    from utilities import get_HR_CTV_min_z
+
     if (is_enable_print == False):
         blockPrint()
     else:
@@ -718,16 +723,15 @@ def generate_brachy_rp_file_without_needle(RP_OperatorsName, dicom_dict, out_rp_
     # TODO for wrap rp_needle_lines into RP file
     print(dicom_dict['pathinfo']['rs_filepath'])
     print(dicom_dict['metadata'].keys())
-    #print(pydicom.read_file(dicom_dict['pathinfo']['rs_filepath']).keys())
-
     rs_filepath = dicom_dict['pathinfo']['rs_filepath']
 
     print('out_rp_filepath = {}'.format(out_rp_filepath))
-    app_roi_num_list = dicom_dict['metadata']['applicator123_roi_numbers']
-    # TODO will change the wrap_to_rp_file function, because we will wrap needle information into RP files
-    #wrap_to_rp_file(RP_OperatorsName=RP_OperatorsName, rs_filepath=rs_filepath, tandem_rp_line=tandem_rp_line, out_rp_filepath=out_rp_filepath, lt_ovoid_rp_line=lt_ovoid_rp_line, rt_ovoid_rp_line=rt_ovoid_rp_line, app_roi_num_list=app_roi_num_list)
-    #wrap_to_rp_file(RP_OperatorsName=RP_OperatorsName, rs_filepath=rs_filepath, tandem_rp_line=tandem_rp_line,out_rp_filepath=out_rp_filepath, lt_ovoid_rp_line=lt_ovoid_rp_line, needle_rp_lines=rp_needle_lines,rt_ovoid_rp_line=rt_ovoid_rp_line, app_roi_num_list=app_roi_num_list)
-    wrap_to_rp_file(RP_OperatorsName=RP_OperatorsName, rs_filepath=rs_filepath, tandem_rp_line=tandem_rp_line,out_rp_filepath=out_rp_filepath, lt_ovoid_rp_line=lt_ovoid_rp_line, needle_rp_lines=[], rt_ovoid_rp_line=rt_ovoid_rp_line, app_roi_num_list=app_roi_num_list)
+    applicator_roi_dict = dicom_dict['metadata']['applicator_roi_dict']
+    wrap_to_rp_file(RP_OperatorsName=RP_OperatorsName, rs_filepath=rs_filepath, tandem_rp_line=tandem_rp_line,
+                    out_rp_filepath=out_rp_filepath, lt_ovoid_rp_line=lt_ovoid_rp_line, needle_rp_lines=[],
+                    rt_ovoid_rp_line=rt_ovoid_rp_line, applicator_roi_dict=applicator_roi_dict)
+
+
     if (is_enable_print == False):
         enablePrint()
 
@@ -735,6 +739,7 @@ def generate_brachy_rp_file_without_needle(RP_OperatorsName, dicom_dict, out_rp_
 def generate_all_rp_process(
         root_folder=r'RAL_plan_new_20190905', rp_output_folder_filepath='all_rp_output',  bytes_dump_folder_filepath='contours_bytes',
         is_recreate_bytes=True, debug_folders=[]):
+
     from utilities import generate_metadata_to_dicom_dict
     from utilities import create_directory_if_not_exists
     from utilities import python_object_dump
@@ -751,7 +756,6 @@ def generate_all_rp_process(
     print('[START] generate_all_rp_process()')
     all_dicom_dict = {}
     # Step 2. Generate all our target
-    #root_folder = r'RAL_plan_new_20190905'
     f_list = [ os.path.join(root_folder, file) for file in os.listdir(root_folder) ]
     folders = os.listdir(root_folder)
     total_folders = []
@@ -759,11 +763,6 @@ def generate_all_rp_process(
     success_folders = []
     sorted_f_list = copy.deepcopy(sorted(f_list))
 
-    #for folder_idx, folder in enumerate(sorted_f_list):
-    #    print(folder_idx, folder)
-    #    print('[{}/{}] Loop info : folder_idx = {}, folder = {}'.format(folder_idx + 1, len(folders), folder_idx, folder),flush=True)
-
-    #for folder_idx, folder in enumerate(sorted(f_list)):
     for folder_idx, folder in enumerate(sorted_f_list):
         enablePrint()
         if len(debug_folders) != 0:
@@ -772,7 +771,6 @@ def generate_all_rp_process(
 
         print('\n[{}/{}] Loop info : folder_idx = {}, folder = {}'.format(folder_idx + 1, len(folders), folder_idx, folder),flush=True)
         byte_filename = r'{}.bytes'.format(os.path.basename(folder))
-        #dump_filepath = os.path.join('contours_bytes', byte_filename)
         dump_filepath = os.path.join(bytes_dump_folder_filepath, byte_filename)
 
         if (is_recreate_bytes == True):
@@ -823,8 +821,8 @@ def generate_all_rp_process(
             out_rp_filepath = os.path.join(rp_output_folder_filepath, out_rp_filepath)
             time_start = datetime.datetime.now()
             print('[{}/{}] Create RP file -> {}'.format(folder_idx+1,len(folders), out_rp_filepath) ,end=' -> ', flush=True)
-            #generate_brachy_rp_file_without_needle(RP_OperatorsName='cylin', dicom_dict=dicom_dict, out_rp_filepath=out_rp_filepath,is_enable_print=False)
-            generate_brachy_rp_file(RP_OperatorsName='cylin', dicom_dict=dicom_dict, out_rp_filepath=out_rp_filepath, is_enable_print=True)
+            generate_brachy_rp_file_without_needle(RP_OperatorsName='cylin', dicom_dict=dicom_dict, out_rp_filepath=out_rp_filepath,is_enable_print=False)
+            #generate_brachy_rp_file(RP_OperatorsName='cylin', dicom_dict=dicom_dict, out_rp_filepath=out_rp_filepath, is_enable_print=True)
             #generate_brachy_rp_file(RP_OperatorsName='cylin', dicom_dict=dicom_dict, out_rp_filepath=out_rp_filepath, is_enable_print=True)
             time_end = datetime.datetime.now()
             print('{}s [{}-{}]'.format(time_end-time_start, time_start, time_end), end='\n', flush=True)
