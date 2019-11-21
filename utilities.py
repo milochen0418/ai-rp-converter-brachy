@@ -15,6 +15,10 @@ import random
 import pickle
 
 # Another utility
+def blockPrint(): # Disable printing
+    sys.stdout = open(os.devnull, 'w')
+def enablePrint(): # Restore for printing
+    sys.stdout = sys.__stdout__
 def python_object_dump(obj, filename):
     file_w = open(filename, "wb")
     pickle.dump(obj, file_w)
@@ -574,7 +578,8 @@ def wrap_to_rp_file(RP_OperatorsName, rs_filepath, tandem_rp_line, out_rp_filepa
     :param needle_rp_lines:
         The list of RP needle lines. Each RP line of these lines is a list of specific needle's points that format is fit to RP file
     :param applicator_roi_dict:
-
+        applicator_roi_dict is the mapping of [ROI Name => ROI Number].
+        RP file's ChnnelSequence will match to correct ROI Number for each RP line, or the RP file will be failed to import.
     :return:
     """
 

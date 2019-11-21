@@ -18,12 +18,8 @@ from shutil import copyfile
 import random
 import pickle
 
-
-# FUNCTIONS - Utility
-def blockPrint(): # Disable printing
-    sys.stdout = open(os.devnull, 'w')
-def enablePrint(): # Restore for printing
-    sys.stdout = sys.__stdout__
+from utilities import blockPrint
+from utilities import enablePrint
 
 # FUNCTIONS - Horizontal Algorithm for each CT slice. Use OpenCV to make contours
 def get_dicom_dict(folder):
