@@ -547,20 +547,41 @@ def get_applicator_rp_line(metric_line, first_purpose_distance_mm, each_purpose_
 
     return tandem_rp_line
 def get_HR_CTV_min_z(rs_filepath):
-    HR_CT_ROINumber = -1
+    """
+
+    :param rs_filepath:
+        the filepath to the RS file
+    :return:
+        return the minimum z value for HR-CTV ROI in RS file
+    """
+    # Step 1. Find the ROI Number whose name is HR-CTV in StructureSetROISequence of RS file
+    HR_CTV_ROINumber = -1
     rs_fp = pydicom.read_file(rs_filepath)
     for roiSeq in rs_fp.StructureSetROISequence:
         if roiSeq.ROIName == 'HR-CTV':
             #print('ROI_Number = {}'.format(roiSeq.ROINumber))
-            HR_CT_ROINumber = roiSeq.ROINumber
+            HR_CTV_ROINumber = roiSeq.ROINumber
             break
+    # Step 2. In ROIContourSequence of RS file, find the idx that index to the item whose is matched to HR-CTV's ROI Number
     hrctv_roicseq_idx = -1
     for c_idx, roiCSeq in enumerate(rs_fp.ROIContourSequence):
-        if roiCSeq.ReferencedROINumber == HR_CT_ROINumber:
+        if roiCSeq.ReferencedROINumber == HR_CTV_ROINumber:
             hrctv_roicseq_idx = c_idx
             break
+    # Step 3. Each Item in ROIContourSequence is representing the organ or something like applicator.
+    # And each ROIContourSequence[hrctv_roicseq_idx].ContourSequence array is present the labels (many contour) data on some speicfic CT slice.
+    # ContourSequence[0] is mean the labels data in the CT slice with minimum z.
+    # ContourSequence[-1] is mean the labels data in the CT slice with maximum z.
+
+    # Step 4. return minimum z value for RT-CTV ROI
+    # ContourData is a array to show [x1,y1,z1, x2,y2,z2, x3,y3,z3 , ... xn,yn,zn]
+    # But in the same item of ContourSequence, all z are the same.
+    # So for the ContourData array [x1,y1,z1, ...., xn,yn,zn], all z are the same.
+    # You can get z value of this slice by ContourData[2]
+    # So ContourSequence[0].ContourData[2] is mean the z value of slice of with minimum z.
     min_z = rs_fp.ROIContourSequence[hrctv_roicseq_idx].ContourSequence[0].ContourData[2]
     return min_z
+
 def wrap_to_rp_file(RP_OperatorsName, rs_filepath, tandem_rp_line, out_rp_filepath, lt_ovoid_rp_line, rt_ovoid_rp_line, needle_rp_lines=[], applicator_roi_dict={}):
     """
     :param RP_OperatorsName:
