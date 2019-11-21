@@ -571,12 +571,32 @@ def algo_to_get_needle_lines(dicom_dict):
 
 # FUNCTIONS - main genearte function
 def generate_brachy_rp_file(RP_OperatorsName, dicom_dict, out_rp_filepath, is_enable_print=False):
+    """
+
+    :param RP_OperatorsName:
+        The value will assign to Operators Name field in RP file
+    :param dicom_dict:
+        Every folder will incldue RP, RD, RS and CTs files. The dicom_dict is dictionary the represent all these information that we need in this folder
+    :param out_rp_filepath:
+        The RP file will save to out_rp_filepath
+    :param is_enable_print:
+        It will show all of printing log if is_eanble_print == True
+        It will not any printing log if is_enable_print == False
+        By the way, when you set is_enable_print as False but you just need to print some information in some line,
+        All you cna do is use enablePrint() and blockPrint() function. For example,
+            ...
+            enablePrint()
+            print('This is for specific debug when you have some confuse on some code and you want to open is_enable_print')
+            blockPrint()
+            ...
+    :return:
+        No return value
+    """
     from utilities import wrap_to_rp_file
     from utilities import get_metric_lines_representation
     from utilities import get_metric_needle_lines_representation
     from utilities import get_applicator_rp_line
     from utilities import get_HR_CTV_min_z
-
     is_enable_print=True
     if (is_enable_print == False):
         blockPrint()
@@ -628,7 +648,6 @@ def generate_brachy_rp_file(RP_OperatorsName, dicom_dict, out_rp_filepath, is_en
 
     # for debug , so change about testing rp import correct or not. So change tandem start from 3mm to 13mm
     tandem_rp_line = get_applicator_rp_line(metric_tandem, 3, 5) # <-- change to reduce 1mm
-
     lt_ovoid_rp_line = get_applicator_rp_line(metric_lt_ovoid, 0, 5)
     rt_ovoid_rp_line = get_applicator_rp_line(metric_rt_ovoid, 0 ,5)
     rp_needle_lines = []
@@ -676,7 +695,6 @@ def generate_brachy_rp_file_without_needle(RP_OperatorsName, dicom_dict, out_rp_
         blockPrint()
     else:
         enablePrint()
-    enablePrint()
     print('Call generate_brachy_rp_file_without_needle()')
     blockPrint()
     # Step 1. Get line of lt_ovoid, tandem, rt_ovoid by OpneCV contour material and innovated combination
@@ -716,7 +734,6 @@ def generate_brachy_rp_file_without_needle(RP_OperatorsName, dicom_dict, out_rp_
     wrap_to_rp_file(RP_OperatorsName=RP_OperatorsName, rs_filepath=rs_filepath, tandem_rp_line=tandem_rp_line,
                     out_rp_filepath=out_rp_filepath, lt_ovoid_rp_line=lt_ovoid_rp_line, needle_rp_lines=[],
                     rt_ovoid_rp_line=rt_ovoid_rp_line, applicator_roi_dict=applicator_roi_dict)
-
 
     if (is_enable_print == False):
         enablePrint()
@@ -800,7 +817,6 @@ def generate_all_rp_process(
 
             metadata = dicom_dict['metadata']
             # out_rp_filepath format is PatientID, RS StudyDate  and the final is folder name processing by coding
-
 
             out_rp_filepath = r'RP.{}.{}.f{}.dcm'.format(  metadata['RS_PatientID'],  metadata['RS_StudyDate'],  os.path.basename(metadata['folder']) )
             #out_rp_filepath = os.path.join('all_rp_output', out_rp_filepath)
