@@ -1,5 +1,6 @@
 # Try to seperate program into clear verion and useful functions
 import os
+from pathlib import Path, PureWindowsPath
 import errno
 import pydicom
 import numpy as np
@@ -9,11 +10,14 @@ import math
 from sys import exit
 import sys
 import datetime
+from IPython.display import display, HTML
+import openpyxl
 import csv, codecs
 from decimal import Decimal
 from shutil import copyfile
 import random
 import pickle
+
 
 # FUNCTIONS - Utility
 def python_object_dump(obj, filename):
@@ -36,8 +40,23 @@ def blockPrint(): # Disable printing
     sys.stdout = open(os.devnull, 'w')
 def enablePrint(): # Restore for printing
     sys.stdout = sys.__stdout__
+def create_directory_if_not_exists(path):
+    """
+    Creates 'path' if it does not exist
+    If creation fails, an exception will be thrown
+    :param path:    the path to ensure it exists
+    """
+    try:
+        os.makedirs(path)
+    except OSError as ex:
+        if ex.errno == errno.EEXIST and os.path.isdir(path):
+            pass
+        else:
+            print('An error happened trying to create ' + path)
+            raise
 
-# FUNCTIONS - Horizontal Algorithm for each ct slice by open cv
+
+# FUNCTIONS - Horizontal Algorithm for each CT slice. Use OpenCV to make contours
 def get_dicom_dict(folder):
     def get_dicom_folder_pathinfo(folder):
         dicom_folder = {}
@@ -138,22 +157,7 @@ def get_dicom_dict(folder):
         #print('ct_obj={}'.format(ct_obj))
     return out_dict
 def generate_output_to_dicom_dict(dicom_dict):
-    from utilities import generate_metadata_to_dicom_dict
-    from utilities import get_contour_xy_mean
-    from utilities import get_contour_area_mm2
-    from utilities import convert_to_gray_image
-    from utilities import get_max_contours
-    from utilities import get_max_contours_by_filter_img
-    from utilities import get_contours_from_edge_detection_algo_01
-    from utilities import get_contours_from_edge_detection_algo_02
-    from utilities import get_contours_from_edge_detection_algo_03
-    from utilities import get_contours_from_edge_detection_algo_04
-    from utilities import get_contours_from_edge_detection_algo_05
-    from utilities import get_contours_from_edge_detection_algo_06
-    from utilities import get_contours_from_edge_detection_algo_07
     from utilities import generate_output_to_ct_obj
-
-    generate_metadata_to_dicom_dict(dicom_dict)
     folder = dicom_dict['metadata']['folder']
     z_map = dicom_dict['z']
     for z_idx, z in enumerate(sorted(z_map.keys())):
@@ -162,15 +166,11 @@ def generate_output_to_dicom_dict(dicom_dict):
         generate_output_to_ct_obj(ct_obj)
         # information is in ct_obj['output']
 
-# FUNCTIONS - Vertial Algorithms
+# FUNCTIONS - Algorithm processing Fucntions
 def algo_to_get_pixel_lines(dicom_dict, needle_lines = []):
-    from utilities import distance
-    from utilities import get_view_scope_by_dicom_dict
-    from utilities import get_minimum_rect_from_contours
-    from utilities import is_point_in_rect
-    from utilities import is_contour_in_rect
     from utilities import get_rect_info_from_cv_contour
-    from utilities import get_most_closed_pt
+    from utilities import get_minimum_rect_from_contours
+    from utilities import is_contour_in_rect
 
     # type: (dicom_dict) -> (lt_ovoid, tandem, rt_ovoid)
     # Step 1. Use algo05 to get center point of inner contour
@@ -514,13 +514,7 @@ def algo_to_get_pixel_lines(dicom_dict, needle_lines = []):
             print('tandem = {}'.format(tandem))
     return (lt_ovoid, tandem, rt_ovoid)
 def algo_to_get_needle_lines(dicom_dict):
-    from utilities import distance
-    from utilities import get_view_scope_by_dicom_dict
-    from utilities import get_minimum_rect_from_contours
-    from utilities import is_point_in_rect
-    from utilities import is_contour_in_rect
     from utilities import get_rect_info_from_cv_contour
-    from utilities import get_most_closed_pt
     needle_lines = []
     # Step 1. Use algo07 to get center point of inner contour
     last_z_in_step1 = sorted(dicom_dict['z'].keys())[0]
@@ -566,6 +560,30 @@ def algo_to_get_needle_lines(dicom_dict):
             if( needle_line_idx >= len(center_pts_dict[z]) ):
                 # It's mean there is no more point, so continue
                 continue
+            #argmin_idx = 0
+            potential_list = []
+            for pt_idx, pt in enumerate(center_pts_dict[z]):
+                x_mm = center_pts_dict[z][pt_idx][0] * ps_x
+                y_mm = center_pts_dict[z][pt_idx][1] * ps_y
+                dist_mm = math.sqrt((x_mm - prev_x_mm) ** 2 + (y_mm - prev_y_mm) ** 2)
+                if dist_mm < allowed_distance_mm:
+                    potential_list.append( (pt_idx , dist_mm) )
+            sorted_potential_list = sorted(potential_list, key=lambda item:item[1])
+            if len(sorted_potential_list) <= 0 :
+                print('There is not closed point')
+                break
+            pt_idx = sorted_potential_list[0][0]
+            prev_pt = (center_pts_dict[z][pt_idx][0], center_pts_dict[z][pt_idx][1], float(z))
+            prev_info['pt'] = prev_pt
+            prev_info['ps_x'] = ps_x
+            prev_info['ps_y'] = ps_y
+            #lt_ovoid.append(prev_pt)
+            needle_line.append(prev_pt)
+            print('needle_line (with idx={})  = {}'.format(needle_line_idx, needle_line))
+
+
+
+            """
             x_mm = center_pts_dict[z][needle_line_idx][0] * ps_x #Error
             #y_mm = center_pts_dict[z][0][1] * ps_y
             y_mm = center_pts_dict[z][needle_line_idx][1] * ps_y
@@ -579,23 +597,28 @@ def algo_to_get_needle_lines(dicom_dict):
                 needle_line.append(prev_pt)
                 print('needle_line (with idx={})  = {}'.format(needle_line_idx, needle_line))
             else:
+                print('allowed_distance_mm = {}'.format(allowed_distance_mm))
+                print('math.sqrt( (x_mm-prev_x_mm)**2 + (y_mm-prev_y_mm)**2) = {}'.format(math.sqrt( (x_mm-prev_x_mm)**2 + (y_mm-prev_y_mm)**2)))
                 break
+            """
         needle_lines.append(needle_line)
     return needle_lines
 
-# FUNCTIONS - main rp generate function
+# FUNCTIONS - main genearte function
 def generate_brachy_rp_file(RP_OperatorsName, dicom_dict, out_rp_filepath, is_enable_print=False):
-    from utilities import get_metric_needle_lines_representation
+    from utilities import wrap_to_rp_file
     from utilities import get_metric_lines_representation
+    from utilities import get_metric_needle_lines_representation
     from utilities import get_applicator_rp_line
-    #is_enable_print=True
+    from utilities import get_HR_CTV_min_z
+
+    is_enable_print=True
     if (is_enable_print == False):
         blockPrint()
     else:
         enablePrint()
     # Step 1. Get line of lt_ovoid, tandem, rt_ovoid by OpneCV contour material and innovated combination
     needle_lines = algo_to_get_needle_lines(dicom_dict)
-
     print('len(needle_lines) = {}'.format(len(needle_lines)))
     if len(needle_lines) > 0 :
         for idx, needle_line in enumerate(needle_lines):
@@ -688,11 +711,6 @@ def generate_brachy_rp_file(RP_OperatorsName, dicom_dict, out_rp_filepath, is_en
     if (is_enable_print == False):
         enablePrint()
 def generate_brachy_rp_file_without_needle(RP_OperatorsName, dicom_dict, out_rp_filepath, is_enable_print=False):
-    from utilities import get_metric_lines_representation
-    from utilities import get_metric_needle_lines_representation
-    from utilities import get_applicator_rp_line
-    from utilities import wrap_to_rp_file
-
     if (is_enable_print == False):
         blockPrint()
     else:
@@ -743,30 +761,17 @@ def generate_brachy_rp_file_without_needle(RP_OperatorsName, dicom_dict, out_rp_
     if (is_enable_print == False):
         enablePrint()
 
-# FUNCTIONS - Major rp process function for root_folder
+# FUNCTIONS - Some ploting utility functions support for you to check CT pictures with data
 def generate_all_rp_process(
         root_folder=r'RAL_plan_new_20190905', rp_output_folder_filepath='all_rp_output',  bytes_dump_folder_filepath='contours_bytes',
         is_recreate_bytes=True, debug_folders=[]):
+    from utilities import generate_metadata_to_dicom_dict
 
     print('Call generate_all_rp_process with the following arguments')
     print('root_folder = ', root_folder)
     print('rp_output_folder_filepath = ', rp_output_folder_filepath)
     print('bytes_dump_folder_filepath = ', bytes_dump_folder_filepath)
 
-    def create_directory_if_not_exists(path):
-        """
-        Creates 'path' if it does not exist
-        If creation fails, an exception will be thrown
-        :param path:    the path to ensure it exists
-        """
-        try:
-            os.makedirs(path)
-        except OSError as ex:
-            if ex.errno == errno.EEXIST and os.path.isdir(path):
-                pass
-            else:
-                print('An error happened trying to create ' + path)
-                raise
 
     create_directory_if_not_exists(bytes_dump_folder_filepath)
     create_directory_if_not_exists(rp_output_folder_filepath)
@@ -795,12 +800,14 @@ def generate_all_rp_process(
 
         print('\n[{}/{}] Loop info : folder_idx = {}, folder = {}'.format(folder_idx + 1, len(folders), folder_idx, folder),flush=True)
         byte_filename = r'{}.bytes'.format(os.path.basename(folder))
+        #dump_filepath = os.path.join('contours_bytes', byte_filename)
         dump_filepath = os.path.join(bytes_dump_folder_filepath, byte_filename)
 
         if (is_recreate_bytes == True):
             time_start = datetime.datetime.now()
             print('[{}/{}] Create bytes file {} '.format(folder_idx + 1, len(folders), dump_filepath), end=' -> ',flush=True)
             dicom_dict = get_dicom_dict(folder)
+            generate_metadata_to_dicom_dict(dicom_dict)
             generate_output_to_dicom_dict(dicom_dict)
             all_dicom_dict[folder] = dicom_dict
             python_object_dump(dicom_dict, dump_filepath)
@@ -817,6 +824,7 @@ def generate_all_rp_process(
                 time_start = datetime.datetime.now()
                 print('[{}/{}] Create bytes file {} '.format(folder_idx + 1, len(folders), dump_filepath), end=' -> ',flush=True)
                 dicom_dict = get_dicom_dict(folder)
+                generate_metadata_to_dicom_dict(dicom_dict)
                 generate_output_to_dicom_dict(dicom_dict)
                 all_dicom_dict[folder] = dicom_dict
                 python_object_dump(dicom_dict, dump_filepath)
@@ -827,6 +835,7 @@ def generate_all_rp_process(
         folder = os.path.basename(folder)
         total_folders.append(folder)
         try:
+            #bytes_filepath = os.path.join('contours_bytes', r'{}.bytes'.format(folder))
             bytes_filepath = os.path.join(bytes_dump_folder_filepath, r'{}.bytes'.format(folder))
             dicom_dict = python_object_load(bytes_filepath)
 
@@ -836,13 +845,14 @@ def generate_all_rp_process(
             metadata = dicom_dict['metadata']
             # out_rp_filepath format is PatientID, RS StudyDate  and the final is folder name processing by coding
 
+
             out_rp_filepath = r'RP.{}.{}.f{}.dcm'.format(  metadata['RS_PatientID'],  metadata['RS_StudyDate'],  os.path.basename(metadata['folder']) )
             #out_rp_filepath = os.path.join('all_rp_output', out_rp_filepath)
             out_rp_filepath = os.path.join(rp_output_folder_filepath, out_rp_filepath)
             time_start = datetime.datetime.now()
             print('[{}/{}] Create RP file -> {}'.format(folder_idx+1,len(folders), out_rp_filepath) ,end=' -> ', flush=True)
             #generate_brachy_rp_file_without_needle(RP_OperatorsName='cylin', dicom_dict=dicom_dict, out_rp_filepath=out_rp_filepath,is_enable_print=False)
-            generate_brachy_rp_file(RP_OperatorsName='cylin', dicom_dict=dicom_dict, out_rp_filepath=out_rp_filepath, is_enable_print=False)
+            generate_brachy_rp_file(RP_OperatorsName='cylin', dicom_dict=dicom_dict, out_rp_filepath=out_rp_filepath, is_enable_print=True)
             #generate_brachy_rp_file(RP_OperatorsName='cylin', dicom_dict=dicom_dict, out_rp_filepath=out_rp_filepath, is_enable_print=True)
             time_end = datetime.datetime.now()
             print('{}s [{}-{}]'.format(time_end-time_start, time_start, time_end), end='\n', flush=True)
@@ -866,6 +876,7 @@ def generate_all_rp_process(
             print('Create RP file Failed')
             failed_folders.append(folder)
             print(debug_ex)
+            raise debug_ex
     print('FOLDER SUMMARY REPORT')
     print('failed folders = {}'.format(failed_folders))
     print('failed / total = {}/{}'.format(len(failed_folders), len(total_folders) ))
@@ -880,23 +891,28 @@ def generate_all_rp_process(
         print('Create largest size dicom file failed')
     print('[END] generate_all_rp_process()')
 
+
 if __name__ == '__main__':
+
     # 10 CASE
     print('root_folder = Study-RAL-implant_20191112 -> {}'.format([os.path.basename(item) for item in os.listdir('Study-RAL-implant_20191112')]))
     generate_all_rp_process(root_folder=r'Study-RAL-implant_20191112',
                             rp_output_folder_filepath='Study-RAL-implant_20191112_RP_Files',bytes_dump_folder_filepath='Study-RAL-implant_20191112_Bytes_Files',
-                            is_recreate_bytes=True, debug_folders=['804045'])
+                            is_recreate_bytes=True, debug_folders=[])
+    #'804045'
+    exit()
+
     # 31 CASE
-    #print('root_folder = RAL_plan_new_20190905 -> {}'.format([os.path.basename(item) for item in os.listdir('RAL_plan_new_20190905')]))
-    #generate_all_rp_process(root_folder=r'RAL_plan_new_20190905',
-    #                        rp_output_folder_filepath='RAL_plan_new_20190905_RP_Files', bytes_dump_folder_filepath='RAL_plan_new_20190905_Bytes_Files',
-    #                        is_recreate_bytes=False, debug_folders=[])
+    print('root_folder = RAL_plan_new_20190905 -> {}'.format([os.path.basename(item) for item in os.listdir('RAL_plan_new_20190905')]))
+    generate_all_rp_process(root_folder=r'RAL_plan_new_20190905',
+                            rp_output_folder_filepath='RAL_plan_new_20190905_RP_Files', bytes_dump_folder_filepath='RAL_plan_new_20190905_Bytes_Files',
+                            is_recreate_bytes=True, debug_folders=[])
 
     # 22 CASE : the case of 33220132 is only one tandem and not with pipe. This case should be wrong
-    #print('root_folder = Study-RAL-20191105 -> {}'.format([os.path.basename(item) for item in os.listdir('Study-RAL-20191105')]))
-    #generate_all_rp_process(root_folder=r'Study-RAL-20191105',
-    #                        rp_output_folder_filepath='Study-RAL-20191105_RP_Files', bytes_dump_folder_filepath='Study-RAL-20191105_Bytes_Files',
-    #                        is_recreate_bytes=False, debug_folders=[])
+    print('root_folder = Study-RAL-20191105 -> {}'.format([os.path.basename(item) for item in os.listdir('Study-RAL-20191105')]))
+    generate_all_rp_process(root_folder=r'Study-RAL-20191105',
+                            rp_output_folder_filepath='Study-RAL-20191105_RP_Files', bytes_dump_folder_filepath='Study-RAL-20191105_Bytes_Files',
+                            is_recreate_bytes=True, debug_folders=[])
 
     exit(0)
 

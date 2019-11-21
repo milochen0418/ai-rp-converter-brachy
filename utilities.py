@@ -21,7 +21,7 @@ def generate_metadata_to_dicom_dict(dicom_dict):
     metadata['view_scope'] = (view_min_y, view_max_y, view_min_x, view_max_x)
 
     # Figure out global_max_contour_constant_value
-    A = dicom_dict['z'][sorted(dicom_dict['z'].keys())[0]]['rescale_pixel_array']
+    A = dicom_dict['z'][ sorted(dicom_dict['z'].keys())[0] ]['rescale_pixel_array']
     data = A.ravel()
     sorted_data = np.copy(data)
     sorted_data.sort()
@@ -29,7 +29,7 @@ def generate_metadata_to_dicom_dict(dicom_dict):
     metadata['global_max_contour_constant_value'] = global_max_contour_constant_value
 
     # metadata['view_scope'] = (view_min_y, view_max_y, view_min_x, view_max_x)
-    # (contours_without_filter, constant) = get_max_contours(img, ContourRetrievalMode=cv2.RETR_TREE)
+    #(contours_without_filter, constant) = get_max_contours(img, ContourRetrievalMode=cv2.RETR_TREE)
 def get_contour_xy_mean(cv_contour):
     rect_info = get_rect_info_from_cv_contour(cv_contour)
     (x_mean, y_mean) = rect_info[2]
@@ -108,7 +108,7 @@ def generate_output_to_ct_obj(ct_obj):
     (view_min_y, view_max_y, view_min_x, view_max_x) = ct_obj['dicom_dict']['metadata']['view_scope']
     global_max_contour_constant_value = ct_obj['dicom_dict']['metadata']['global_max_contour_constant_value']
 
-    # view_pixel_array = rescale_pixel_array[view_min_y:view_max_y, view_min_x:view_max_x]
+    #view_pixel_array = rescale_pixel_array[view_min_y:view_max_y, view_min_x:view_max_x]
     img = ct_obj['rescale_pixel_array']
     gray_img = convert_to_gray_image(img)
     gray_img = gray_img[view_min_y: view_max_y, view_min_x:view_max_x]
@@ -124,21 +124,18 @@ def generate_output_to_ct_obj(ct_obj):
     ct_obj['output']['contours']['algo03'] = get_contours_from_edge_detection_algo_03(img)
     ct_obj['output']['contours']['algo04'] = get_contours_from_edge_detection_algo_04(img)
     contour_constant_value = ct_obj['dicom_dict']['metadata']['global_max_contour_constant_value']
-    ct_obj['output']['contours']['algo05'] = get_contours_from_edge_detection_algo_05(rescale_pixel_array,
-                                                                                      contour_constant_value)
-    ct_obj['output']['contours']['algo06'] = get_contours_from_edge_detection_algo_06(rescale_pixel_array,
-                                                                                      contour_constant_value)
-    ct_obj['output']['contours']['algo07'] = get_contours_from_edge_detection_algo_07(rescale_pixel_array,
-                                                                                      contour_constant_value, ps_x,
-                                                                                      ps_y)
+    ct_obj['output']['contours']['algo05'] = get_contours_from_edge_detection_algo_05(rescale_pixel_array, contour_constant_value)
+    ct_obj['output']['contours']['algo06'] = get_contours_from_edge_detection_algo_06(rescale_pixel_array, contour_constant_value)
+    ct_obj['output']['contours']['algo07'] = get_contours_from_edge_detection_algo_07(rescale_pixel_array, contour_constant_value, ps_x, ps_y)
 
-    # ct_obj['output']['contours']['algo05'] = get_contours_from_edge_detection_algo_05(img, contour_constant_vlaue = global_max_contour_constant_value)
-    # ct_obj['output']['contours']['algo06'] = get_contours_from_edge_detection_algo_06(img, contour_constant_value = global_max_contour_constant_value)
+    #ct_obj['output']['contours']['algo05'] = get_contours_from_edge_detection_algo_05(img, contour_constant_vlaue = global_max_contour_constant_value)
+    #ct_obj['output']['contours']['algo06'] = get_contours_from_edge_detection_algo_06(img, contour_constant_value = global_max_contour_constant_value)
+
 
     # Process to contours to fit global pixel img
     ct_obj['output']['contours512'] = {}
     for algo_key in sorted(ct_obj['output']['contours'].keys()):
-        ct_obj['output']['contours512'][algo_key] = copy.deepcopy(ct_obj['output']['contours'][algo_key])
+        ct_obj['output']['contours512'][algo_key] =  copy.deepcopy(ct_obj['output']['contours'][algo_key] )
         contours = ct_obj['output']['contours512'][algo_key]
         for contour in contours:
             for [pt] in contour:
@@ -154,8 +151,8 @@ def generate_output_to_ct_obj(ct_obj):
         contours_infos = []
         for contour in contours:
             contours_info = {}
-            # contours_infos.append(contours_info)
-            (x, y) = get_contour_xy_mean(contour)
+            #contours_infos.append(contours_info)
+            (x,y) = get_contour_xy_mean(contour)
             global_x_pixel = x + view_min_x
             global_y_pixel = y + view_min_y
             area_mm2 = get_contour_area_mm2(contour, ps_x, ps_y)
@@ -361,9 +358,10 @@ def get_most_closed_pt(src_pt, pts, allowed_distance=100):
         pass
     return dst_pt
 
+
 # FUNCTIONS - Utility of main rp generate function
 def get_metric_lines_representation(dicom_dict, lt_ovoid, tandem, rt_ovoid):
-    # (metric_lt_ovoid, metric_tandem, metric_rt_ovoid) = get_metric_lines_representation(dicom_dict, lt_ovoid, tandem, rt_ovoid)
+    #(metric_lt_ovoid, metric_tandem, metric_rt_ovoid) = get_metric_lines_representation(dicom_dict, lt_ovoid, tandem, rt_ovoid)
     new_lines = []
     for line in [lt_ovoid, tandem, rt_ovoid]:
         new_line = []
@@ -372,7 +370,7 @@ def get_metric_lines_representation(dicom_dict, lt_ovoid, tandem, rt_ovoid):
             ct_obj = dicom_dict['z'][z]
             x = pt[0] * ct_obj['ps_x'] + ct_obj['origin_x']
             y = pt[1] * ct_obj['ps_y'] + ct_obj['origin_y']
-            new_line.append([x, y, z])
+            new_line.append([x,y,z])
         new_lines.append(new_line)
     (metric_lt_ovoid, metric_tandem, metric_rt_ovoid) = (new_lines[0], new_lines[1], new_lines[2])
     return (metric_lt_ovoid, metric_tandem, metric_rt_ovoid)
@@ -391,7 +389,6 @@ def get_metric_needle_lines_representation(dicom_dict, needle_lines):
 def get_applicator_rp_line(metric_line, first_purpose_distance_mm, each_purpose_distance_mm):
     if (len(metric_line) == 0):
         return []
-
     # REWRITE get_metric_pt_info_by_travel_distance, so the get_metric_pt, reduct_distance_step and get_metric_pt_info_travel_distance will not be USED
     def get_metric_pt(metric_line, pt_idx, pt_idx_remainder):
         # print('get_metric_pt(metric_line={}, pt_idx={}, pt_idx_remainder={})'.format(metric_line, pt_idx, pt_idx_remainder))
@@ -415,7 +412,6 @@ def get_applicator_rp_line(metric_line, first_purpose_distance_mm, each_purpose_
             pt[axis_idx] += ((end_pt[axis_idx] - pt[axis_idx]) * pt_idx_remainder)
             # pt[axis_idx] = pt[axis_idx] + diff_with_ratio
         return pt
-
     def reduce_distance_step(metric_line, pt_idx, pt_idx_remainder, dist):
         # reduce dist and move further more step for (pt_idx, pt_idx_remainder)
         # ret_dist = ??  reduce dist into ret_dist
@@ -470,14 +466,12 @@ def get_applicator_rp_line(metric_line, first_purpose_distance_mm, each_purpose_
 
         pass
         # return (ret_dist, ret_pt_idx, ret_pt_idx_remainder)
-
     def get_metric_pt_info_by_travel_distance(metric_line, pt_idx, pt_idx_remainder, travel_dist):
         dist = travel_dist
         count_max = len(metric_line)
         count = 0
         while (True):
-            (t_dist, t_pt_idx, t_pt_idx_remainder) = reduce_distance_step(metric_line, pt_idx, pt_idx_remainder,
-                                                                          dist)
+            (t_dist, t_pt_idx, t_pt_idx_remainder) = reduce_distance_step(metric_line, pt_idx, pt_idx_remainder, dist)
 
             if pt_idx == len(metric_line) - 1 and pt_idx_remainder == 1:
                 # CASE 0: This is mean the distanced point will out of the line
@@ -504,21 +498,32 @@ def get_applicator_rp_line(metric_line, first_purpose_distance_mm, each_purpose_
     pt_idx = 0
     pt_idx_remainder = 0
     travel_dist = first_purpose_distance_mm
-    (t_pt, t_pt_idx, t_pt_idx_remainder, t_dist) = get_metric_pt_info_by_travel_distance(metric_line, pt_idx,
-                                                                                         pt_idx_remainder,
-                                                                                         travel_dist)
+    (t_pt, t_pt_idx, t_pt_idx_remainder, t_dist) = get_metric_pt_info_by_travel_distance(metric_line, pt_idx,pt_idx_remainder, travel_dist)
     tandem_rp_line.append(t_pt)
     for i in range(100):
         travel_dist = each_purpose_distance_mm
         (pt_idx, pt_idx_remainder) = (t_pt_idx, t_pt_idx_remainder)
-        (t_pt, t_pt_idx, t_pt_idx_remainder, t_dist) = get_metric_pt_info_by_travel_distance(metric_line, pt_idx,
-                                                                                             pt_idx_remainder,
-                                                                                             travel_dist)
+        (t_pt, t_pt_idx, t_pt_idx_remainder, t_dist) = get_metric_pt_info_by_travel_distance(metric_line, pt_idx,pt_idx_remainder,travel_dist)
         if (t_pt == tandem_rp_line[-1]):
             break
         tandem_rp_line.append(t_pt)
 
     return tandem_rp_line
+def get_HR_CTV_min_z(rs_filepath):
+    HR_CT_ROINumber = -1
+    rs_fp = pydicom.read_file(rs_filepath)
+    for roiSeq in rs_fp.StructureSetROISequence:
+        if roiSeq.ROIName == 'HR-CTV':
+            #print('ROI_Number = {}'.format(roiSeq.ROINumber))
+            HR_CT_ROINumber = roiSeq.ROINumber
+            break
+    hrctv_roicseq_idx = -1
+    for c_idx, roiCSeq in enumerate(rs_fp.ROIContourSequence):
+        if roiCSeq.ReferencedROINumber == HR_CT_ROINumber:
+            hrctv_roicseq_idx = c_idx
+            break
+    min_z = rs_fp.ROIContourSequence[hrctv_roicseq_idx].ContourSequence[0].ContourData[2]
+    return min_z
 def wrap_to_rp_file(RP_OperatorsName, rs_filepath, tandem_rp_line, out_rp_filepath, lt_ovoid_rp_line, rt_ovoid_rp_line, needle_rp_lines=[], applicator_roi_dict={}):
     # TODO wrap needles
     print('len(needle_rp_lines)={}'.format(len(needle_rp_lines)))
@@ -664,3 +669,4 @@ def wrap_to_rp_file(RP_OperatorsName, rs_filepath, tandem_rp_line, out_rp_filepa
     rp_fp.ApplicationSetupSequence[0].ChannelSequence = copy.deepcopy(rp_fp.ApplicationSetupSequence[0].ChannelSequence[0:max_idx+1])
     pydicom.write_file(out_rp_filepath, rp_fp)
     pass
+
