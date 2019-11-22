@@ -877,31 +877,37 @@ def generate_all_rp_process(
         print('Create largest size dicom file failed')
     print('[END] generate_all_rp_process()')
 
+import time
 
-if __name__ == '__main__':
-
+def main():
     # 10 CASE
-    print('root_folder = Study-RAL-implant_20191112 -> {}'.format([os.path.basename(item) for item in os.listdir('Study-RAL-implant_20191112')]))
+    print('root_folder = Study-RAL-implant_20191112 -> {}'.format(
+        [os.path.basename(item) for item in os.listdir('Study-RAL-implant_20191112')]))
     generate_all_rp_process(root_folder=r'Study-RAL-implant_20191112',
-                            rp_output_folder_filepath='Study-RAL-implant_20191112_RP_Files',bytes_dump_folder_filepath='Study-RAL-implant_20191112_Bytes_Files',
+                            rp_output_folder_filepath='Study-RAL-implant_20191112_RP_Files',
+                            bytes_dump_folder_filepath='Study-RAL-implant_20191112_Bytes_Files',
                             is_recreate_bytes=True, debug_folders=[])
-    #'804045'
-
+    # '804045'
 
     # 31 CASE
-    print('root_folder = RAL_plan_new_20190905 -> {}'.format([os.path.basename(item) for item in os.listdir('RAL_plan_new_20190905')]))
+    print('root_folder = RAL_plan_new_20190905 -> {}'.format(
+        [os.path.basename(item) for item in os.listdir('RAL_plan_new_20190905')]))
     generate_all_rp_process(root_folder=r'RAL_plan_new_20190905',
-                            rp_output_folder_filepath='RAL_plan_new_20190905_RP_Files', bytes_dump_folder_filepath='RAL_plan_new_20190905_Bytes_Files',
+                            rp_output_folder_filepath='RAL_plan_new_20190905_RP_Files',
+                            bytes_dump_folder_filepath='RAL_plan_new_20190905_Bytes_Files',
                             is_recreate_bytes=True, debug_folders=[])
 
     # 22 CASE : the case of 33220132 is only one tandem and not with pipe. This case should be wrong
-    print('root_folder = Study-RAL-20191105 -> {}'.format([os.path.basename(item) for item in os.listdir('Study-RAL-20191105')]))
+    print('root_folder = Study-RAL-20191105 -> {}'.format(
+        [os.path.basename(item) for item in os.listdir('Study-RAL-20191105')]))
     generate_all_rp_process(root_folder=r'Study-RAL-20191105',
-                            rp_output_folder_filepath='Study-RAL-20191105_RP_Files', bytes_dump_folder_filepath='Study-RAL-20191105_Bytes_Files',
+                            rp_output_folder_filepath='Study-RAL-20191105_RP_Files',
+                            bytes_dump_folder_filepath='Study-RAL-20191105_Bytes_Files',
                             is_recreate_bytes=True, debug_folders=[])
 
-    exit(0)
 
+if __name__ == '__main__':
+    main()
 
 
 
