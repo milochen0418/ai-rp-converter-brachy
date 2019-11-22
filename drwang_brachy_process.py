@@ -696,7 +696,7 @@ def generate_brachy_rp_file_without_needle(RP_OperatorsName, dicom_dict, out_rp_
     else:
         enablePrint()
     print('Call generate_brachy_rp_file_without_needle()')
-    blockPrint()
+
     # Step 1. Get line of lt_ovoid, tandem, rt_ovoid by OpneCV contour material and innovated combination
     (lt_ovoid, tandem, rt_ovoid) = algo_to_get_pixel_lines(dicom_dict)
     # Step 2. Convert line into metric representation
@@ -743,6 +743,21 @@ def generate_all_rp_process(
         root_folder=r'RAL_plan_new_20190905', rp_output_folder_filepath='all_rp_output',  bytes_dump_folder_filepath='contours_bytes',
         is_recreate_bytes=True, debug_folders=[]):
 
+    """
+
+    :param root_folder:
+        The folder structure of current data is like {root_folder}/{case_folder}
+        people always put many case folder in root_folder.
+        You can generate each dicom_dict for each case_folder. And then process this case into RP file
+
+    :param rp_output_folder_filepath:
+        Every RP file will put into
+
+    :param bytes_dump_folder_filepath:
+    :param is_recreate_bytes:
+    :param debug_folders:
+    :return:
+    """
     from utilities import generate_metadata_to_dicom_dict
     from utilities import create_directory_if_not_exists
     from utilities import python_object_dump
@@ -811,7 +826,6 @@ def generate_all_rp_process(
             #bytes_filepath = os.path.join('contours_bytes', r'{}.bytes'.format(folder))
             bytes_filepath = os.path.join(bytes_dump_folder_filepath, r'{}.bytes'.format(folder))
             dicom_dict = python_object_load(bytes_filepath)
-
             if fullpath_folder not in all_dicom_dict.keys():
                 all_dicom_dict[fullpath_folder] = dicom_dict
 
@@ -823,8 +837,8 @@ def generate_all_rp_process(
             out_rp_filepath = os.path.join(rp_output_folder_filepath, out_rp_filepath)
             time_start = datetime.datetime.now()
             print('[{}/{}] Create RP file -> {}'.format(folder_idx+1,len(folders), out_rp_filepath) ,end=' -> ', flush=True)
-            generate_brachy_rp_file_without_needle(RP_OperatorsName='cylin', dicom_dict=dicom_dict, out_rp_filepath=out_rp_filepath,is_enable_print=False)
-            #generate_brachy_rp_file(RP_OperatorsName='cylin', dicom_dict=dicom_dict, out_rp_filepath=out_rp_filepath, is_enable_print=True)
+            #generate_brachy_rp_file_without_needle(RP_OperatorsName='cylin', dicom_dict=dicom_dict, out_rp_filepath=out_rp_filepath,is_enable_print=False)
+            generate_brachy_rp_file(RP_OperatorsName='cylin', dicom_dict=dicom_dict, out_rp_filepath=out_rp_filepath, is_enable_print=False)
             #generate_brachy_rp_file(RP_OperatorsName='cylin', dicom_dict=dicom_dict, out_rp_filepath=out_rp_filepath, is_enable_print=True)
             time_end = datetime.datetime.now()
             print('{}s [{}-{}]'.format(time_end-time_start, time_start, time_end), end='\n', flush=True)
@@ -848,7 +862,7 @@ def generate_all_rp_process(
             print('Create RP file Failed')
             failed_folders.append(folder)
             print(debug_ex)
-            raise debug_ex
+            #raise debug_ex
     print('FOLDER SUMMARY REPORT')
     print('failed folders = {}'.format(failed_folders))
     print('failed / total = {}/{}'.format(len(failed_folders), len(total_folders) ))
@@ -870,9 +884,9 @@ if __name__ == '__main__':
     print('root_folder = Study-RAL-implant_20191112 -> {}'.format([os.path.basename(item) for item in os.listdir('Study-RAL-implant_20191112')]))
     generate_all_rp_process(root_folder=r'Study-RAL-implant_20191112',
                             rp_output_folder_filepath='Study-RAL-implant_20191112_RP_Files',bytes_dump_folder_filepath='Study-RAL-implant_20191112_Bytes_Files',
-                            is_recreate_bytes=True, debug_folders=['804045'])
+                            is_recreate_bytes=True, debug_folders=[])
     #'804045'
-    exit()
+
 
     # 31 CASE
     print('root_folder = RAL_plan_new_20190905 -> {}'.format([os.path.basename(item) for item in os.listdir('RAL_plan_new_20190905')]))
