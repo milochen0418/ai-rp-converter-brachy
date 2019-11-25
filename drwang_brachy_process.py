@@ -908,7 +908,10 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    from random import randint
+    for i in range(100):
+        main()
+        time.sleep(randint(100, 700))
 
 
 
