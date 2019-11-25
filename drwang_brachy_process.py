@@ -5,6 +5,7 @@ import errno
 import pydicom
 import numpy as np
 import cv2
+import time
 import copy
 import math
 from sys import exit
@@ -877,7 +878,7 @@ def generate_all_rp_process(
         print('Create largest size dicom file failed')
     print('[END] generate_all_rp_process()')
 
-import time
+
 
 def main():
     # 10 CASE
@@ -908,6 +909,9 @@ def main():
 
 if __name__ == '__main__':
     main()
+
+
+
 
 
 
