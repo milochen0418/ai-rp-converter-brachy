@@ -234,105 +234,16 @@ def distance(pt1, pt2):
     ans = math.sqrt(sum)
     return ans
 def get_view_scope_by_dicom_dict(dicom_dict):
-    #return (156, 356, 156, 356)
+    """
+    If you set View Scope, the computing time of algorithm will be reduced.
+    But the side effect is that maybe you don't know what the best view scope for each patient's case.
+    There is some patient's case that is not scanned in middle position. So finally, I think return
+    512x512 is the best value because pixel_array in CT is 512x512 size.
+    
+    :param dicom_dict:
+    :return:
+    """
     return (0, 512, 0, 512)
-    def get_rect_info_from_cv_contour(cv_contour):
-        i = cv_contour
-        con = i.reshape(i.shape[0], i.shape[2])
-        x_min = con[:, 0].min()
-        x_max = con[:, 0].max()
-        x_mean = con[:, 0].mean()
-        y_min = con[:, 1].min()
-        y_max = con[:, 1].max()
-        y_mean = con[:, 1].mean()
-        h = y_max - y_min
-        w = x_max - x_min
-        x_mean = int(x_mean)
-        y_mean = int(y_mean)
-        rect_info = [(x_min, x_max, y_min, y_max), (w, h), (x_mean, y_mean)]
-        return rect_info
-    def get_rect_infos_and_center_pts(contours, h_min=13, w_min=13, h_max=19, w_max=19):
-        app_center_pts = []
-        app_center_pts_extend_data = []
-        rect_infos = []
-        for contour in contours:
-            # Step 2. make useful information
-            rect_info = get_rect_info_from_cv_contour(cv_contour=contour)
-            # rect_info is [(x_min, x_max, y_min, y_max), (w, h), (x_mean, y_mean)]
-            """
-            i = contour
-            con = i.reshape(i.shape[0], i.shape[2])
-            x_min = con[:, 0].min()
-            x_max = con[:, 0].max()
-            x_mean = con[:, 0].mean()
-            y_min = con[:, 1].min()
-            y_max = con[:, 1].max()
-            y_mean = con[:, 1].mean()
-            h = y_max - y_min
-            w = x_max - x_min
-            x_mean = int(x_mean)
-            y_mean = int(y_mean)
-            rect_info = [(x_min, x_max, y_min, y_max), (w, h), (x_mean, y_mean)]
-            """
-            (x_min, x_max, y_min, y_max) = rect_info[0]
-            (w, h) = rect_info[1]
-            (x_mean, y_mean) = rect_info[2]
-
-            # if h >= 13 and h < 19 and w >= 13 and h < 19:
-            if h >= h_min and h < h_max and w >= w_min and w < w_max:
-                cen_pt = [x_mean, y_mean]
-                app_center_pts.append(cen_pt)
-                app_center_pts_extend_data.append({'cen_pt': cen_pt, 'contour': contour, 'rect_info': rect_info})
-            else:
-                # print('(h={},{} , w={},{})'.format(h_max, h_min, w_max, w_min))
-                # print('Not matching ! rect_info = ', rect_info)
-                pass
-            # print(rect_info)
-            rect_infos.append(rect_info)
-        sorted_app_center_pts = sorted(app_center_pts, key=lambda cen_pt: cen_pt[0], reverse=False)
-        return (sorted_app_center_pts, rect_infos, app_center_pts, app_center_pts_extend_data)
-    # Figure out (x_min, x_max, y_min, y_max) view scope that without bone
-    # Get the first slice (minimum z value)
-    #dicom_dict = get_dicom_dict(folder)
-    z_map = dicom_dict['z']
-    first_slice_z = sorted(z_map.keys())[0] # the z is minimum value. The most light OVoid and tandem
-    ct_obj = z_map[first_slice_z]
-    ps_x = ct_obj['ps_x']
-    ps_y = ct_obj['ps_y']
-    h_max = int((19.0 * 4.19921e-1) / ps_y)
-    h_min = int((13.0 * 4.19921e-1) / ps_y)
-    w_max = int((19.0 * 4.19921e-1) / ps_x)
-    w_min = int((13.0 * 4.19921e-1) / ps_x)
-    (contours, constant) = get_max_contours(ct_obj['rescale_pixel_array'])
-    (sorted_app_center_pts, rect_infos, app_center_pts, app_center_pts_extend_data) = get_rect_infos_and_center_pts(contours, h_max=h_max, w_max=w_max, h_min=h_min, w_min=w_min)
-    x_sorted_pts = sorted(app_center_pts, key=lambda cen_pt: cen_pt[0], reverse=False)
-    y_sorted_pts = sorted(app_center_pts, key=lambda cen_pt: cen_pt[1], reverse=False)
-    (min_x, max_x) = (x_sorted_pts[0][0], x_sorted_pts[-1][0])
-    (min_y, max_y) = (y_sorted_pts[0][1], y_sorted_pts[-1][1])
-    #print('X:({}, {})'.format(min_x, max_x))
-    #print('Y:({}, {})'.format(min_y, max_y))
-    w = max_x - min_x
-    h = max_y - min_y
-    dist = np.max([w, h])
-    cen_x = int(min_x + (w) / 2)
-    cen_y = int(min_y + (h) / 2)
-    loc_min_x = int(cen_x - dist / 2)
-    loc_max_x = int(cen_x + dist / 2)
-    loc_min_y = int(cen_y - dist / 2)
-    loc_max_y = int(cen_y + dist / 2)
-    #print('loc X:({}, {})'.format(loc_min_x, loc_max_x))
-    #print('loc Y:({}, {})'.format(loc_min_y, loc_max_y))
-    padding = 50
-    view_min_y = loc_min_y - padding
-    view_max_y = loc_max_y + padding
-    view_min_x = loc_min_x - padding
-    view_max_x = loc_max_x + padding
-    #(view_min_y, view_max_y, view_min_x, view_max_x) = (0,0,0,0)
-    # fake answer
-    return (156, 356, 156, 356)
-    #return (50, 50, 462, 462)
-    #return (view_min_y=156, view_max_y=356, view_min_x=156, view_max_x=356)
-    return (view_min_y, view_max_y, view_min_x, view_max_x)
 def get_minimum_rect_from_contours(contours, padding=2):
     rect = (x_min, x_max, y_min, y_max) = (0, 0, 0, 0)
     is_first = True
