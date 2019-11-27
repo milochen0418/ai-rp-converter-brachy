@@ -457,6 +457,13 @@ def is_point_in_rect(pt, rect=(0, 0, 0, 0)):
     else:
         return False
 def is_contour_in_rect(contour, rect=(0, 0, 0, 0)):
+    """
+    Detect the contour is including in rect or not
+    :param contour:
+    :param rect:
+    :return:
+        return boolean value True/False
+    """
     (x_min, x_max, y_min, y_max) = rect
     isContourInRect = True
     reshaped_contour = contour.reshape(contour.shape[0], contour.shape[2])
