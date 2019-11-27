@@ -140,9 +140,14 @@ def get_contours_from_edge_detection_algo_07(img, contour_constant_value, ps_x, 
     10 mm^2 can filter out Lt' ovoid and Rt' Ovoid
 
     :param img:
+        The input image your want to make algorithm for it
     :param contour_constant_value:
     :param ps_x:
+        To figure the area in mm^2 unit, we need to have the PixelSpacing attribute value in CT file, so that we can
+        convert the format of pixel into mm unit
     :param ps_y:
+        To figure the area in mm^2 unit, we need to have the PixelSpacing attribute value in CT file, so that we can
+        convert the format of pixel into mm unit
     :return:
         array of contours that area < 10 mm^2
     """
