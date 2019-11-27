@@ -411,6 +411,15 @@ def get_view_scope_by_dicom_dict(dicom_dict):
     """
     return (0, 512, 0, 512)
 def get_minimum_rect_from_contours(contours, padding=2):
+    """
+    Find the minimum that include all of contour of contours array
+    :param contours:
+        array of contour
+    :param padding:
+        Add padding value for return rect
+    :return:
+        return rect object represent in format of (x_min, x_max, y_min, y_max)
+    """
     rect = (x_min, x_max, y_min, y_max) = (0, 0, 0, 0)
     is_first = True
     for contour in contours:
@@ -457,6 +466,11 @@ def is_contour_in_rect(contour, rect=(0, 0, 0, 0)):
             break
     return isContourInRect
 def get_rect_info_from_cv_contour(cv_contour):
+    """
+
+    :param cv_contour:
+    :return:
+    """
     i = cv_contour
     con = i.reshape(i.shape[0], i.shape[2])
     x_min = con[:, 0].min()
@@ -476,7 +490,7 @@ def get_most_closed_pt(src_pt, pts, allowed_distance=100):
     find which is the closed point of src_pt in point array pts.
     But only find the point that distance smaller than allowed_distance
     :param src_pt:
-        source point 
+        source point
     :param pts:
         array of points
     :param allowed_distance:
