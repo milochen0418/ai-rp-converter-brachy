@@ -133,6 +133,19 @@ def get_contours_from_edge_detection_algo_06(img, contour_constant_value):
     contours = contours_without_filter
     return contours
 def get_contours_from_edge_detection_algo_07(img, contour_constant_value, ps_x, ps_y):
+    """
+    Because the value of needle is like Lt Ovoid nad Rt Ovoid and the only difference is area size,
+    So we get contour by this the value and limit the area size < 10 mm^2.
+    Needle area is not easy to get a perfect value's range perfectly,  but find the contour with area smaller than
+    10 mm^2 can filter out Lt' ovoid and Rt' Ovoid
+
+    :param img:
+    :param contour_constant_value:
+    :param ps_x:
+    :param ps_y:
+    :return:
+        array of contours that area < 10 mm^2
+    """
     (contours_without_filter, constant) = get_max_contours(img, constant_value=contour_constant_value,
                                                            ContourRetrievalMode=cv2.RETR_EXTERNAL)
     needle_allowed_area_mm2 = 10
