@@ -72,6 +72,18 @@ def get_contour_xy_mean(cv_contour):
     (x_mean, y_mean) = rect_info[2]
     return (x_mean, y_mean)
 def get_contour_area_mm2(contour, ps_x, ps_y):
+    """
+        The function will get the contour with unit of pixel and return the Area with unit of mm^2
+        the ps_x and ps_y is help us to knwo how to convert unit from pixel to mm.
+    :param contour:
+        the contours with the unit of pixel
+    :param ps_x:
+        PixelSpacing X of CT image
+    :param ps_y:
+        PixelSpacing Y of CT image
+    :return:
+        return value of Area of this contour in mm^2 unit
+    """
     area_mm2 = cv2.contourArea(contour) * ps_x * ps_y
     return area_mm2
 def convert_to_gray_image(pixel_array):
