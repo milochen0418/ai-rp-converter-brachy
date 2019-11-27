@@ -35,6 +35,16 @@ def get_dicom_dict(folder):
         return the dicom_dict object.
         From dicom_dict object, you can use all dicom file's information you need for this project.
         So, your process don't need to waste time to reopen again.
+
+        dicom_dict support the following field
+        ['z'][-32] will get ct object with z = -32
+        Each ct object, which is a dicionary object,  is not also represent a CT file but filepath and dicom_dict.
+        ['pathinfo']['rs_filepath'] will get RS filepath. So do rd_filepath, rp_filepath and ct_filelist.
+        ['metadata'] save all metadata that represent all folder. for example
+        ['metadata']['RS_StudyDate'] is mean RS file's StudyDate
+        ['metadata']['RS_PatientID'] is mean RS file's PatientID
+        ['metadata']['RS_SOPInstanceUID'] is mean RS file's SOPInstanceUID
+
     """
     def get_dicom_folder_pathinfo(folder):
         dicom_folder = {}
