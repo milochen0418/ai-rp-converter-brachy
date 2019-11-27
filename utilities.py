@@ -115,6 +115,7 @@ def get_contours_from_edge_detection_algo_02(img, filter_img):
     return contours
 def get_contours_from_edge_detection_algo_03(img):
     """
+    [The algorithm will get Local maximum contours with Tree-Sturcture]
     Algorithm will compute and return array of contours by maximum constant value
     The algorithm will figure out it maximum constant for img and use this value to find contours  array.
     the return contours array is Tree Structure. It's mean that it may be exist some contour contained by another contour
@@ -128,6 +129,7 @@ def get_contours_from_edge_detection_algo_03(img):
     return contours
 def get_contours_from_edge_detection_algo_04(img):
     """
+    [The algorithm will get Local maximum contours with NonTree-Sturcture]
     Algorithm will compute and return array of contours by maximum constant value
     The algorithm will figure out it maximum constant for img and use this value to find contours  array.
     the return contours array is NonTree Structure. It's mean there is not contour contained by another contour
