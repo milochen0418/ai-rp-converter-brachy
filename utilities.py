@@ -497,6 +497,18 @@ def get_metric_needle_lines_representation(dicom_dict, needle_lines):
         metric_needle_lines.append(metric_needle_line)
     return metric_needle_lines
 def get_applicator_rp_line(metric_line, first_purpose_distance_mm, each_purpose_distance_mm):
+    """
+    The metric line is array of point with mm unit and this function will get the RP line by
+    RP's applicator's rule. The RP's applicator's rule is starting from some tip and go every step in fixed length.
+    In this case, the RP applicator line will start in first__purpose_distance_mm and then go each step with
+    fixed length = each_purpose_distance_mm
+    :param metric_line:
+        The metric line is array of point with mm unit
+    :param first_purpose_distance_mm:
+    :param each_purpose_distance_mm:
+    :return:
+        return the RP applicator line, which is the line information for our to write to RP file
+    """
     if (len(metric_line) == 0):
         return []
     # REWRITE get_metric_pt_info_by_travel_distance, so the get_metric_pt, reduct_distance_step and get_metric_pt_info_travel_distance will not be USED
