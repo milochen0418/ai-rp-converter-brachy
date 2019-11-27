@@ -148,9 +148,13 @@ def get_dicom_dict(folder):
     return out_dict
 def generate_output_to_dicom_dict(dicom_dict):
     """
-
+    After call get_dicom_dict(folder), you can get dicom_dict.
+    generate_output_to_dicom_dict(dicom_dict) will compute many kind of openCV function and save the temporary data info dicom_dict
+    Horizontal Algorithm material will finish after calling this function.
     :param dicom_dict:
+        The dicom_dict is INPUT that from the return value of  get_dicom_dict(folder)
     :return:
+    
     """
     from utilities import generate_output_to_ct_obj
     folder = dicom_dict['metadata']['folder']
