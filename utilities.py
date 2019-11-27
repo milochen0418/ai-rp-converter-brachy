@@ -166,11 +166,41 @@ def get_contours_from_edge_detection_algo_04(img):
     contours = contours_without_filter
     return contours
 def get_contours_from_edge_detection_algo_05(img, contour_constant_value):
+    """
+    [The algorithm will get Global maximum contours with Tree-Sturcture]
+    Algorithm will compute and return array of contours by maximum constant value
+    The algorithm will figure out it maximum constant for img and use this value to find contours  array.
+    the return contours array is Tree Structure. It's mean that it may be exist some contour contained by another contour
+
+    :param img:
+        INPUT  image
+    :param contour_constant_value:
+        We expect this contour_constant_value is the global maximum constant value for
+        all CT files in the same dicom_dict.
+    :return:
+        list of contours
+    """
+
     (contours_without_filter, constant) = get_max_contours(img, constant_value=contour_constant_value,
                                                            ContourRetrievalMode=cv2.RETR_TREE)
     contours = contours_without_filter
     return contours
 def get_contours_from_edge_detection_algo_06(img, contour_constant_value):
+    """
+    [The algorithm will get Global maximum contours with Non-Tree-Sturcture]
+    Algorithm will compute and return array of contours by maximum constant value
+    The algorithm will figure out it maximum constant for img and use this value to find contours  array.
+    the return contours array is Tree Structure. It's mean that it may be exist some contour contained by another contour
+
+    :param img:
+        INPUT  image
+    :param contour_constant_value:
+        We expect this contour_constant_value is the global maximum constant value for
+        all CT files in the same dicom_dict.
+    :return:
+        list of contours
+    """
+
     # the img should be rescale_pixel_array
     (contours_without_filter, constant) = get_max_contours(img, constant_value=contour_constant_value,
                                                            ContourRetrievalMode=cv2.RETR_EXTERNAL)
