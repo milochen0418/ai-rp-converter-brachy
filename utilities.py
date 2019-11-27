@@ -32,12 +32,20 @@ def python_object_dump(obj, filename):
     Dump python object into a file with file name = filename, so that all python data is save in this file
     :param obj:
     :param filename:
-    :return: 
+    :return:
     """
     file_w = open(filename, "wb")
     pickle.dump(obj, file_w)
     file_w.close()
 def python_object_load(filename):
+    """
+    Some python object's data are saving in the file with file name = filename by python_object_dump().
+    For getting this python object's data back, You need to call python_object_load().
+    it will load the python object according to the file with file name = filename
+    :param filename: 
+    :return:
+        return python object that data is saved in the file with file name = filename
+    """
     try:
         file_r = open(filename, "rb")
         obj2 = pickle.load(file_r)
