@@ -44,6 +44,8 @@ def get_dicom_dict(folder):
         ['metadata']['RS_StudyDate'] is mean RS file's StudyDate
         ['metadata']['RS_PatientID'] is mean RS file's PatientID
         ['metadata']['RS_SOPInstanceUID'] is mean RS file's SOPInstanceUID
+        ['metadata']['applicator_roi_dict'] is a dictionary that mapping data from ROIName to ROINumber. This information is colleted  from RS file and
+        we need to use this information to write RP file.
 
     """
     def get_dicom_folder_pathinfo(folder):
@@ -145,6 +147,11 @@ def get_dicom_dict(folder):
         #print('ct_obj={}'.format(ct_obj))
     return out_dict
 def generate_output_to_dicom_dict(dicom_dict):
+    """
+
+    :param dicom_dict:
+    :return:
+    """
     from utilities import generate_output_to_ct_obj
     folder = dicom_dict['metadata']['folder']
     z_map = dicom_dict['z']
