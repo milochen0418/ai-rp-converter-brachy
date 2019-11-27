@@ -137,7 +137,7 @@ def get_contours_from_edge_detection_algo_07(img, contour_constant_value, ps_x, 
     Because the value of needle is like Lt Ovoid nad Rt Ovoid and the only difference is area size,
     So we get contour by this the value and limit the area size < 10 mm^2.
     Needle area is not easy to get a perfect value's range perfectly,  but find the contour with area smaller than
-    10 mm^2 can filter out Lt' ovoid and Rt' Ovoid
+    10 mm^2 can filter out Lt' ovoid and Rt' Ovoid. 
 
     :param img:
         The input image your want to make algorithm for it
