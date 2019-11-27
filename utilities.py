@@ -118,11 +118,19 @@ def get_max_contours(A, constant_value=None, ContourRetrievalMode=cv2.RETR_EXTER
     _, contours, _ = cv2.findContours(gray_image, ContourRetrievalMode, cv2.CHAIN_APPROX_NONE)
     return (contours, constant)
 def get_max_contours_by_filter_img(A, filter_img, ContourRetrievalMode=cv2.RETR_EXTERNAL):
-    # gray_image = cv2.cvtColor(filter_img, cv2.COLOR_RGB2GRAY)
+    """
+    Figure conoutrs of A 2D array by filter_img.
+    More reference : https://docs.opencv.org/3.4/df/d0d/tutorial_find_contours.html
+    :param A:
+        input pixel array A (2D_
+    :param filter_img:
+        bit mask image
+    :param ContourRetrievalMode:
+        Contour Retrieval Mode
+    :return:
+        return contours array
+    """
     gray_image = filter_img
-    # findContours
-    # _, contours, _ = cv2.findContours(gray_image, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
-    # _, contours, _ = cv2.findContours(gray_image, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
     _, contours, _ = cv2.findContours(gray_image, ContourRetrievalMode, cv2.CHAIN_APPROX_NONE)
     return contours
 def get_contours_from_edge_detection_algo_01(img, filter_img):
