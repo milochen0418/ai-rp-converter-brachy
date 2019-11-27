@@ -108,9 +108,32 @@ def get_max_contours_by_filter_img(A, filter_img, ContourRetrievalMode=cv2.RETR_
     _, contours, _ = cv2.findContours(gray_image, ContourRetrievalMode, cv2.CHAIN_APPROX_NONE)
     return contours
 def get_contours_from_edge_detection_algo_01(img, filter_img):
+    """
+    [The algorithm will get contours, with Tree-Sturcture,  according  to filter_img]
+    In our algorithm , the filter_img is made by
+    cv2.adaptiveThreshold(gray_img, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 15, -22)
+    More useful information about adaptiveThreshold, you can refer the document here
+    https://docs.opencv.org/master/d7/d4d/tutorial_py_thresholding.html
+
+    :param img:
+    :param filter_img:
+    :return:
+    """
     contours = get_max_contours_by_filter_img(img, filter_img, ContourRetrievalMode=cv2.RETR_TREE)
     return contours
 def get_contours_from_edge_detection_algo_02(img, filter_img):
+    """
+    [The algorithm will get contours, with NoneTree-Sturcture,  according  to filter_img]
+    In our algorithm , the filter_img is made by
+    cv2.adaptiveThreshold(gray_img, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 15, -22)
+    More useful information about adaptiveThreshold, you can refer the document here
+    https://docs.opencv.org/master/d7/d4d/tutorial_py_thresholding.html
+
+    :param img:
+    :param filter_img:
+    :return:
+    """
+
     contours = get_max_contours_by_filter_img(img, filter_img, ContourRetrievalMode=cv2.RETR_EXTERNAL)
     return contours
 def get_contours_from_edge_detection_algo_03(img):
