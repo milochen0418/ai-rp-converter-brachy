@@ -357,6 +357,15 @@ def generate_output_to_ct_obj(ct_obj):
 
 # FUNCTIONS - Utility for Vertical Algorithm
 def distance(pt1, pt2):
+    """
+    The pt1 and pt2 is n-dimension point and distance function will figure out distance of these to points
+    :param pt1:
+        n-dimension point 1
+    :param pt2:
+        n-dimension point 2
+    :return:
+        return floating value that represent the distance between pt1 and pt2
+    """
     axis_num = len(pt1)
     # Assume maximum of axis number of pt is 3
     # Because we may save pt[4] as another appended information for algorithm
