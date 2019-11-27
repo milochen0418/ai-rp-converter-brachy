@@ -889,7 +889,7 @@ def main():
                             bytes_dump_folder_filepath='Study-RAL-implant_20191112_Bytes_Files',
                             is_recreate_bytes=True, debug_folders=[])
     # '804045'
-    
+
     # 31 CASE
     print('root_folder = RAL_plan_new_20190905 -> {}'.format(
         [os.path.basename(item) for item in os.listdir('RAL_plan_new_20190905')]))
@@ -908,12 +908,7 @@ def main():
 
 
 if __name__ == '__main__':
-    from random import randint
-    import gc
-    for i in range(100):
-        main()
-        gc.collect()
-        time.sleep(randint(100,700))
+    main()
 
 
 
