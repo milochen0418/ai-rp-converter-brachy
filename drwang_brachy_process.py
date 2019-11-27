@@ -24,6 +24,18 @@ from utilities import enablePrint
 
 # FUNCTIONS - Horizontal Algorithm for each CT slice. Use OpenCV to make contours
 def get_dicom_dict(folder):
+    """
+
+    :param folder:
+        There are at least RS and CT file in this folder
+        get_dicom_dict() will collect all filepath information about CT, RS, RD and RP.
+        it will also get basic information from CT and RS files
+
+    :return:
+        return the dicom_dict object.
+        From dicom_dict object, you can use all dicom file's information you need for this project.
+        So, your process don't need to waste time to reopen again.
+    """
     def get_dicom_folder_pathinfo(folder):
         dicom_folder = {}
         ct_filelist = []
