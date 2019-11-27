@@ -449,6 +449,13 @@ def get_minimum_rect_from_contours(contours, padding=2):
     rect = (x_min, x_max, y_min, y_max)
     return rect
 def is_point_in_rect(pt, rect=(0, 0, 0, 0)):
+    """
+    To detect point is in rect or not
+    :param pt:
+    :param rect:
+    :return:
+        return True/False value to mean point is including in rect or not 
+    """
     (x_min, x_max, y_min, y_max) = rect
     x = pt[0]
     y = pt[1]
