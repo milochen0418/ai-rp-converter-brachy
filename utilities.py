@@ -68,6 +68,13 @@ def generate_metadata_to_dicom_dict(dicom_dict):
     # metadata['view_scope'] = (view_min_y, view_max_y, view_min_x, view_max_x)
     #(contours_without_filter, constant) = get_max_contours(img, ContourRetrievalMode=cv2.RETR_TREE)
 def get_contour_xy_mean(cv_contour):
+    """
+    From the CV's contour, figure out its x,y mean value in pixel unit
+    :param cv_contour:
+        cv_contour is with the pixel unit. it suppose to be a contour which is CV's algorithm result with dicom CT's pixel_array
+    :return:
+        return (x,y) mean value. It's also used to represent center of contour.
+    """
     rect_info = get_rect_info_from_cv_contour(cv_contour)
     (x_mean, y_mean) = rect_info[2]
     return (x_mean, y_mean)
