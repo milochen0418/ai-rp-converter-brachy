@@ -467,9 +467,12 @@ def is_contour_in_rect(contour, rect=(0, 0, 0, 0)):
     return isContourInRect
 def get_rect_info_from_cv_contour(cv_contour):
     """
-
+    To figure out rect object(x_min, x_max, y_min, y_max) , (width,height) and mean x,y value for cv_contour and
+    then return these
     :param cv_contour:
     :return:
+        return rect_info = [(x_min, x_max, y_min, y_max), (w, h), (x_mean, y_mean)]
+
     """
     i = cv_contour
     con = i.reshape(i.shape[0], i.shape[2])
