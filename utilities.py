@@ -16,8 +16,16 @@ import pickle
 
 # Another utility
 def blockPrint(): # Disable printing
+    """
+    Let print function be disable
+    :return:
+    """
     sys.stdout = open(os.devnull, 'w')
 def enablePrint(): # Restore for printing
+    """
+    Let print function be enable
+    :return:
+    """
     sys.stdout = sys.__stdout__
 def python_object_dump(obj, filename):
     file_w = open(filename, "wb")
