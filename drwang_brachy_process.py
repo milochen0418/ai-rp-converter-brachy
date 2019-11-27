@@ -154,8 +154,10 @@ def generate_output_to_dicom_dict(dicom_dict):
     :param dicom_dict:
         The dicom_dict is INPUT that from the return value of  get_dicom_dict(folder)
     :return:
-    
+        No return value but the append more algorithm computing result into dicom_dict
     """
+
+    # generate_output_to_ct_obj will compute any Open CV algorihtm for each CT and save the computing result into dicom_dict for them
     from utilities import generate_output_to_ct_obj
     folder = dicom_dict['metadata']['folder']
     z_map = dicom_dict['z']
