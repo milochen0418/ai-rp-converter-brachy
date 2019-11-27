@@ -28,6 +28,12 @@ def enablePrint(): # Restore for printing
     """
     sys.stdout = sys.__stdout__
 def python_object_dump(obj, filename):
+    """
+    Dump python object into a file with file name = filename, so that all python data is save in this file
+    :param obj:
+    :param filename:
+    :return: 
+    """
     file_w = open(filename, "wb")
     pickle.dump(obj, file_w)
     file_w.close()
