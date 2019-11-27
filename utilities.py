@@ -75,6 +75,12 @@ def get_contour_area_mm2(contour, ps_x, ps_y):
     area_mm2 = cv2.contourArea(contour) * ps_x * ps_y
     return area_mm2
 def convert_to_gray_image(pixel_array):
+    """
+    Convert dicomt CT's pixel_array into gray image
+    :param pixel_array:
+    :return:
+        gray image
+    """
     img = np.copy(pixel_array)
     # Convert to float to avoid overflow or underflow losses.
     img_2d = img.astype(float)
