@@ -250,6 +250,19 @@ def get_contours_from_edge_detection_algo_07(img, contour_constant_value, ps_x, 
                        (get_contour_area_mm2(contour, ps_x, ps_y) < needle_allowed_area_mm2)]
     return needle_contours
 def generate_output_to_ct_obj(ct_obj):
+    """
+    Use get_contours_from_edge_detection_algo0* to computing contours data for ct_obj and save data in it
+    :param ct_obj:
+        INPUT: ct_obj is one of data in dicom_dict to represent CT data
+    :return:
+        There is no return data because the computing result is adding into ct_obj
+        ['output']['contours']['algo*'] -> The data is computed by algo* and the
+        contours data format save in mm unit
+        ['output']['contours512']['algo*'] -> The data is computed by algo* and the
+        contours data format save in pixel unit
+        ['output']['contours_infos'] -> More information after computingalgo*, like mean x,y and area size
+
+    """
     out = ct_obj['output']
     rescale_pixel_array = ct_obj['rescale_pixel_array']
     (view_min_y, view_max_y, view_min_x, view_max_x) = ct_obj['dicom_dict']['metadata']['view_scope']
@@ -274,10 +287,6 @@ def generate_output_to_ct_obj(ct_obj):
     ct_obj['output']['contours']['algo05'] = get_contours_from_edge_detection_algo_05(rescale_pixel_array, contour_constant_value)
     ct_obj['output']['contours']['algo06'] = get_contours_from_edge_detection_algo_06(rescale_pixel_array, contour_constant_value)
     ct_obj['output']['contours']['algo07'] = get_contours_from_edge_detection_algo_07(rescale_pixel_array, contour_constant_value, ps_x, ps_y)
-
-    #ct_obj['output']['contours']['algo05'] = get_contours_from_edge_detection_algo_05(img, contour_constant_vlaue = global_max_contour_constant_value)
-    #ct_obj['output']['contours']['algo06'] = get_contours_from_edge_detection_algo_06(img, contour_constant_value = global_max_contour_constant_value)
-
 
     # Process to contours to fit global pixel img
     ct_obj['output']['contours512'] = {}
@@ -602,7 +611,6 @@ def get_HR_CTV_min_z(rs_filepath):
     # So ContourSequence[0].ContourData[2] is mean the z value of slice of with minimum z.
     min_z = rs_fp.ROIContourSequence[hrctv_roicseq_idx].ContourSequence[0].ContourData[2]
     return min_z
-
 def wrap_to_rp_file(RP_OperatorsName, rs_filepath, tandem_rp_line, out_rp_filepath, lt_ovoid_rp_line, rt_ovoid_rp_line, needle_rp_lines=[], applicator_roi_dict={}):
     """
     :param RP_OperatorsName:
