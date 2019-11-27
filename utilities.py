@@ -102,6 +102,19 @@ def convert_to_gray_image(pixel_array):
     img_2d_scaled = np.uint8(img_2d_scaled)
     return img_2d_scaled
 def get_max_contours(A, constant_value=None, ContourRetrievalMode=cv2.RETR_EXTERNAL):
+    """
+    To get max contours array by referring the max value constant_value
+    :param A:
+        INPUT: pixel array A
+    :param constant_value:
+        To set default constant_value or not.
+        If there is constant_value, then follow this value to do algorithm.
+        If there is no constant_value(mean is None), then figure out the almost max constant value from A
+    :param ContourRetrievalMode:
+        Contour Retrieval Mode
+    :return:
+        return array of contours
+    """
     constant = None
     if constant_value == None:
         # Algoruthm to find constant value
