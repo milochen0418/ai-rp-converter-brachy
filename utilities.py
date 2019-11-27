@@ -471,6 +471,20 @@ def get_most_closed_pt(src_pt, pts, allowed_distance=100):
 
 # FUNCTIONS - Utility of main rp generate function
 def get_metric_lines_representation(dicom_dict, lt_ovoid, tandem, rt_ovoid):
+    """
+    [To covnert lt's ovoid, tandem, rt's ovoid from unit of pixel into unit of mm]
+    :param dicom_dict:
+        INPUT:The dicom_dict to represent the dicom data for specific case of some patient
+    :param lt_ovoid:
+        INPUT:array of lt_ovoid's point and each point is in format of pixel unit
+    :param tandem:
+        INPUT:array of teandem's point and each point is in format of pixel unit
+    :param rt_ovoid:
+        INPUT:array of rt_ovoid's point and each point is in format of pixel unit
+    :return:
+        return (metric_lt_ovoid, metric_tandem, metric_rt_ovoid). every metric line is
+        present the data format in mm unit
+    """
     #(metric_lt_ovoid, metric_tandem, metric_rt_ovoid) = get_metric_lines_representation(dicom_dict, lt_ovoid, tandem, rt_ovoid)
     new_lines = []
     for line in [lt_ovoid, tandem, rt_ovoid]:
@@ -485,6 +499,16 @@ def get_metric_lines_representation(dicom_dict, lt_ovoid, tandem, rt_ovoid):
     (metric_lt_ovoid, metric_tandem, metric_rt_ovoid) = (new_lines[0], new_lines[1], new_lines[2])
     return (metric_lt_ovoid, metric_tandem, metric_rt_ovoid)
 def get_metric_needle_lines_representation(dicom_dict, needle_lines):
+    """
+    Get metric needle lines with representation of mm unit
+    :param dicom_dict:
+        INPUT:dicom_dict represent dicom data of some case of some patient
+    :param needle_lines:
+        needle_lines is needle array and every array represent the points for each needle. every points is save in
+        pixel unit.
+    :return:
+        return metric needle lines with representation of mm unit
+    """
     metric_needle_lines = []
     for line in needle_lines:
         metric_needle_line = []
