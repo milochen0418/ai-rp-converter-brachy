@@ -42,7 +42,7 @@ def python_object_load(filename):
     Some python object's data are saving in the file with file name = filename by python_object_dump().
     For getting this python object's data back, You need to call python_object_load().
     it will load the python object according to the file with file name = filename
-    :param filename: 
+    :param filename:
     :return:
         return python object that data is saved in the file with file name = filename
     """
@@ -472,6 +472,18 @@ def get_rect_info_from_cv_contour(cv_contour):
     rect_info = [(x_min, x_max, y_min, y_max), (w, h), (x_mean, y_mean)]
     return rect_info
 def get_most_closed_pt(src_pt, pts, allowed_distance=100):
+    """
+    find which is the closed point of src_pt in point array pts.
+    But only find the point that distance smaller than allowed_distance
+    :param src_pt:
+        source point 
+    :param pts:
+        array of points
+    :param allowed_distance:
+    :return:
+        return None if there is not suitable point
+        return one point if there is the best matching point in pts
+    """
     if pts == None:
         return None
     if pts == []:
