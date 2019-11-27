@@ -53,6 +53,12 @@ def create_directory_if_not_exists(path):
 
 # FUNCTIONS - Utility of Horizontal Algorithms
 def generate_metadata_to_dicom_dict(dicom_dict):
+    """
+    Generate more metadata for dicom_dict and put data into dicom_dict itself
+    :param dicom_dict:
+    :return:
+        No return value because the generating metadata will add into dicom_dict['metadata']
+    """
     (view_min_y, view_max_y, view_min_x, view_max_x) = get_view_scope_by_dicom_dict(dicom_dict)
     metadata = dicom_dict['metadata']
     metadata['view_scope'] = (view_min_y, view_max_y, view_min_x, view_max_x)
