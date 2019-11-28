@@ -72,7 +72,6 @@ def create_directory_if_not_exists(path):
             print('An error happened trying to create ' + path)
             raise
 
-
 # FUNCTIONS - Utility of Horizontal Algorithms
 def generate_metadata_to_dicom_dict(dicom_dict):
     """
@@ -375,8 +374,6 @@ def generate_output_to_ct_obj(ct_obj):
         ct_obj['output']['contours_infos'][algo_key] = contours_infos
     pass
 
-
-
 # FUNCTIONS - Utility for Vertical Algorithm
 def distance(pt1, pt2):
     """
@@ -532,7 +529,6 @@ def get_most_closed_pt(src_pt, pts, allowed_distance=100):
                 dst_pt = pt
         pass
     return dst_pt
-
 
 # FUNCTIONS - Utility of main rp generate function
 def get_metric_lines_representation(dicom_dict, lt_ovoid, tandem, rt_ovoid):

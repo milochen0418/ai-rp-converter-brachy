@@ -953,9 +953,6 @@ def generate_all_rp_process(
     except Exception as ex:
         print('Create largest size dicom file failed')
     print('[END] generate_all_rp_process()')
-
-
-
 def main():
     # 10 CASE
     print('root_folder = Study-RAL-implant_20191112 -> {}'.format(
@@ -981,8 +978,6 @@ def main():
                             rp_output_folder_filepath='Study-RAL-20191105_RP_Files',
                             bytes_dump_folder_filepath='Study-RAL-20191105_Bytes_Files',
                             is_recreate_bytes=True, debug_folders=[])
-
-
 if __name__ == '__main__':
     main()
 
