@@ -169,6 +169,16 @@ def generate_output_to_dicom_dict(dicom_dict):
 
 # FUNCTIONS - Algorithm processing Fucntions
 def algo_to_get_pixel_lines(dicom_dict, needle_lines = []):
+    """
+    After horizontal algorithm have figured out by Horizontal Algorithm,
+    algo_to_get_pixel_lines() ia processing in vertical for every ct slice in dicom_dict.
+    This algorithm will figure out lt'ovoid, tandem and rt'ovoid in line with unit of pixel
+    The needle_lines is a referenced input the help tandem line can more be precise.
+
+    :param dicom_dict:
+    :param needle_lines:
+    :return: 
+    """
     from utilities import get_rect_info_from_cv_contour
     from utilities import get_minimum_rect_from_contours
     from utilities import is_contour_in_rect
