@@ -177,7 +177,8 @@ def algo_to_get_pixel_lines(dicom_dict, needle_lines = []):
 
     :param dicom_dict:
     :param needle_lines:
-    :return: 
+    :return:
+        (lt_ovoid, tandem, rt_ovoid). And each of it is array of points and each point is unit of pixel
     """
     from utilities import get_rect_info_from_cv_contour
     from utilities import get_minimum_rect_from_contours
@@ -525,6 +526,15 @@ def algo_to_get_pixel_lines(dicom_dict, needle_lines = []):
             print('tandem = {}'.format(tandem))
     return (lt_ovoid, tandem, rt_ovoid)
 def algo_to_get_needle_lines(dicom_dict):
+    """
+    After horizontal algorithm have figured out by Horizontal Algorithm,
+    algo_to_get_needle_lines() ia processing in vertical for every ct slice in dicom_dict.
+    This algorithm will figure out array of needle line and each line is with unit of pixel
+
+    :param dicom_dict:
+    :return:
+        return array of needle lines
+    """
     from utilities import get_rect_info_from_cv_contour
     needle_lines = []
     # Step 1. Use algo07 to get center point of inner contour
