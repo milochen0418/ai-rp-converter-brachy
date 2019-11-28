@@ -741,6 +741,27 @@ def generate_brachy_rp_file(RP_OperatorsName, dicom_dict, out_rp_filepath, is_en
     if (is_enable_print == False):
         enablePrint()
 def generate_brachy_rp_file_without_needle(RP_OperatorsName, dicom_dict, out_rp_filepath, is_enable_print=False):
+    """
+    [Generate RP file bh inputs and we don't figure needle in this function]
+    :param RP_OperatorsName:
+        The value will assign to Operators Name field in RP file
+    :param dicom_dict:
+        Every folder will incldue RP, RD, RS and CTs files. The dicom_dict is dictionary the represent all these information that we need in this folder
+    :param out_rp_filepath:
+        The RP file will save to out_rp_filepath
+    :param is_enable_print:
+        It will show all of printing log if is_eanble_print == True
+        It will not any printing log if is_enable_print == False
+        By the way, when you set is_enable_print as False but you just need to print some information in some line,
+        All you cna do is use enablePrint() and blockPrint() function. For example,
+            ...
+            enablePrint()
+            print('This is for specific debug when you have some confuse on some code and you want to open is_enable_print')
+            blockPrint()
+            ...
+    :return:
+        No return value
+    """
     from utilities import wrap_to_rp_file
     from utilities import get_metric_lines_representation
     from utilities import get_metric_needle_lines_representation
