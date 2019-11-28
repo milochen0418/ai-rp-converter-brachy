@@ -454,7 +454,7 @@ def is_point_in_rect(pt, rect=(0, 0, 0, 0)):
     :param pt:
     :param rect:
     :return:
-        return True/False value to mean point is including in rect or not 
+        return True/False value to mean point is including in rect or not
     """
     (x_min, x_max, y_min, y_max) = rect
     x = pt[0]
